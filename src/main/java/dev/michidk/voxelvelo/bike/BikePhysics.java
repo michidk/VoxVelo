@@ -59,6 +59,16 @@ public final class BikePhysics {
 				slopeGravityFactor, wheelBase, steerAngleLowSpeed, steerAngleHighSpeed, maxLateralAccel, pavedRolling, looseRolling, looseGrip);
 		}
 
+		public Params withTires(double paved, double loose, double grip) {
+			return new Params(riderMass, bikeMass, maxSpeed, dragArea, drivetrainEfficiency, maxDriveAcceleration, maxBrakeDeceleration,
+				slopeGravityFactor, wheelBase, steerAngleLowSpeed, steerAngleHighSpeed, maxLateralAccel, paved, loose, grip);
+		}
+
+		public Params withCockpit(double drag, double steerLow, double steerHigh) {
+			return new Params(riderMass, bikeMass, maxSpeed, drag, drivetrainEfficiency, maxDriveAcceleration, maxBrakeDeceleration,
+				slopeGravityFactor, wheelBase, steerLow, steerHigh, maxLateralAccel, pavedRolling, looseRolling, looseGrip);
+		}
+
 		/** Effective rolling resistance coefficient of this bike on the given surface. */
 		public double rolling(BikeSurface surface) {
 			return surface.rollingResistance * lerp(pavedRolling, looseRolling, surface.looseness);

@@ -72,6 +72,20 @@ java {
 	targetCompatibility = JavaVersion.VERSION_25
 }
 
+sourceSets {
+	verification {
+		compileClasspath += sourceSets.client.output
+		runtimeClasspath += sourceSets.client.runtimeClasspath
+	}
+}
+
+tasks.register('verifyVirtualShifting', JavaExec) {
+	dependsOn verificationClasses
+	classpath = sourceSets.verification.runtimeClasspath
+	mainClass = 'dev.michidk.voxelvelo.client.ftms.VirtualShiftingChecks'
+}
+tasks.named('check') { dependsOn 'verifyVirtualShifting' }
+
 jar {
 	def projectName = project.name
 	inputs.property "projectName", projectName

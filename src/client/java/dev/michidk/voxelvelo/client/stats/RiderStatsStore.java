@@ -13,7 +13,7 @@ public final class RiderStatsStore {
 	private static final long FRESH_MILLIS = 3_000;
 
 	/** @param watts -1 when the rider does not share (or is not riding); @param heartRate 0 when unknown or private */
-	public record Stats(UUID player, int watts, int heartRate, float speedKmh, int cadence, long receivedAt) {}
+	public record Stats(UUID player, int watts, int heartRate, float speedKmh, int cadence, int gear, long receivedAt) {}
 
 	private final Map<UUID, Stats> byPlayer = new ConcurrentHashMap<>();
 
@@ -22,7 +22,7 @@ public final class RiderStatsStore {
 		this.byPlayer.clear();
 		for (RiderStatsPayload.Entry entry : payload.entries()) {
 			int watts = entry.watts() == RiderStatsPayload.NO_WATTS ? -1 : entry.watts();
-			this.byPlayer.put(entry.player(), new Stats(entry.player(), watts, entry.heartRate(), entry.speedKmh(), entry.cadence(), now));
+			this.byPlayer.put(entry.player(), new Stats(entry.player(), watts, entry.heartRate(), entry.speedKmh(), entry.cadence(), entry.gear(), now));
 		}
 	}
 

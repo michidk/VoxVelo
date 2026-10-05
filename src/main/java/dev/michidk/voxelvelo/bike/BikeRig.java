@@ -16,9 +16,11 @@ package dev.michidk.voxelvelo.bike;
  * @param pedalRestAngle angle of the right pedal at the start of the pedal animation, in radians from straight
  *                      down toward the front
  * @param steeringTilt  rake of the steering axis from vertical, in radians (top leans toward the rider)
+ * @param headY         height of the top of the head tube, where the handlebars clamp (the fork bone pivot)
+ * @param headZ         position of the top of the head tube along Z
  */
 public record BikeRig(double saddleY, double saddleZ, double gripX, double gripY, double gripZ,
-	double crankY, double crankZ, double pedalRadius, double pedalRestAngle, double steeringTilt) {
+	double crankY, double crankZ, double pedalRadius, double pedalRestAngle, double steeringTilt, double headY, double headZ) {
 
 	/**
 	 * The models are drawn at this fraction of their authored size. At full size the bike is 2 blocks long and the
@@ -26,6 +28,12 @@ public record BikeRig(double saddleY, double saddleZ, double gripX, double gripY
 	 * with the saddle at 0.88.
 	 */
 	public static final float MODEL_SCALE = 0.8F;
+
+	/** This frame with the handlebars of another bike: its grips keep their place relative to the head tube. */
+	public BikeRig withBarsOf(BikeRig bars) {
+		return new BikeRig(this.saddleY, this.saddleZ, bars.gripX, this.headY + bars.gripY - bars.headY, this.headZ + bars.gripZ - bars.headZ,
+			this.crankY, this.crankZ, this.pedalRadius, this.pedalRestAngle, this.steeringTilt, this.headY, this.headZ);
+	}
 
 	private static double blocks(double units) {
 		return units * MODEL_SCALE / 16.0;

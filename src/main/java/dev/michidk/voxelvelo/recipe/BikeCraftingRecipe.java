@@ -3,6 +3,7 @@ package dev.michidk.voxelvelo.recipe;
 import com.mojang.serialization.MapCodec;
 import dev.michidk.voxelvelo.VoxelVelo;
 import dev.michidk.voxelvelo.bike.BikeComponents;
+import dev.michidk.voxelvelo.bike.TireTread;
 import dev.michidk.voxelvelo.item.BikeItem;
 import dev.michidk.voxelvelo.registry.ModItems;
 import net.minecraft.core.Registry;
@@ -15,7 +16,7 @@ import net.minecraft.world.item.crafting.CustomRecipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.level.Level;
 
-/** Two-ingredient recoloring and tire replacement; copy the original stack to retain its state. */
+/** Two-ingredient recoloring and tire replacement (repair or a new tread); copy the original stack to retain its state. */
 public final class BikeCraftingRecipe extends CustomRecipe {
     public static final RecipeSerializer<BikeCraftingRecipe> SERIALIZER = new RecipeSerializer<>(
             MapCodec.unit(BikeCraftingRecipe::new), StreamCodec.unit(new BikeCraftingRecipe()));
@@ -46,8 +47,10 @@ public final class BikeCraftingRecipe extends CustomRecipe {
         if (target.isEmpty() || ingredient.isEmpty()) return ItemStack.EMPTY;
         ItemStack result = target.copyWithCount(1);
         if (target.is(ModItems.BIKE_WHEEL)) {
-            if (!ingredient.is(ModItems.TIRE) || BikeComponents.tire(target) >= 1) return ItemStack.EMPTY;
+            TireTread tread = ModItems.treadOf(ingredient);
+            if (tread == null || BikeComponents.tire(target) >= 1 && BikeComponents.tread(target) == tread) return ItemStack.EMPTY;
             BikeComponents.tire(result, 1);
+            BikeComponents.tread(result, tread);
         } else {
             var dye = ingredient.get(DataComponents.DYE);
             if (dye == null) return ItemStack.EMPTY;

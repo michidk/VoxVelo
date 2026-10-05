@@ -97,7 +97,7 @@ dependencies {
 }
 
 // Language keys of the fitness integration. The shared language file lists them, the core jar does not ship them.
-def fitnessLangKey = ~/^\s*"(key\.voxelvelo\.toggle_stats|voxelvelo\.(hint\.trainer_not_connected|config\.(trainer|telemetry|choose_trainer|auto_connect|resistance|intensity|obc|sources|road|slope_window|stats)|sources\.|road\.|junction\.|stats\.|rider\.(stats|share_watts|share_hr|hud_sources)|hud\.heart|obc\.|trainer\.))[a-z_.]*":.*/
+def fitnessLangKey = ~/^\s*"(key\.voxelvelo\.toggle_stats|voxelvelo\.(hint\.trainer_not_connected|config\.(trainer|telemetry|choose_trainer|auto_connect|resistance|intensity|virtual_shifting|physical_ratio|wheel_circumference|obc|sources|road|slope_window|stats)|sources\.|road\.|junction\.|stats\.|rider\.(stats|share_watts|share_hr|hud_sources|heart_graph|junction_hud)|hud\.heart|obc\.|trainer\.))[a-z_.]*":.*/
 
 processResources {
 	def modVersion = project.version

@@ -14,8 +14,8 @@ import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.network.chat.Component;
 
 /**
- * Top-left list of current bike riders with power, speed, cadence and shared heart rate. Toggled with a key or in the
- * settings, and empty (so invisible) when nobody is riding.
+ * Top-left list of other bike riders with power, speed, cadence and shared heart rate. Toggled with a key or in the
+ * settings, and empty (so invisible) when no other players are riding.
  */
 public final class StatsOverlay implements HudElement {
 	private static final int MARGIN = 6;
@@ -38,6 +38,9 @@ public final class StatsOverlay implements HudElement {
 
 		List<Component> lines = new ArrayList<>();
 		for (RiderStatsStore.Stats stats : this.ctx.riderStats.fresh()) {
+			if (stats.player().equals(mc.player.getUUID())) {
+				continue;
+			}
 			if (lines.size() >= Math.min(64, (graphics.guiHeight() / 2 - PADDING * 2) / LINE_HEIGHT)) {
 				continue;
 			}
@@ -49,7 +52,8 @@ public final class StatsOverlay implements HudElement {
 				Component.literal(watts).withStyle(ChatFormatting.GOLD),
 				Component.translatable("voxelvelo.hud.speed", String.format("%.1f", stats.speedKmh())).withStyle(ChatFormatting.GREEN),
 				Component.translatable("voxelvelo.hud.cadence", stats.cadence()).withStyle(ChatFormatting.AQUA),
-				Component.literal(pulse).withStyle(ChatFormatting.RED)));
+				Component.literal(pulse).withStyle(ChatFormatting.RED),
+				Component.translatable("voxelvelo.hud.gear", stats.gear()).withStyle(ChatFormatting.LIGHT_PURPLE)));
 		}
 		if (lines.isEmpty()) {
 			return;

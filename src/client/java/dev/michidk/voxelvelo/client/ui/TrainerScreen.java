@@ -41,7 +41,8 @@ public class TrainerScreen extends Screen {
 		y += 28;
 
 		List<BluetoothDevice> devices = this.ctx.bluetooth.devices(Ftms.SERVICE);
-		for (int i = 0; i < Math.min(MAX_ROWS, devices.size()); i++) {
+		int visibleRows = Math.max(0, Math.min(MAX_ROWS, (this.height - 126 - y) / 24));
+		for (int i = 0; i < Math.min(visibleRows, devices.size()); i++) {
 			BluetoothDevice device = devices.get(i);
 			this.addRenderableWidget(Button.builder(this.rowLabel(device), button -> this.choose(device)).tooltip(Tips.of("voxelvelo.trainer.device")).bounds(left, y, WIDTH, 20).build());
 			y += 24;
@@ -50,7 +51,7 @@ public class TrainerScreen extends Screen {
 		// Connection and feedback settings, pinned above the Done button.
 		int half = (WIDTH - 10) / 2;
 		int right = left + half + 10;
-		int by = this.height - 30 - 48;
+		int by = this.height - 30 - 96;
 		this.addRenderableWidget(CycleButton.onOffBuilder(this.ctx.config.autoConnectTrainer)
 			.withTooltip(value -> Tips.of("voxelvelo.config.auto_connect"))
 			.create(left, by, half, 20, Component.translatable("voxelvelo.config.auto_connect"), (button, value) -> this.ctx.config.autoConnectTrainer = value));
@@ -61,6 +62,16 @@ public class TrainerScreen extends Screen {
 			v -> Component.translatable("voxelvelo.config.intensity", Math.round(v * 100)), v -> this.ctx.config.trainerResistanceIntensity = v).tip("voxelvelo.config.intensity"));
 		this.addRenderableWidget(new ValueSlider(right, by + 24, half, TerrainSlope.MIN_WINDOW, TerrainSlope.MAX_WINDOW, 1.0, this.ctx.config.slopeWindowBlocks,
 			v -> Component.translatable("voxelvelo.config.slope_window", Math.round(v)), v -> this.ctx.config.slopeWindowBlocks = (int) Math.round(v)).tip("voxelvelo.config.slope_window"));
+		this.addRenderableWidget(CycleButton.onOffBuilder(this.ctx.config.virtualShiftingEnabled)
+			.withTooltip(value -> Tips.of("voxelvelo.config.virtual_shifting"))
+			.create(left, by + 48, WIDTH, 20, Component.translatable("voxelvelo.config.virtual_shifting"),
+				(button, value) -> this.ctx.config.virtualShiftingEnabled = value));
+		this.addRenderableWidget(new ValueSlider(left, by + 72, half, 0.5, 6.0, 0.05, this.ctx.config.trainerGearRatio,
+			v -> Component.translatable("voxelvelo.config.physical_ratio", String.format(java.util.Locale.ROOT, "%.2f", v)),
+			v -> this.ctx.config.trainerGearRatio = v).tip("voxelvelo.config.physical_ratio"));
+		this.addRenderableWidget(new ValueSlider(right, by + 72, half, 1.0, 3.0, 0.05, this.ctx.config.trainerWheelCircumferenceM,
+			v -> Component.translatable("voxelvelo.config.wheel_circumference", String.format(java.util.Locale.ROOT, "%.2f", v)),
+			v -> this.ctx.config.trainerWheelCircumferenceM = v).tip("voxelvelo.config.wheel_circumference"));
 
 		this.addRenderableWidget(Button.builder(Component.translatable("gui.done"), button -> this.onClose())
 			.bounds(left, this.height - 30, WIDTH, 20).build());

@@ -36,6 +36,10 @@ public final class FitnessConfig {
 	/** Send terrain gradient and surface to the trainer as resistance. Intensity 1.0 matches the game physics. */
 	public boolean trainerResistanceEnabled = true;
 	public double trainerResistanceIntensity = 1.0;
+	public boolean virtualShiftingEnabled = true;
+	/** Physical chainring teeth divided by rear cog teeth; keep the real bike in this gear. */
+	public double trainerGearRatio = 2.5;
+	public double trainerWheelCircumferenceM = 2.1;
 
 	/** Show other riders watts and heart rate on screen, and whether this player shares theirs with the others. */
 	public boolean statsOverlayEnabled = true;
@@ -43,6 +47,8 @@ public final class FitnessConfig {
 	public boolean shareHeartRate = true;
 
 	public boolean hudShowSources = true;
+	public boolean heartRateHudEnabled = true;
+	public boolean junctionHudEnabled = true;
 
 	/** Blocks that count as road for the road-follow steering source: block ids, or tags written as #namespace:tag. */
 	public java.util.List<String> roadBlocks = new java.util.ArrayList<>(java.util.List.of("minecraft:stone", "minecraft:gravel"));
@@ -127,6 +133,8 @@ public final class FitnessConfig {
 		this.obcPreferredKey = this.obcPreferredKey == null ? "" : this.obcPreferredKey;
 		this.obcPreferredName = this.obcPreferredName == null ? "" : this.obcPreferredName;
 		this.trainerResistanceIntensity = clamp(this.trainerResistanceIntensity, 0.0, 2.0, 1.0);
+		this.trainerGearRatio = clamp(this.trainerGearRatio, 0.5, 6.0, 2.5);
+		this.trainerWheelCircumferenceM = clamp(this.trainerWheelCircumferenceM, 1.0, 3.0, 2.1);
 		this.roadBlocks = sanitizeBlocks(this.roadBlocks);
 		this.roadMaxHalfWidth = Math.max(2, Math.min(16, this.roadMaxHalfWidth));
 		this.slopeWindowBlocks = Math.max(10, Math.min(40, this.slopeWindowBlocks));

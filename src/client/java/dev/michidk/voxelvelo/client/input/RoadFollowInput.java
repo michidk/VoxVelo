@@ -71,7 +71,7 @@ public final class RoadFollowInput implements BikeInputSource {
 		}
 		this.roadBlocks.update(this.config.roadBlocks);
 		ClientRoadWorld world = new ClientRoadWorld(client.level, this.roadBlocks);
-		var params = bike.getBikeType().params();
+		var params = bike.params();
 		double speed = bike.getSpeed();
 		RoadFollower.Result result = RoadFollower.steer(world, bike.getX(), bike.getY(), bike.getZ(), bike.getYRot(), speed, params, this.config.roadMaxHalfWidth);
 

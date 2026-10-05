@@ -7,6 +7,7 @@ import com.geckolib.animation.AnimationController;
 import com.geckolib.animation.RawAnimation;
 import com.geckolib.animation.object.PlayState;
 import com.geckolib.util.GeckoLibUtil;
+import dev.michidk.voxelvelo.item.BikeHelmetItem;
 import dev.michidk.voxelvelo.registry.ModItems;
 import dev.michidk.voxelvelo.terrain.LevelGround;
 import dev.michidk.voxelvelo.terrain.TerrainSlope;
@@ -101,6 +102,8 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
     private static final EntityDataAccessor<Integer> DATA_COLOR = SynchedEntityData.defineId(BikeEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_PARTS = SynchedEntityData.defineId(BikeEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_TIRES = SynchedEntityData.defineId(BikeEntity.class, EntityDataSerializers.INT);
+    /** Installed treads and handlebar kind, see {@link BikeComponents#setup}; clients need it for handling and looks. */
+    private static final EntityDataAccessor<Integer> DATA_SETUP = SynchedEntityData.defineId(BikeEntity.class, EntityDataSerializers.INT);
     private final SimpleContainer components = new SimpleContainer(BikeComponents.COUNT) {
         @Override public void setChanged() {
             super.setChanged();
@@ -150,6 +153,7 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 		entityData.define(DATA_COLOR, BikeComponents.DEFAULT_COLOR);
         entityData.define(DATA_PARTS, 31);
         entityData.define(DATA_TIRES, 100 | (100 << 8));
+        entityData.define(DATA_SETUP, BikeComponents.stockSetup(BikeType.GRAVEL));
         entityData.define(DATA_TYPE, BikeType.GRAVEL.ordinal());
 		entityData.define(DATA_SPEED, 0.0F);
 		entityData.define(DATA_STEERING, 0.0F);
@@ -174,10 +178,14 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
     public int getComponentMask() { return entityData.get(DATA_PARTS); }
     public boolean hasPart(int slot) { return (getComponentMask() & (1 << slot)) != 0; }
     public int tirePercent(int slot) { return (entityData.get(DATA_TIRES) >> (slot * 8)) & 255; }
+    public int getSetup() { return entityData.get(DATA_SETUP); }
+    /** Physics parameters of the frame with the installed tires and handlebars. */
+    public BikePhysics.Params params() { return BikeComponents.params(getBikeType(), getSetup()); }
+    public BikeRig rig() { return BikeComponents.rig(getBikeType(), getSetup()); }
     public boolean canRide() { return (getComponentMask() & 15) == 15 && mechanic == null; }
 
     private void initializeComponents() {
-        for (int i = 0; i < BikeComponents.COUNT; i++) components.setItem(i, new ItemStack(BikeComponents.expected(getBikeType(), i)));
+        for (int i = 0; i < BikeComponents.COUNT; i++) components.setItem(i, BikeComponents.stock(getBikeType(), i));
         syncComponents();
     }
 
@@ -188,6 +196,7 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
         entityData.set(DATA_PARTS, mask);
         entityData.set(DATA_TIRES, (int) Math.ceil(BikeComponents.tire(components.getItem(0)) * 100)
                 | ((int) Math.ceil(BikeComponents.tire(components.getItem(1)) * 100) << 8));
+        entityData.set(DATA_SETUP, BikeComponents.setup(getBikeType(), components));
         if ((mask & 15) != 15) ejectPassengers();
     }
 
@@ -197,8 +206,12 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
         if (contents != null) {
             NonNullList<ItemStack> items = NonNullList.withSize(BikeComponents.COUNT, ItemStack.EMPTY);
             contents.copyInto(items);
-            for (int i = 0; i < items.size(); i++) components.setItem(i,
-                    BikeComponents.accepts(getBikeType(), i, items.get(i)) ? items.get(i).copy() : ItemStack.EMPTY);
+            for (int i = 0; i < items.size(); i++) {
+                ItemStack part = BikeComponents.accepts(i, items.get(i)) ? items.get(i).copy() : ItemStack.EMPTY;
+                // Bikes from before treads existed ran on the tires of their own type.
+                BikeComponents.stampTread(part, TireTread.nativeFor(getBikeType()));
+                components.setItem(i, part);
+            }
         }
         syncComponents();
     }
@@ -315,8 +328,8 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 		Player rider = this.getRider();
         if (!canRide()) { ejectPassengers(); input = new BikeControlState(0, 0, 1, input.gear()); }
 		BikePhysics.Params params = rider == null
-			? this.getBikeType().params()
-			: RiderSettings.apply(this.getBikeType().params(), RiderSettings.get(rider.getUUID()));
+			? this.params()
+			: RiderSettings.apply(this.params(), RiderSettings.get(rider.getUUID()));
 
 		if (this.isEyeInFluid(FluidTags.WATER)) {
 			if (++this.submergedTicks >= SUBMERGED_EJECT_TICKS) {
@@ -421,7 +434,8 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 			this.playSound(SoundEvents.PLAYER_ATTACK_KNOCKBACK, (float) Math.min(1.0, impact / 12.0), 0.8F);
 		}
 		if (impact > CRASH_DAMAGE_IMPACT && this.getRider() instanceof Player rider && this.level() instanceof ServerLevel serverLevel) {
-			rider.hurtServer(serverLevel, serverLevel.damageSources().flyIntoWall(), (float) ((impact - CRASH_DAMAGE_IMPACT) * 0.5));
+			float helmet = BikeHelmetItem.isWornBy(rider) ? BikeHelmetItem.CRASH_DAMAGE_FACTOR : 1.0F;
+			rider.hurtServer(serverLevel, serverLevel.damageSources().flyIntoWall(), (float) ((impact - CRASH_DAMAGE_IMPACT) * 0.5) * helmet);
 		}
 	}
 

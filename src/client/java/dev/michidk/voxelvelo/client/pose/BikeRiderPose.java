@@ -4,7 +4,6 @@ import com.geckolib.animatable.manager.AnimatableManager;
 import com.geckolib.animation.AnimationController;
 import dev.michidk.voxelvelo.bike.BikeEntity;
 import dev.michidk.voxelvelo.bike.BikeRig;
-import dev.michidk.voxelvelo.bike.BikeType;
 import net.fabricmc.fabric.api.client.rendering.v1.RenderStateDataKey;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.util.Mth;
@@ -34,12 +33,12 @@ public final class BikeRiderPose {
 	private static final double LEG_SWING_GAIN = 4.0;
 	private static final float MAX_LEG_ANGLE = 1.5F;
 
-	private final BikeType type;
+	private final BikeRig rig;
 	/** Position in the crank revolution, 0..1. */
 	private final float pedalPhase;
 
-	private BikeRiderPose(BikeType type, float pedalPhase) {
-		this.type = type;
+	private BikeRiderPose(BikeRig rig, float pedalPhase) {
+		this.rig = rig;
 		this.pedalPhase = pedalPhase;
 	}
 
@@ -51,12 +50,12 @@ public final class BikeRiderPose {
 		AnimatableManager<BikeEntity> manager = bike.getAnimatableInstanceCache().<BikeEntity>getManagerForId(bike.getId());
 		AnimationController<BikeEntity> drive = manager.getAnimationControllers().get("drive");
 		double time = drive == null ? 0.0 : drive.getCurrentAnimationTime();
-		return new BikeRiderPose(bike.getBikeType(), (float) (time - Math.floor(time)));
+		return new BikeRiderPose(bike.rig(), (float) (time - Math.floor(time)));
 	}
 
 	/** Overrides the body parts of the humanoid model. Called after the vanilla pose has been computed. */
 	public void apply(ModelPart body, ModelPart head, ModelPart rightArm, ModelPart leftArm, ModelPart rightLeg, ModelPart leftLeg) {
-		BikeRig rig = this.type.rig;
+		BikeRig rig = this.rig;
 		float sin = Mth.sin(LEAN);
 		float cos = Mth.cos(LEAN);
 

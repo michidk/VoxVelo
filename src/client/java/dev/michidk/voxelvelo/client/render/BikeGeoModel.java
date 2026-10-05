@@ -18,14 +18,26 @@ public class BikeGeoModel extends GeoModel<BikeEntity> {
 		return state.getOrDefaultGeckolibData(BikeDataTickets.BIKE_TYPE, BikeType.GRAVEL);
 	}
 
+	private static String fileName(BikeType type) {
+		return (type == BikeType.ROAD ? "race" : type.id) + "_bike";
+	}
+
+	public static Identifier model(BikeType type) {
+		return VoxelVelo.id("entity/bikes/" + fileName(type));
+	}
+
+	public static Identifier texture(BikeType type) {
+		return VoxelVelo.id("textures/entity/bikes/" + fileName(type) + ".png");
+	}
+
 	@Override
 	public Identifier getModelResource(GeoRenderState renderState) {
-		return VoxelVelo.id("entity/bikes/" + (typeOf(renderState) == BikeType.ROAD ? "race" : typeOf(renderState).id) + "_bike");
+		return model(typeOf(renderState));
 	}
 
 	@Override
 	public Identifier getTextureResource(GeoRenderState renderState) {
-		return VoxelVelo.id("textures/entity/bikes/" + (typeOf(renderState) == BikeType.ROAD ? "race" : typeOf(renderState).id) + "_bike.png");
+		return texture(typeOf(renderState));
 	}
 
 	@Override

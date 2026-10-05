@@ -6,6 +6,7 @@ import dev.michidk.voxelvelo.client.hud.BikeHud;
 import dev.michidk.voxelvelo.client.input.VoxelVeloKeys;
 import dev.michidk.voxelvelo.client.network.BikeControlSender;
 import dev.michidk.voxelvelo.client.render.BikeGeoRenderer;
+import dev.michidk.voxelvelo.client.render.BikeHelmetRenderer;
 import dev.michidk.voxelvelo.client.ui.ConfigScreen;
 import dev.michidk.voxelvelo.client.ui.MenuButton;
 import dev.michidk.voxelvelo.registry.ModEntities;
@@ -26,6 +27,7 @@ public class VoxelVeloClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		VoxelVeloKeys.register();
 		EntityRenderers.register(ModEntities.BICYCLE, BikeGeoRenderer::new);
+		BikeHelmetRenderer.register();
 
 		ClientContext ctx = ClientContext.init();
 		BikeControlSender sender = new BikeControlSender(ctx.inputManager, ctx.mountListeners());

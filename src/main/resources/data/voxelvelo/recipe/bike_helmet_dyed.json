@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_dye",
+  "dye": "#minecraft:dyes",
+  "group": "dyed_armor",
+  "result": {
+    "id": "voxelvelo:bike_helmet"
+  },
+  "target": "voxelvelo:bike_helmet"
+}

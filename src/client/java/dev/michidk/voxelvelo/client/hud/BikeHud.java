@@ -1,6 +1,7 @@
 package dev.michidk.voxelvelo.client.hud;
 
 import dev.michidk.voxelvelo.bike.BikeEntity;
+import dev.michidk.voxelvelo.bike.BikeControlState;
 import dev.michidk.voxelvelo.client.ClientContext;
 import dev.michidk.voxelvelo.client.network.BikeControlSender;
 import java.util.ArrayList;
@@ -58,7 +59,7 @@ public final class BikeHud implements HudElement {
 			Component.translatable("voxelvelo.hud.speed", String.format("%.1f", bike.getSpeed() * 3.6F)).withStyle(ChatFormatting.GREEN)));
 		lines.add(Component.translatable("voxelvelo.hud.terrain",
 			Component.translatable("voxelvelo.hud.slope", String.format("%+.1f", measuredGradient.orElse(bike.getGradient()) * 100.0))
-				.withStyle(ChatFormatting.YELLOW), bike.getGear()));
+				.withStyle(ChatFormatting.YELLOW), bike.getGear() + "/" + BikeControlState.MAX_GEAR));
 		for (HudExtras extras : this.ctx.hudExtras()) {
 			extras.addLines(lines);
 		}

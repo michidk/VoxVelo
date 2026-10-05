@@ -61,13 +61,16 @@ final class FitnessNetworking {
 			int heartRate = vitals != null && vitals.shareHeartRate() ? vitals.heartRate() : RiderStatsPayload.NO_HEART_RATE;
 			int cadence = vitals != null && vitals.cadence() >= 0 ? vitals.cadence()
 				: bike.isPedaling() ? Math.round(bike.getCadenceRevsPerSecond() * 60.0F) : 0;
-			entries.add(new RiderStatsPayload.Entry(player.getUUID(), watts, heartRate, bike.getSpeed() * 3.6F, cadence));
+			entries.add(new RiderStatsPayload.Entry(player.getUUID(), watts, heartRate, bike.getSpeed() * 3.6F, cadence, bike.getGear()));
 		}
 		for (ServerPlayer receiver : players) {
 			if (!ServerPlayNetworking.canSend(receiver, RiderStatsPayload.TYPE)) {
 				continue;
 			}
-			ServerPlayNetworking.send(receiver, RiderStatsPayload.of(entries));
+			List<RiderStatsPayload.Entry> others = entries.stream()
+				.filter(entry -> !entry.player().equals(receiver.getUUID()))
+				.toList();
+			ServerPlayNetworking.send(receiver, RiderStatsPayload.of(others));
 		}
 	}
 }

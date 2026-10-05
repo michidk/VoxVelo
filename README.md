@@ -276,6 +276,27 @@ chunk is treated as one message.
 
 ## Trainer resistance feedback
 
+Virtual shifting is enabled by default in the fitness build. Keep the real bicycle in one gear, then use
+X/Z or OpenBikeControl to select the 12 virtual gears. In *Trainer...*, set *Physical ratio* to chainring
+teeth divided by rear cog teeth (for example, 50/20 = 2.50). Gear 6 has a virtual ratio of 2.50; each
+step increases that ratio by 13%. Set *Wheel* to the circumference in metres (default 2.10 m); this is
+used when the trainer supplies cadence but no speed. Disable *Virtual Shifting* to restore terrain-only feedback.
+
+The independent implementation calculates virtual road speed from trainer speed and the relative gear
+ratio, then reflects slope, rolling and aerodynamic load back through that ratio. It translates the
+result into an equivalent FTMS simulation grade, retaining the existing resistance limits. Higher gears
+increase pedaling load on flats and climbs; downhill load can fall to zero, without requesting motor
+assistance. Measured watts and cadence are never altered, and game speed still comes from measured power.
+Gear updates can be sent every 150 ms; terrain and speed updates keep the 750 ms interval. Trainer commands
+remain serialized and queued changes are coalesced. Virtual shifting requires *Resistance* to be enabled.
+
+Physical principles were researched using [SHIFTR](https://github.com/JuergenLeber/SHIFTR),
+[Tacx Virtual Shifting](https://github.com/Berg0162/Tacx-Virtual-Shifting),
+[QZ](https://github.com/cagnulein/qdomyos-zwift), and
+[KickrShiftr](https://github.com/jvivenot/KickrShiftr). No source code was copied or ported.
+This generic FTMS approximation depends on the trainer's internal mass and resistance model; calibration
+and real hardware testing are still needed. Missing or stale telemetry uses zero speed for load calculation.
+
 With an FTMS trainer as the propulsion source, the terrain you ride over changes how the trainer feels:
 
 ```text
@@ -322,18 +343,23 @@ for posing a player model; they only touch players that are riding a bike.
 
 ## Rider stats and heart rate
 
-The top-left overlay lists current bike riders across the server, including you, with colored **watts**, **speed
-(km/h)**, **cadence (rpm)** and **heart rate**, strongest first. Riders disappear on the next update when they
+Open `B` > *HUD & Rider Stats...* to switch the riding HUD, heart-rate graph, other-rider list, input-source
+lines and junction prompt on or off individually. Settings are saved when you close the menu. Input-source
+lines appear within the riding HUD; hiding junction prompts keeps road following active.
+
+The top-left overlay lists other current bike riders across the server with colored **watts**, **speed
+(km/h)**, **cadence (rpm)**, **heart rate** and **gear**, strongest first. Riders disappear on the next update when they
 dismount. Toggle it with `H` (rebindable, *Toggle Rider Stats*) or in `B` > *Rider & HUD...*. The list fits the
 available screen height and the server sends up to 64 riders.
 
-While riding, the top-right panel displays your trainer's heart rate and a heart that pulses at the reported
-BPM. Missing telemetry shows `-- bpm`. It follows the riding HUD visibility setting.
+While riding, the top-right panel displays your current BPM and a scrolling graph of the last 60 seconds,
+sampled once per second. The vertical scale adjusts to your readings. Missing telemetry shows `-- bpm`
+and leaves gaps in the graph. History resets when you dismount or change bikes. Its visibility is controlled independently by the *Heart Rate Graph* setting.
 
 Your client sends trainer cadence and heart rate in the version 2 `rider_vitals` packet. Twice a second the
-server sends a complete version 2 `rider_stats` snapshot with current riders, applied watts, bike speed,
-cadence and shared heart rate. Without trainer cadence, cadence is estimated from the bike. Both server and
-clients need the updated mod for these version 2 packets.
+server sends a complete version 3 `rider_stats` snapshot with current riders, applied watts, bike speed,
+cadence, shared heart rate and current gear. Without trainer cadence, cadence is estimated from the bike. Both server and
+clients need the updated mod for these packets.
 
 *Share My Watts* and *Share My Heart Rate* still control those values; hidden or unavailable values show
 `--`. Speed and cadence are shown for every current rider. Trainer cadence is clamped to 0?300 rpm and

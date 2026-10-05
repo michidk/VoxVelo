@@ -22,6 +22,7 @@ public class BikeGeoRenderer extends GeoEntityRenderer<BikeEntity, EntityRenderS
 		super(context, new BikeGeoModel());
 		this.shadowRadius = 0.5F;
         withRenderLayer(new BikeFrameTintLayer(this));
+        for (int slot = 0; slot < BikePartSwapLayer.BONES.length; slot++) withRenderLayer(new BikePartSwapLayer(this, slot));
 		this.withScale(BikeRig.MODEL_SCALE);
 	}
 
@@ -30,7 +31,8 @@ public class BikeGeoRenderer extends GeoEntityRenderer<BikeEntity, EntityRenderS
 		super.extractRenderState(bike, state, partialTick);
 		state.addGeckolibData(BikeDataTickets.FRAME_COLOR, bike.getFrameColor());
         state.addGeckolibData(BikeDataTickets.COMPONENTS, bike.getComponentMask());
-		float steer = bike.getSteering() * (float) BikePhysics.maxSteerAngle(bike.getSpeed(), bike.getBikeType().params());
+        state.addGeckolibData(BikeDataTickets.SETUP, bike.getSetup());
+		float steer = bike.getSteering() * (float) BikePhysics.maxSteerAngle(bike.getSpeed(), bike.params());
 		state.addGeckolibData(BikeDataTickets.BIKE_TYPE, bike.getBikeType());
 		state.addGeckolibData(BikeDataTickets.WHEEL_ANGLE, bike.getWheelAngle(partialTick));
 		state.addGeckolibData(BikeDataTickets.STEER_ANGLE, steer);
@@ -64,7 +66,9 @@ public class BikeGeoRenderer extends GeoEntityRenderer<BikeEntity, EntityRenderS
         String[] names = {"front_wheel", "rear_wheel", "handlebar", "saddle", "crank"};
         for (int i = 0; i < names.length; i++) {
             boolean missing = (parts & (1 << i)) == 0;
-            snapshots.ifPresent(names[i], bone -> { bone.skipRender(missing); bone.skipChildrenRender(missing); });
+            // A part from another bike is drawn by BikePartSwapLayer instead of this model's own bone.
+            boolean hidden = missing || i < BikePartSwapLayer.BONES.length && BikePartSwapLayer.swapped(info.renderState(), i);
+            snapshots.ifPresent(names[i], bone -> { bone.skipRender(hidden); bone.skipChildrenRender(missing); });
         }
         snapshots.ifPresent("left_pedal", bone -> bone.skipRender((parts & 16) == 0));
         snapshots.ifPresent("right_pedal", bone -> bone.skipRender((parts & 16) == 0));

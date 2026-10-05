@@ -19,6 +19,7 @@ public class VoxelVelo implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
+		dev.michidk.voxelvelo.registry.ModComponents.register();
 		ModEntities.register();
 		ModItems.register();
         dev.michidk.voxelvelo.registry.ModMenus.register();

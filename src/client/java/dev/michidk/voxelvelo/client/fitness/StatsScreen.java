@@ -23,24 +23,34 @@ public class StatsScreen extends Screen {
 	protected void init() {
 		int left = this.width / 2 - WIDTH / 2;
 		int y = 46;
-		this.addRenderableWidget(CycleButton.onOffBuilder(this.ctx.config.hudShowSources)
-			.withTooltip(value -> Tips.of("voxelvelo.rider.hud_sources"))
-			.create(left, y, WIDTH, 20, Component.translatable("voxelvelo.rider.hud_sources"), (button, value) -> this.ctx.config.hudShowSources = value));
-		y += 32;
-		this.addRenderableWidget(CycleButton.onOffBuilder(this.ctx.config.statsOverlayEnabled)
-			.withTooltip(value -> Tips.of("voxelvelo.rider.stats"))
-			.create(left, y, WIDTH, 20, Component.translatable("voxelvelo.rider.stats"), (button, value) -> this.ctx.config.statsOverlayEnabled = value));
-		y += 24;
 		int half = (WIDTH - 10) / 2;
-		this.addRenderableWidget(CycleButton.onOffBuilder(this.ctx.config.shareWatts)
-			.withTooltip(value -> Tips.of("voxelvelo.rider.share_watts"))
-			.create(left, y, half, 20, Component.translatable("voxelvelo.rider.share_watts"), (button, value) -> this.ctx.config.shareWatts = value));
-		this.addRenderableWidget(CycleButton.onOffBuilder(this.ctx.config.shareHeartRate)
-			.withTooltip(value -> Tips.of("voxelvelo.rider.share_hr"))
-			.create(left + half + 10, y, half, 20, Component.translatable("voxelvelo.rider.share_hr"), (button, value) -> this.ctx.config.shareHeartRate = value));
+		int right = left + half + 10;
+		this.toggle(left, y, half, "voxelvelo.rider.hud", this.ctx.core.config.hudEnabled,
+			value -> this.ctx.core.config.hudEnabled = value);
+		this.toggle(right, y, half, "voxelvelo.rider.heart_graph", this.ctx.config.heartRateHudEnabled,
+			value -> this.ctx.config.heartRateHudEnabled = value);
+		y += 24;
+		this.toggle(left, y, half, "voxelvelo.rider.stats", this.ctx.config.statsOverlayEnabled,
+			value -> this.ctx.config.statsOverlayEnabled = value);
+		this.toggle(right, y, half, "voxelvelo.rider.hud_sources", this.ctx.config.hudShowSources,
+			value -> this.ctx.config.hudShowSources = value);
+		y += 24;
+		this.toggle(left, y, WIDTH, "voxelvelo.rider.junction_hud", this.ctx.config.junctionHudEnabled,
+			value -> this.ctx.config.junctionHudEnabled = value);
+		y += 32;
+		this.toggle(left, y, half, "voxelvelo.rider.share_watts", this.ctx.config.shareWatts,
+			value -> this.ctx.config.shareWatts = value);
+		this.toggle(right, y, half, "voxelvelo.rider.share_hr", this.ctx.config.shareHeartRate,
+			value -> this.ctx.config.shareHeartRate = value);
 
 		this.addRenderableWidget(Button.builder(Component.translatable("gui.done"), button -> this.onClose())
 			.bounds(left, this.height - 30, WIDTH, 20).build());
+	}
+
+	private void toggle(int x, int y, int width, String key, boolean enabled, java.util.function.Consumer<Boolean> change) {
+		this.addRenderableWidget(CycleButton.onOffBuilder(enabled)
+			.withTooltip(value -> Tips.of(key))
+			.create(x, y, width, 20, Component.translatable(key), (button, value) -> change.accept(value)));
 	}
 
 	@Override
@@ -52,6 +62,7 @@ public class StatsScreen extends Screen {
 	@Override
 	public void onClose() {
 		this.ctx.config.save();
+		this.ctx.core.config.save();
 		this.minecraft.gui.setScreen(this.parent);
 	}
 }

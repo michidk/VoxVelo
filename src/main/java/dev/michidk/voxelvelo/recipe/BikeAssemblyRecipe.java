@@ -12,7 +12,10 @@ import net.minecraft.world.item.crafting.display.RecipeDisplay;
 import net.minecraft.world.level.Level;
 import java.util.List;
 
-/** A normal shaped, recipe-book-visible assembly recipe that transfers consumed component data. */
+/**
+ * A normal shaped, recipe-book-visible assembly recipe that transfers consumed component data. The recipe JSON decides
+ * which parts are accepted (any wheel, either handlebar); each consumed part fills the first free slot it fits.
+ */
 public record BikeAssemblyRecipe(ShapedRecipe recipe) implements CraftingRecipe {
     public static final RecipeSerializer<BikeAssemblyRecipe> SERIALIZER = new RecipeSerializer<>(
             ShapedRecipe.MAP_CODEC.xmap(BikeAssemblyRecipe::new, BikeAssemblyRecipe::recipe),
@@ -27,8 +30,10 @@ public record BikeAssemblyRecipe(ShapedRecipe recipe) implements CraftingRecipe 
             if (stack.isEmpty()) continue;
             if (stack.is(ModItems.frameFor(bike.bikeType()))) BikeComponents.color(result, BikeComponents.color(stack));
             else for (int i = 0; i < parts.size(); i++) {
-                if (parts.get(i).isEmpty() && stack.is(BikeComponents.expected(bike.bikeType(), i))) {
-                    parts.set(i, stack.copyWithCount(1));
+                if (parts.get(i).isEmpty() && BikeComponents.fits(i, stack)) {
+                    ItemStack part = stack.copyWithCount(1);
+                    BikeComponents.stampTread(part, BikeComponents.tread(part)); // What its tooltip showed.
+                    parts.set(i, part);
                     break;
                 }
             }

@@ -7,7 +7,7 @@
     " SP"
   ],
   "key": {
-    "H": "voxelvelo:flat_handlebars",
+    "H": "#voxelvelo:handlebars",
     "W": "voxelvelo:bike_wheel",
     "F": "voxelvelo:mountain_bike_frame",
     "S": "voxelvelo:bike_saddle",

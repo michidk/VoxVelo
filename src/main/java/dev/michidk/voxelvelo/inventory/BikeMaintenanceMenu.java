@@ -2,6 +2,7 @@ package dev.michidk.voxelvelo.inventory;
 
 import dev.michidk.voxelvelo.bike.BikeComponents;
 import dev.michidk.voxelvelo.bike.BikeEntity;
+import dev.michidk.voxelvelo.bike.TireTread;
 import dev.michidk.voxelvelo.registry.ModItems;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
@@ -12,7 +13,7 @@ import net.minecraft.world.item.ItemStack;
 /** Validated part slots and vanilla container synchronization; all edits execute on the server. */
 public final class BikeMaintenanceMenu extends AbstractContainerMenu {
     private final BikeEntity bike;
-    private final SimpleContainerData status = new SimpleContainerData(4);
+    private final SimpleContainerData status = new SimpleContainerData(5);
 
     public BikeMaintenanceMenu(int id, Inventory inventory) { this(id, inventory, null); }
 
@@ -24,7 +25,7 @@ public final class BikeMaintenanceMenu extends AbstractContainerMenu {
             final int component = i;
             addSlot(new Slot(parts, i, 16 + i * 31, 35) {
                 @Override public boolean mayPlace(ItemStack stack) {
-                    return stillValid(inventory.player) && stack.is(BikeComponents.expected(dev.michidk.voxelvelo.bike.BikeType.byOrdinal(status.get(3)), component));
+                    return stillValid(inventory.player) && BikeComponents.fits(component, stack);
                 }
                 @Override public boolean mayPickup(Player player) { return stillValid(player); }
                 @Override public int getMaxStackSize() { return 1; }
@@ -41,10 +42,13 @@ public final class BikeMaintenanceMenu extends AbstractContainerMenu {
         status.set(1, bike.tirePercent(0));
         status.set(2, bike.tirePercent(1));
         status.set(3, bike.getBikeType().ordinal());
+        status.set(4, bike.getSetup());
     }
 
     public int frontCondition() { return status.get(1); }
     public int rearCondition() { return status.get(2); }
+    /** Installed treads and bars, see {@link BikeComponents#setup}. */
+    public int setup() { return status.get(4); }
     public String conditionKey() {
         if ((status.get(0) & 15) != 15) return "menu.voxelvelo.missing";
         if ((status.get(0) & 16) == 0) return "menu.voxelvelo.coasting";
@@ -64,10 +68,13 @@ public final class BikeMaintenanceMenu extends AbstractContainerMenu {
 
     @Override public void clicked(int slot, int button, ContainerInput input, Player player) {
         if (bike == null || !stillValid(player)) return;
-        if (slot >= 0 && slot < 2 && input == ContainerInput.PICKUP && getCarried().is(ModItems.TIRE)) {
+        TireTread tread = ModItems.treadOf(getCarried());
+        if (slot >= 0 && slot < 2 && input == ContainerInput.PICKUP && tread != null) {
+            // Fitting a tire replaces the old one, worn or not: repairs it, or changes the tread.
             ItemStack wheel = bike.components().getItem(slot);
-            if (!wheel.isEmpty() && BikeComponents.tire(wheel) < 1) {
+            if (!wheel.isEmpty() && (BikeComponents.tire(wheel) < 1 || BikeComponents.tread(wheel) != tread)) {
                 BikeComponents.tire(wheel, 1);
+                BikeComponents.tread(wheel, tread);
                 getCarried().shrink(1);
                 bike.components().setChanged();
                 bike.useWrench(player);
