@@ -4,8 +4,9 @@ Rideable, fully multiplayer bicycles for Minecraft (Fabric). Ride with the keybo
 trainer (Bluetooth FTMS) and OpenBikeControl steering such as the BikeControl phone app.
 
 > **Status:** Milestones 1 to 6 (multiplayer bicycles, keyboard riding, three bike types, physics, terrain,
-> gradients, collisions, FTMS trainer power, OpenBikeControl steering, free source mixing and trainer resistance feedback) are
-> implemented. The HUD and visual polish are planned (see [Roadmap](#roadmap)).
+> gradients, collisions, FTMS trainer power, OpenBikeControl steering, free source mixing and trainer resistance
+> feedback) are implemented. Milestone 7 (UX and polish) has the HUD, settings pages and rider pose done; the final
+> bike models are still to be integrated (see [Roadmap](#roadmap)). The current models are placeholders.
 
 ## What it does
 
@@ -209,12 +210,29 @@ server: gradient measured from real movement + surface under the bike   (synced 
 Checked against a scripted fake trainer (command order, byte encoding, clamping, lost-control retry); not yet
 tried on real trainer hardware, so expect to tune the intensity and compare against how your trainer reacts.
 
+## HUD, rider settings and pose
+
+While riding, a small HUD in the bottom-right shows power, cadence, speed, grade and gear (and heart rate when
+the trainer relays it), plus one line per control with a **green or red dot**: which source drives it, and
+whether it is connected. Cadence comes from the trainer when available, otherwise it is estimated from the bike.
+
+*Rider & HUD...* in the settings (`B`):
+
+- **Rider mass** (40-150 kg) and an optional personal **speed limit** (5-100 km/h, or off). They are sent to the
+  server in a small versioned packet (`rider_settings`, protocol v1), clamped there, kept per player and dropped
+  on disconnect, and then used in that rider's physics. Other players are unaffected.
+- **HUD** on/off and whether the input source lines are shown.
+
+Riders are posed on the bike for everyone who sees them: hands forward on the bars and legs following the pedals.
+The pedal phase is read from the same GeckoLib controller that turns the crank, so legs and pedals stay in step.
+This needs two small client-side mixins (`AvatarRendererMixin`, `HumanoidModelMixin`) because Fabric has no hook
+for posing a player model; they only touch players that are riding a bike.
+
 ## Configuration
 
 Press `B` for the settings screen: trainer choice and auto-connect, OpenBikeControl device and transports, the
 input source of each control (propulsion, steering, brake, gears), trainer resistance on/off and intensity, keyboard virtual power (50-600 W) and keyboard
-steering sensitivity. Settings live in `config/voxelvelo-client.json`. Rider and bike
-mass, maximum speed and HUD options are planned.
+steering sensitivity. Settings live in `config/voxelvelo-client.json`. Rider mass, speed limit and HUD options are on the *Rider & HUD...* page.
 
 ## Building
 
@@ -250,7 +268,7 @@ src/client  client only: keyboard/input composition, packet sender, GeckoLib ren
 4. OpenBikeControl (done)
 5. Mixed input configuration (done)
 6. Trainer feedback (done)
-7. HUD, config UI, better model and rider pose
+7. HUD, config UI and rider pose (done); final bike models (pending)
 
 ## License
 

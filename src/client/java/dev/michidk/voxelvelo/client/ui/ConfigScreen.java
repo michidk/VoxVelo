@@ -50,6 +50,9 @@ public class ConfigScreen extends Screen {
 		this.addRenderableWidget(new PowerSlider(left, y, WIDTH));
 		y += 24;
 		this.addRenderableWidget(new SensitivitySlider(left, y, WIDTH));
+		y += 24;
+		this.addRenderableWidget(Button.builder(Component.translatable("voxelvelo.config.rider"),
+			button -> this.minecraft.gui.setScreen(new RiderScreen(this))).bounds(left, y, WIDTH, 20).build());
 
 		this.addRenderableWidget(Button.builder(Component.translatable("gui.done"), button -> this.onClose())
 			.bounds(left, this.height - 30, WIDTH, 20).build());

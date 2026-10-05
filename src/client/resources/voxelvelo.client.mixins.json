@@ -1,0 +1,12 @@
+{
+	"required": true,
+	"package": "dev.michidk.voxelvelo.client.mixin",
+	"compatibilityLevel": "JAVA_25",
+	"client": [
+		"AvatarRendererMixin",
+		"HumanoidModelMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

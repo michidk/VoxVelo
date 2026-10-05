@@ -9,6 +9,12 @@
 	],
 	"license": "MIT",
 	"environment": "*",
+	"mixins": [
+		{
+			"config": "voxelvelo.client.mixins.json",
+			"environment": "client"
+		}
+	],
 	"entrypoints": {
 		"main": [
 			"dev.michidk.voxelvelo.VoxelVelo"

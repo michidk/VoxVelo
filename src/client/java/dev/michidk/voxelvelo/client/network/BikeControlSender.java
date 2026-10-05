@@ -24,12 +24,18 @@ public final class BikeControlSender {
 
 	private BikeEntity currentBike;
 	private BikeControlState lastSent;
+	private BikeControlState lastComposed = BikeControlState.NEUTRAL;
 	private int ticksSinceSend;
 	private int sequence;
 	private float lastBikeYaw;
 
 	public BikeControlSender(BikeInputManager inputManager) {
 		this.inputManager = inputManager;
+	}
+
+	/** The controls composed on the last tick while riding, for the HUD. */
+	public BikeControlState lastComposed() {
+		return this.lastComposed;
 	}
 
 	public void tick(Minecraft client) {
@@ -62,6 +68,7 @@ public final class BikeControlSender {
 		this.followBikeYaw(player, bike);
 
 		BikeControlState state = this.inputManager.compose(client);
+		this.lastComposed = state;
 		this.ticksSinceSend++;
 		if (!state.equals(this.lastSent) || this.ticksSinceSend >= HEARTBEAT_TICKS) {
 			if (ClientPlayNetworking.canSend(BikeControlPayload.TYPE)) {

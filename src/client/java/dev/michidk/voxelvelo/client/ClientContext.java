@@ -1,5 +1,7 @@
 package dev.michidk.voxelvelo.client;
 
+import dev.michidk.voxelvelo.network.RiderSettingsPayload;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import dev.michidk.voxelvelo.client.bluetooth.BluetoothManager;
 import dev.michidk.voxelvelo.client.bluetooth.SimpleBleBackend;
 import dev.michidk.voxelvelo.client.config.VoxelVeloConfig;
@@ -32,6 +34,13 @@ public final class ClientContext {
 		this.inputManager.register(new FtmsTrainerInput(this.ftms));
 		this.inputManager.register(new OpenBikeControlInput(this.obc));
 		this.trainerFeedback = new TrainerFeedback(this);
+	}
+
+	/** Tells the server this player rider mass and speed limit. Harmless if the server does not know the packet. */
+	public void sendRiderSettings() {
+		if (ClientPlayNetworking.canSend(RiderSettingsPayload.TYPE)) {
+			ClientPlayNetworking.send(RiderSettingsPayload.of(this.config.riderMassKg, this.config.speedLimitKmh));
+		}
 	}
 
 	public static ClientContext init() {

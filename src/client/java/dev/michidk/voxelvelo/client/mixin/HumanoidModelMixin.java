@@ -1,0 +1,22 @@
+package dev.michidk.voxelvelo.client.mixin;
+
+import dev.michidk.voxelvelo.client.pose.BikeRiderPose;
+import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+/** Applies the bike riding pose after vanilla has posed the limbs. */
+@Mixin(HumanoidModel.class)
+public abstract class HumanoidModelMixin<T extends HumanoidRenderState> {
+	@Inject(method = "setupAnim(Lnet/minecraft/client/renderer/entity/state/HumanoidRenderState;)V", at = @At("TAIL"))
+	private void voxelvelo$poseBikeRider(T state, CallbackInfo ci) {
+		BikeRiderPose pose = state.getData(BikeRiderPose.KEY);
+		if (pose != null) {
+			HumanoidModel<?> self = (HumanoidModel<?>) (Object) this;
+			pose.apply(self.rightArm, self.leftArm, self.rightLeg, self.leftLeg);
+		}
+	}
+}

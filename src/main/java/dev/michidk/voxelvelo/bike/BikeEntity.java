@@ -187,7 +187,10 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 
 	private void serverTick() {
 		BikeControlState input = this.effectiveControl();
-		BikePhysics.Params params = this.getBikeType().params();
+		Player rider = this.getRider();
+		BikePhysics.Params params = rider == null
+			? this.getBikeType().params()
+			: RiderSettings.apply(this.getBikeType().params(), RiderSettings.get(rider.getUUID()));
 
 		if (this.isEyeInFluid(FluidTags.WATER)) {
 			if (++this.submergedTicks >= SUBMERGED_EJECT_TICKS) {
