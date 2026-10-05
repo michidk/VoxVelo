@@ -6,10 +6,14 @@ import com.geckolib.renderer.base.RenderPassInfo;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import dev.michidk.voxelvelo.bike.BikeEntity;
+import dev.michidk.voxelvelo.bike.BikeRig;
+import dev.michidk.voxelvelo.bike.BikeType;
 import dev.michidk.voxelvelo.bike.BikePhysics;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.util.Mth;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 /**
  * Renders bikes with GeckoLib. Keyframed animation covers the crank and pedals; the wheels and the
@@ -20,6 +24,7 @@ public class BikeGeoRenderer extends GeoEntityRenderer<BikeEntity, EntityRenderS
 	public BikeGeoRenderer(EntityRendererProvider.Context context) {
 		super(context, new BikeGeoModel());
 		this.shadowRadius = 0.5F;
+		this.withScale(BikeRig.MODEL_SCALE);
 	}
 
 	@Override
@@ -57,6 +62,11 @@ public class BikeGeoRenderer extends GeoEntityRenderer<BikeEntity, EntityRenderS
 		float steer = info.getOrDefaultGeckolibData(BikeDataTickets.STEER_ANGLE, 0.0F);
 		snapshots.ifPresent("rear_wheel", bone -> bone.setRotX(-wheel));
 		snapshots.ifPresent("front_wheel", bone -> bone.setRotX(-wheel));
-		snapshots.ifPresent("front_assembly", bone -> bone.setRotY(-steer));
+		BikeType type = info.getOrDefaultGeckolibData(BikeDataTickets.BIKE_TYPE, BikeType.GRAVEL);
+		// The fork steers about the tilted steering axis, not world Y: tilt, turn, untilt. GeckoLib runtime rotations are
+		// the mirror image of model-space ones (wheel and plain steering both need a negated angle), hence -tilt, -steer.
+		float tilt = (float) type.rig.steeringTilt();
+		Vector3f euler = new Quaternionf().rotationX(-tilt).rotateY(-steer).rotateX(tilt).getEulerAnglesZYX(new Vector3f());
+		snapshots.ifPresent("front_assembly", bone -> bone.setRotation(euler.x, euler.y, euler.z));
 	}
 }

@@ -3,10 +3,10 @@
 Rideable, fully multiplayer bicycles for Minecraft (Fabric). Ride with the keyboard, or bring a smart
 trainer (Bluetooth FTMS) and OpenBikeControl steering such as the BikeControl phone app.
 
-> **Status:** Milestones 1 to 6 (multiplayer bicycles, keyboard riding, three bike types, physics, terrain,
-> gradients, collisions, FTMS trainer power, OpenBikeControl steering, free source mixing and trainer resistance
-> feedback) are implemented. Milestone 7 (UX and polish) has the HUD, settings pages and rider pose done; the final
-> bike models are still to be integrated (see [Roadmap](#roadmap)). The current models are placeholders.
+> **Status:** Milestones 1 to 7 are implemented: multiplayer bicycles, keyboard riding, three bike types with their
+> own physics and models, terrain and collisions, FTMS trainer power with resistance feedback, OpenBikeControl steering,
+> free source mixing, HUD, settings pages and rider pose. Hardware paths (trainer, OpenBikeControl devices) are
+> checked against mock devices, not real ones (see the sections below).
 
 ## What it does
 
@@ -246,18 +246,34 @@ Requires JDK 25.
 
 ## Models
 
-Bikes are rendered with [GeckoLib](https://github.com/bernie-g/geckolib): models live in
-`assets/voxelvelo/geckolib/models/entity/{road,gravel,mountain}_bike.geo.json` and share one animation file,
-`geckolib/animations/entity/bicycle.animation.json` (crank and pedals). Wheel rotation and steering come from the
-synced physics state in `BikeGeoRenderer` instead of keyframes, because they depend continuously on speed. Bones
-the code relies on: `rear_wheel`, `front_wheel`, `front_assembly`, `crank`, `pedal_left`, `pedal_right`.
+Bikes are rendered with [GeckoLib](https://github.com/bernie-g/geckolib). The models are made in Blockbench and
+exported as GeckoLib-ready, cuboid-only Bedrock geometry (GeckoLib 5.5.7 cannot draw meshes, so round tires are
+48 rotated segments):
+
+- `assets/voxelvelo/geckolib/models/entity/{road,gravel,mountain}_bike.geo.json` and the matching
+  `textures/entity/bicycle_*.png` (64x64, one atlas each).
+- `geckolib/animations/entity/bicycle.animation.json`: a one-second pedal loop shared by all bikes. The controller
+  speed is the cadence, so it plays faster when you pedal harder and pauses when you coast.
+- `models/` holds the editable `*-cuboids.bbmodel` sources, the notes from the model author and
+  `*.metadata.json` per bike (saddle top, grips, steering pivot and axis, bounds). To change a model, re-export
+  from Blockbench, copy the files over, and update `BikeRig` if the metadata changed.
+
+Bones the code relies on: `frame` (root), `rear_wheel`, `front_assembly` (fork, stem, bars) with child
+`front_wheel`, and `crank` with children `pedal_left`/`pedal_right`. Wheel spin and steering come from the synced
+physics state in `BikeGeoRenderer`, not from keyframes, because they depend continuously on speed. The fork
+steers about the model's tilted steering axis, not world Y.
+
+`BikeRig` (one per bike type) carries the measurements from the metadata. The seat position, the rider's arm
+angles to the grips and the leg swing to the pedals are all derived from it, so a new bike model only needs new
+numbers there. The models are drawn at `BikeRig.MODEL_SCALE` (0.7) of their authored size: at full size the
+saddle is 1.3 blocks up and the bike 2.3 blocks long, which a player model (0.75-block legs) could not sit on or
+pedal. The pedal cranks in the models are short (about 1.6 units), so the rider's legs swing more than the pedals.
 
 ## Layout
 
 ```text
 src/main    common + server: BikeEntity, BikePhysics, BikeSurface, BikeControlState, packets, registries
 src/client  client only: keyboard/input composition, packet sender, GeckoLib renderer
-./tools      one-off seed generator for the GeckoLib bike models (they are meant to be edited in Blockbench)
 ```
 
 ## Roadmap
@@ -268,7 +284,7 @@ src/client  client only: keyboard/input composition, packet sender, GeckoLib ren
 4. OpenBikeControl (done)
 5. Mixed input configuration (done)
 6. Trainer feedback (done)
-7. HUD, config UI and rider pose (done); final bike models (pending)
+7. HUD, config UI, rider pose and final bike models (done)
 
 ## License
 

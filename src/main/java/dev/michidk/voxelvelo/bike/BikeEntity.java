@@ -62,8 +62,8 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 
 	/** Server ticks without a control packet after which the rider input is considered gone. */
 	public static final int CONTROL_TIMEOUT_TICKS = 15;
-	public static final float WHEEL_RADIUS = 0.375F;
-	private static final double SEAT_OFFSET = -0.12;
+	/** Radius of the wheels as drawn (7.5 model units at the model scale), so the rolling speed matches the ground. */
+	public static final float WHEEL_RADIUS = 7.5F * BikeRig.MODEL_SCALE / 16.0F;
 	private static final int SUBMERGED_EJECT_TICKS = 40;
 	private static final double DT = 1.0 / 20.0;
 	/** Largest drop the bike stays glued to the ground over (down slopes, stairs). */
@@ -482,7 +482,7 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 
 	@Override
 	protected Vec3 getPassengerAttachmentPoint(Entity passenger, EntityDimensions dimensions, float scale) {
-		return new Vec3(0.0, this.getBikeType().seatHeight, SEAT_OFFSET).yRot(-this.getYRot() * (float) (Math.PI / 180.0));
+		return new Vec3(0.0, this.getBikeType().rig.seatHeight(), this.getBikeType().rig.seatOffset()).yRot(-this.getYRot() * (float) (Math.PI / 180.0));
 	}
 
 	@Override

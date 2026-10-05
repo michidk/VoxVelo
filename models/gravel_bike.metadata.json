@@ -1,0 +1,52 @@
+{
+  "units_per_block": 16,
+  "forward": "-Z",
+  "bounds": {
+    "min": [
+      -3.6500000000000004,
+      0.00005329048779634249,
+      -17.9999467095122
+    ],
+    "max": [
+      3.6499999999999995,
+      20.9,
+      19.4999467095122
+    ],
+    "size_blocks": [
+      0.45625,
+      1.3062466693445127,
+      2.343743338689025
+    ]
+  },
+  "wheel_diameter": 15,
+  "wheel_spin_axis": "X",
+  "crank_axis": "X",
+  "saddle_top": [
+    0,
+    20.9,
+    6.075
+  ],
+  "grips": [
+    [
+      3.2,
+      19.6,
+      -7.75
+    ],
+    [
+      -3.2,
+      19.6,
+      -7.75
+    ]
+  ],
+  "steering_pivot": [
+    0,
+    17.4,
+    -5.7
+  ],
+  "steering_axis": [
+    0,
+    0.9529257800132619,
+    0.3032036572769469
+  ],
+  "steering_note": "Apply steering around this tilted axis, not world Y. Bone rest rotation is zero."
+}

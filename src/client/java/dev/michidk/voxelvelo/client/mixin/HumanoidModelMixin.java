@@ -16,7 +16,7 @@ public abstract class HumanoidModelMixin<T extends HumanoidRenderState> {
 		BikeRiderPose pose = state.getData(BikeRiderPose.KEY);
 		if (pose != null) {
 			HumanoidModel<?> self = (HumanoidModel<?>) (Object) this;
-			pose.apply(self.rightArm, self.leftArm, self.rightLeg, self.leftLeg);
+			pose.apply(self.body, self.head, self.rightArm, self.leftArm, self.rightLeg, self.leftLeg);
 		}
 	}
 }
