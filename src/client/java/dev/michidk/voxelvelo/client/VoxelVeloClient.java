@@ -14,9 +14,15 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
+import net.fabricmc.fabric.api.client.screen.v1.Screens;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.PauseScreen;
+import net.minecraft.client.gui.screens.options.OptionsScreen;
+import net.minecraft.network.chat.Component;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 
 /** Client-only entrypoint: keyboard riding, rendering, the riding HUD and configuration, plus any add-ons. */
@@ -36,6 +42,14 @@ public class VoxelVeloClient implements ClientModInitializer {
 		for (VoxelVeloClientExtension extension : extensions) {
 			extension.init(ctx);
 		}
+
+		// A way in for players who do not know the settings key: a small button on the pause menu and the options menu.
+		ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
+			if (screen instanceof OptionsScreen || screen instanceof PauseScreen) {
+				Screens.getWidgets(screen).add(Button.builder(Component.translatable("voxelvelo.menu.button"),
+					button -> client.gui.setScreen(new ConfigScreen(screen))).bounds(6, 6, 90, 20).build());
+			}
+		});
 
 		ClientPlayConnectionEvents.JOIN.register((handler, packetSender, minecraft) -> {
 			ctx.sendRiderSettings();
