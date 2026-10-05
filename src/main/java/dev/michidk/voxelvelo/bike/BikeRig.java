@@ -21,10 +21,11 @@ public record BikeRig(double saddleY, double saddleZ, double gripX, double gripY
 	double crankY, double crankZ, double pedalRadius, double pedalRestAngle, double steeringTilt) {
 
 	/**
-	 * The models are drawn at this fraction of their authored size. At full size the saddle sits 1.3 blocks up
-	 * and the bike is 2.3 blocks long, which a player model (legs 0.75 blocks) can neither sit on nor pedal.
+	 * The models are drawn at this fraction of their authored size. At full size the bike is 2 blocks long and the
+	 * saddle 1.1 blocks up, which a player model (legs 0.75 blocks) can hardly pedal; at 0.8 it is 1.6 blocks long
+	 * with the saddle at 0.88.
 	 */
-	public static final float MODEL_SCALE = 0.7F;
+	public static final float MODEL_SCALE = 0.8F;
 
 	private static double blocks(double units) {
 		return units * MODEL_SCALE / 16.0;

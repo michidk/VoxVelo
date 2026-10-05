@@ -385,24 +385,28 @@ Bikes are rendered with [GeckoLib](https://github.com/bernie-g/geckolib). The mo
 exported as GeckoLib-ready, cuboid-only Bedrock geometry (GeckoLib 5.5.7 cannot draw meshes, so round tires are
 48 rotated segments):
 
-- `assets/voxelvelo/geckolib/models/entity/{road,gravel,mountain}_bike.geo.json` and the matching
-  `textures/entity/bicycle_*.png` (64x64, one atlas each).
+- `assets/voxelvelo/geckolib/models/entity/bikes/{race,gravel,mountain}_bike.geo.json` and the matching
+  `textures/entity/bikes/*.png` (64x64, one atlas each). The road bike type uses the race bike model.
 - `geckolib/animations/entity/bicycle.animation.json`: a one-second pedal loop shared by all bikes. The controller
   speed is the cadence, so it plays faster when you pedal harder and pauses when you coast.
-- `models/` holds the editable `*-cuboids.bbmodel` sources, the notes from the model author and
-  `*.metadata.json` per bike (saddle top, grips, steering pivot and axis, bounds). To change a model, re-export
-  from Blockbench, copy the files over, and update `BikeRig` if the metadata changed.
+- `models/final/` holds the editable `*.bbmodel` sources of these final models, their `*.json` metadata (saddle top,
+  grips, steering pivot and axis, bounds) and the author's notes and validation report. To change a model, re-export
+  from Blockbench, copy the files over, and update `BikeRig` if the metadata changed. (`models/` also keeps the
+  earlier model drafts.)
 
-Bones the code relies on: `frame` (root), `rear_wheel`, `front_assembly` (fork, stem, bars) with child
-`front_wheel`, and `crank` with children `pedal_left`/`pedal_right`. Wheel spin and steering come from the synced
-physics state in `BikeGeoRenderer`, not from keyframes, because they depend continuously on speed. The fork
-steers about the model's tilted steering axis, not world Y.
+Rig the code relies on (`bike` root): `frame_colored` with the tubes `top_tube`, `down_tube`, `seat_tube` and
+`rear_stays`; `fork` with children `handlebar` and `front_wheel`; `rear_wheel`; `crank` with children
+`left_pedal`/`right_pedal`; and `saddle`. Wheel spin and steering come from the synced physics state in
+`BikeGeoRenderer`, not from keyframes, because they depend continuously on speed. The fork rests tilted along the
+steering axis, so steering is a plain turn about its local Y added to that rest pose. Only `frame_colored` and the
+tubes under it take the frame color (`BikeFrameTintLayer`); everything else keeps its own colors.
 
 `BikeRig` (one per bike type) carries the measurements from the metadata. The seat position, the rider's arm
 angles to the grips and the leg swing to the pedals are all derived from it, so a new bike model only needs new
-numbers there. The models are drawn at `BikeRig.MODEL_SCALE` (0.7) of their authored size: at full size the
-saddle is 1.3 blocks up and the bike 2.3 blocks long, which a player model (0.75-block legs) could not sit on or
-pedal. The pedal cranks in the models are short (about 1.6 units), so the rider's legs swing more than the pedals.
+numbers there. The models are drawn at `BikeRig.MODEL_SCALE` (0.8) of their authored size: at full size the bike
+is 2 blocks long with the saddle 1.1 blocks up, which a player model (0.75-block legs) could hardly pedal; at 0.8
+it is 1.6 blocks long with the saddle at 0.88. The wheel radius for the wheel spin (6.3 model units) follows the
+same scale. The inventory icons of the parts are the 16x16 sprites from the same asset set.
 
 ## Layout
 

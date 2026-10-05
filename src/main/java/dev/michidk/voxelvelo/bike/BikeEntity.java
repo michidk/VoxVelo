@@ -73,8 +73,8 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 
 	/** Server ticks without a control packet after which the rider input is considered gone. */
 	public static final int CONTROL_TIMEOUT_TICKS = 15;
-	/** Radius of the wheels as drawn (7.5 model units at the model scale), so the rolling speed matches the ground. */
-	public static final float WHEEL_RADIUS = 7.5F * BikeRig.MODEL_SCALE / 16.0F;
+	/** Radius of the wheels as drawn (6.3 model units at the model scale), so the rolling speed matches the ground. */
+	public static final float WHEEL_RADIUS = 6.3F * BikeRig.MODEL_SCALE / 16.0F;
 	private static final int SUBMERGED_EJECT_TICKS = 40;
 	private static final double DT = 1.0 / 20.0;
 	/** Largest drop the bike stays glued to the ground over (down slopes, stairs). */

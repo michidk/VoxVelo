@@ -1,0 +1,71 @@
+{
+  "units_per_block": 16,
+  "forward": "-Z",
+  "bounds": {
+    "min": [
+      -4.284,
+      0.00004476400974892769,
+      -15.707955235990251
+    ],
+    "max": [
+      4.284,
+      17.0184,
+      16.37995523599025
+    ],
+    "size_blocks": [
+      0.5355,
+      1.0636472022493908,
+      2.0054944044987812
+    ]
+  },
+  "wheel_diameter": 12.6,
+  "wheel_spin_axis": "X",
+  "crank_axis": "X",
+  "saddle_top": [
+    0,
+    16.715999999999998,
+    5.103
+  ],
+  "grips": [
+    [
+      3.6539999999999995,
+      16.674,
+      -5.796
+    ],
+    [
+      -3.6539999999999995,
+      16.674,
+      -5.796
+    ]
+  ],
+  "steering_pivot": [
+    0,
+    15.624,
+    -4.788
+  ],
+  "steering_axis": [
+    0,
+    0.9566738804288584,
+    0.29116161578269606
+  ],
+  "steering_note": "fork has an aligned rest pose. Apply additive LOCAL Y steering to fork; front_wheel spin uses local X.",
+  "tint_bone": "frame_colored",
+  "tint_descendants": [
+    "top_tube",
+    "down_tube",
+    "seat_tube",
+    "rear_stays"
+  ],
+  "wheel_bones": [
+    "front_wheel",
+    "rear_wheel"
+  ],
+  "pedal_bones": [
+    "left_pedal",
+    "right_pedal"
+  ],
+  "texture_size": [
+    64,
+    64
+  ]
+}
