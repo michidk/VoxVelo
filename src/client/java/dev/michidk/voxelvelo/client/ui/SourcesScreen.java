@@ -8,10 +8,11 @@ import java.util.List;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.CycleButton;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
-/** Chooses, for each control, which input source drives it. Sources can be mixed freely. */
+/** Chooses which input source drives each control (they can be mixed freely) and tunes the keyboard. */
 public class SourcesScreen extends Screen {
 	private static final int WIDTH = 310;
 
@@ -34,11 +35,21 @@ public class SourcesScreen extends Screen {
 					choices.add(source);
 				}
 			}
+			String key = channel.name().toLowerCase();
 			this.addRenderableWidget(CycleButton.<BikeInputSource>builder(source -> Component.literal(source.displayName()), this.ctx.inputManager.selected(channel))
 				.withValues(choices)
-				.create(left, y, WIDTH, 20, Component.translatable("voxelvelo.sources." + channel.name().toLowerCase()), (button, value) -> this.ctx.config.setSource(channel, value.id())));
+				.withTooltip(source -> Tooltip.create(Component.translatable("voxelvelo.sources." + key + ".tip")))
+				.create(left, y, WIDTH, 20, Component.translatable("voxelvelo.sources." + key), (button, value) -> this.ctx.config.setSource(channel, value.id())));
 			y += 24;
 		}
+
+		y += 8;
+		this.addRenderableWidget(new ValueSlider(left, y, WIDTH, 50.0, 600.0, 10.0, this.ctx.config.keyboardVirtualPower,
+			v -> Component.translatable("voxelvelo.config.virtual_power", Math.round(v)), v -> this.ctx.config.keyboardVirtualPower = v));
+		y += 24;
+		this.addRenderableWidget(new ValueSlider(left, y, WIDTH, 0.3, 1.0, 0.05, this.ctx.config.keyboardSteeringSensitivity,
+			v -> Component.translatable("voxelvelo.config.steering_sensitivity", Math.round(v * 100)), v -> this.ctx.config.keyboardSteeringSensitivity = v));
+
 		this.addRenderableWidget(Button.builder(Component.translatable("gui.done"), button -> this.onClose())
 			.bounds(left, this.height - 30, WIDTH, 20).build());
 	}
@@ -50,8 +61,6 @@ public class SourcesScreen extends Screen {
 		graphics.centeredText(this.font, this.title, cx, 20, 0xFFFFFFFF);
 		graphics.centeredText(this.font, ConfigScreen.trainerStatus(this.ctx), cx, 36, 0xFFC0C0C0);
 		graphics.centeredText(this.font, ConfigScreen.obcStatus(this.ctx), cx, 48, 0xFFC0C0C0);
-		graphics.centeredText(this.font, Component.translatable("voxelvelo.sources.note"), cx, this.height - 58, 0xFF909090);
-		graphics.centeredText(this.font, Component.translatable("voxelvelo.sources.note2"), cx, this.height - 46, 0xFF909090);
 	}
 
 	@Override

@@ -3,15 +3,17 @@ package dev.michidk.voxelvelo.client.ui;
 import dev.michidk.voxelvelo.client.ClientContext;
 import dev.michidk.voxelvelo.client.bluetooth.BluetoothDevice;
 import dev.michidk.voxelvelo.client.ftms.Ftms;
+import dev.michidk.voxelvelo.client.terrain.TerrainSlope;
 import java.util.List;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.CycleButton;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
 /** Scans for Bluetooth devices and lets the player pick the trainer. Everything here is non-blocking. */
 public class TrainerScreen extends Screen {
-	private static final int MAX_ROWS = 5;
+	private static final int MAX_ROWS = 3;
 	private static final int WIDTH = 310;
 
 	private final Screen parent;
@@ -41,6 +43,19 @@ public class TrainerScreen extends Screen {
 			this.addRenderableWidget(Button.builder(this.rowLabel(device), button -> this.choose(device)).bounds(left, y, WIDTH, 20).build());
 			y += 24;
 		}
+
+		// Connection and feedback settings, pinned above the Done button.
+		int half = (WIDTH - 10) / 2;
+		int right = left + half + 10;
+		int by = this.height - 30 - 48;
+		this.addRenderableWidget(CycleButton.onOffBuilder(this.ctx.config.autoConnectTrainer)
+			.create(left, by, half, 20, Component.translatable("voxelvelo.config.auto_connect"), (button, value) -> this.ctx.config.autoConnectTrainer = value));
+		this.addRenderableWidget(CycleButton.onOffBuilder(this.ctx.config.trainerResistanceEnabled)
+			.create(right, by, half, 20, Component.translatable("voxelvelo.config.resistance"), (button, value) -> this.ctx.config.trainerResistanceEnabled = value));
+		this.addRenderableWidget(new ValueSlider(left, by + 24, half, 0.0, 2.0, 0.1, this.ctx.config.trainerResistanceIntensity,
+			v -> Component.translatable("voxelvelo.config.intensity", Math.round(v * 100)), v -> this.ctx.config.trainerResistanceIntensity = v));
+		this.addRenderableWidget(new ValueSlider(right, by + 24, half, TerrainSlope.MIN_WINDOW, TerrainSlope.MAX_WINDOW, 1.0, this.ctx.config.slopeWindowBlocks,
+			v -> Component.translatable("voxelvelo.config.slope_window", Math.round(v)), v -> this.ctx.config.slopeWindowBlocks = (int) Math.round(v)));
 
 		this.addRenderableWidget(Button.builder(Component.translatable("gui.done"), button -> this.onClose())
 			.bounds(left, this.height - 30, WIDTH, 20).build());
@@ -118,6 +133,7 @@ public class TrainerScreen extends Screen {
 
 	@Override
 	public void onClose() {
+		this.ctx.config.save();
 		this.ctx.bluetooth.stopScan();
 		this.minecraft.gui.setScreen(this.parent);
 	}

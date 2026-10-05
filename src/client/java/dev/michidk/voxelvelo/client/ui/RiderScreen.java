@@ -29,16 +29,25 @@ public class RiderScreen extends Screen {
 	@Override
 	protected void init() {
 		int left = this.width / 2 - WIDTH / 2;
-		int y = 50;
+		int y = 46;
 		this.addRenderableWidget(new MassSlider(left, y));
 		y += 24;
 		this.addRenderableWidget(new LimitSlider(left, y));
-		y += 32;
+		y += 28;
 		this.addRenderableWidget(CycleButton.onOffBuilder(this.ctx.config.hudEnabled)
 			.create(left, y, WIDTH, 20, Component.translatable("voxelvelo.rider.hud"), (button, value) -> this.ctx.config.hudEnabled = value));
 		y += 24;
 		this.addRenderableWidget(CycleButton.onOffBuilder(this.ctx.config.hudShowSources)
 			.create(left, y, WIDTH, 20, Component.translatable("voxelvelo.rider.hud_sources"), (button, value) -> this.ctx.config.hudShowSources = value));
+		y += 32;
+		this.addRenderableWidget(CycleButton.onOffBuilder(this.ctx.config.statsOverlayEnabled)
+			.create(left, y, WIDTH, 20, Component.translatable("voxelvelo.rider.stats"), (button, value) -> this.ctx.config.statsOverlayEnabled = value));
+		y += 24;
+		int half = (WIDTH - 10) / 2;
+		this.addRenderableWidget(CycleButton.onOffBuilder(this.ctx.config.shareWatts)
+			.create(left, y, half, 20, Component.translatable("voxelvelo.rider.share_watts"), (button, value) -> this.ctx.config.shareWatts = value));
+		this.addRenderableWidget(CycleButton.onOffBuilder(this.ctx.config.shareHeartRate)
+			.create(left + half + 10, y, half, 20, Component.translatable("voxelvelo.rider.share_hr"), (button, value) -> this.ctx.config.shareHeartRate = value));
 		this.addRenderableWidget(Button.builder(Component.translatable("gui.done"), button -> this.onClose())
 			.bounds(left, this.height - 30, WIDTH, 20).build());
 	}
@@ -47,7 +56,7 @@ public class RiderScreen extends Screen {
 	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
 		super.extractRenderState(graphics, mouseX, mouseY, a);
 		graphics.centeredText(this.font, this.title, this.width / 2, 20, 0xFFFFFFFF);
-		graphics.centeredText(this.font, Component.translatable("voxelvelo.rider.note"), this.width / 2, 34, 0xFF909090);
+		graphics.centeredText(this.font, Component.translatable("voxelvelo.rider.note"), this.width / 2, 33, 0xFF909090);
 	}
 
 	@Override

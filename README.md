@@ -117,6 +117,28 @@ The keyboard keeps working next to the other sources instead of being switched o
 
 A disconnected source for steering, brake or gears falls back to the keyboard so the bike stays controllable.
 
+## Road follow (hands-free steering)
+
+For trainer riding without OpenBikeControl or keyboard: set *Steering* to **Road follow** in
+`B` > *Input Sources...* and the bike steers itself along the centre of a road.
+
+- **What is a road:** a column whose top block is one of your *road blocks* with two passable blocks above it
+  (air, grass, flowers, ...). Default blocks are stone and gravel; edit the list in `B` > *Road & Terrain...*.
+  Entries are block ids (`minecraft:gravel`, `stone`) or `#tags`; *Add Block Under Me* and *Add Block I Look At*
+  take them from the world, and *Reset* restores stone + gravel.
+- **Centre:** the road is measured across the bike's heading, from the left edge to the right edge of the
+  continuous run of road columns under the bike. The bike steers toward a point a few blocks ahead on that
+  centre line, so curves are cut smoothly instead of zig-zagging.
+- **Width limit:** roads wider than *Max Half-Width* (2-16 blocks each side) are treated as open ground.
+- **Gives up quietly:** with no road under the bike, or on open ground, the source reports no steering, so the
+  keyboard (or whatever else is idle-capable) takes over and you never lose control.
+
+### Slope window
+
+Trainers react slowly, so the resistance does not follow the block directly under the wheel. The grade is a
+least-squares slope along the bike's heading over a window of **10 to 40 blocks** in front of and behind it
+(*Slope Window* in `B` > *Trainer...*, default 10). Single steps and stairs blend into a smooth grade.
+
 ## FTMS trainer support
 
 Any smart trainer or indoor bike that exposes the standard Bluetooth **Fitness Machine Service** works. The
@@ -246,9 +268,16 @@ private). Nothing is sent about players who are not riding or have nothing to sh
 
 ## Configuration
 
-Press `B` for the settings screen: trainer choice and auto-connect, OpenBikeControl device and transports, the
-input source of each control (propulsion, steering, brake, gears), trainer resistance on/off and intensity, keyboard virtual power (50-600 W) and keyboard
-steering sensitivity. Settings live in `config/voxelvelo-client.json`. Rider mass, speed limit and HUD options are on the *Rider & HUD...* page.
+Press `B` for the settings hub, which links to one page per topic:
+
+- *Trainer...*: trainer choice, auto-connect, resistance on/off, intensity and the slope window.
+- *OpenBikeControl...*: device and transports.
+- *Input Sources...*: the source of each control (propulsion, steering, brake, gears), keyboard virtual power
+  (50-600 W) and keyboard steering sensitivity.
+- *Road & Terrain...*: the road block list and the widest road (max half-width) for road follow.
+- *Rider & HUD...*: rider mass, speed limit, HUD options, the rider stats overlay and what you share.
+
+Settings live in `config/voxelvelo-client.json`.
 
 ## Building
 
