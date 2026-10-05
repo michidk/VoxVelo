@@ -1,6 +1,7 @@
 package dev.michidk.voxelvelo.client.ui;
 
-import dev.michidk.voxelvelo.client.ClientContext;
+import dev.michidk.voxelvelo.client.fitness.FitnessContext;
+import dev.michidk.voxelvelo.client.fitness.FitnessStatus;
 import dev.michidk.voxelvelo.client.input.BikeInputSource;
 import dev.michidk.voxelvelo.client.input.ControlChannel;
 import java.util.ArrayList;
@@ -12,12 +13,12 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
-/** Chooses which input source drives each control (they can be mixed freely) and tunes the keyboard. */
+/** Chooses which input source drives each control (they can be mixed freely). */
 public class SourcesScreen extends Screen {
 	private static final int WIDTH = 310;
 
 	private final Screen parent;
-	private final ClientContext ctx = ClientContext.get();
+	private final FitnessContext ctx = FitnessContext.get();
 
 	public SourcesScreen(Screen parent) {
 		super(Component.translatable("voxelvelo.sources.title"));
@@ -43,13 +44,6 @@ public class SourcesScreen extends Screen {
 			y += 24;
 		}
 
-		y += 8;
-		this.addRenderableWidget(new ValueSlider(left, y, WIDTH, 50.0, 600.0, 10.0, this.ctx.config.keyboardVirtualPower,
-			v -> Component.translatable("voxelvelo.config.virtual_power", Math.round(v)), v -> this.ctx.config.keyboardVirtualPower = v));
-		y += 24;
-		this.addRenderableWidget(new ValueSlider(left, y, WIDTH, 0.3, 1.0, 0.05, this.ctx.config.keyboardSteeringSensitivity,
-			v -> Component.translatable("voxelvelo.config.steering_sensitivity", Math.round(v * 100)), v -> this.ctx.config.keyboardSteeringSensitivity = v));
-
 		this.addRenderableWidget(Button.builder(Component.translatable("gui.done"), button -> this.onClose())
 			.bounds(left, this.height - 30, WIDTH, 20).build());
 	}
@@ -59,8 +53,8 @@ public class SourcesScreen extends Screen {
 		super.extractRenderState(graphics, mouseX, mouseY, a);
 		int cx = this.width / 2;
 		graphics.centeredText(this.font, this.title, cx, 20, 0xFFFFFFFF);
-		graphics.centeredText(this.font, ConfigScreen.trainerStatus(this.ctx), cx, 36, 0xFFC0C0C0);
-		graphics.centeredText(this.font, ConfigScreen.obcStatus(this.ctx), cx, 48, 0xFFC0C0C0);
+		graphics.centeredText(this.font, FitnessStatus.trainerStatus(this.ctx), cx, 36, 0xFFC0C0C0);
+		graphics.centeredText(this.font, FitnessStatus.obcStatus(this.ctx), cx, 48, 0xFFC0C0C0);
 	}
 
 	@Override

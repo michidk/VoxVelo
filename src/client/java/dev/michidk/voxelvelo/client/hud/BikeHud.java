@@ -2,12 +2,10 @@ package dev.michidk.voxelvelo.client.hud;
 
 import dev.michidk.voxelvelo.bike.BikeEntity;
 import dev.michidk.voxelvelo.client.ClientContext;
-import dev.michidk.voxelvelo.client.ftms.TrainerTelemetry;
-import dev.michidk.voxelvelo.client.input.BikeInputSource;
-import dev.michidk.voxelvelo.client.input.ControlChannel;
 import dev.michidk.voxelvelo.client.network.BikeControlSender;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.OptionalDouble;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.DeltaTracker;
@@ -44,22 +42,25 @@ public final class BikeHud implements HudElement {
 		}
 
 		List<Component> lines = new ArrayList<>();
-		TrainerTelemetry telemetry = this.ctx.ftms.freshTelemetry();
 		double power = this.sender.lastComposed().propulsion();
-		long cadence = telemetry != null && telemetry.cadenceRpm() != null
-			? Math.round(telemetry.cadenceRpm())
+		OptionalDouble measuredCadence = OptionalDouble.empty();
+		OptionalDouble measuredGradient = OptionalDouble.empty();
+		for (HudExtras extras : this.ctx.hudExtras()) {
+			measuredCadence = measuredCadence.isPresent() ? measuredCadence : extras.cadenceRpm();
+			measuredGradient = measuredGradient.isPresent() ? measuredGradient : extras.gradient();
+		}
+		long cadence = measuredCadence.isPresent()
+			? Math.round(measuredCadence.getAsDouble())
 			: bike.isPedaling() ? Math.round(bike.getCadenceRevsPerSecond() * 60.0F) : 0;
 		lines.add(Component.translatable("voxelvelo.hud.main",
 			Component.translatable("voxelvelo.hud.power", Math.round(power)).withStyle(ChatFormatting.GOLD),
 			Component.translatable("voxelvelo.hud.cadence", cadence).withStyle(ChatFormatting.AQUA),
 			Component.translatable("voxelvelo.hud.speed", String.format("%.1f", bike.getSpeed() * 3.6F)).withStyle(ChatFormatting.GREEN)));
 		lines.add(Component.translatable("voxelvelo.hud.terrain",
-			Component.translatable("voxelvelo.hud.slope", String.format("%+.1f", this.ctx.rideTerrain.slope().orElse(bike.getGradient()) * 100.0))
+			Component.translatable("voxelvelo.hud.slope", String.format("%+.1f", measuredGradient.orElse(bike.getGradient()) * 100.0))
 				.withStyle(ChatFormatting.YELLOW), bike.getGear()));
-		if (this.ctx.config.hudShowSources) {
-			for (ControlChannel channel : ControlChannel.values()) {
-				lines.add(this.sourceLine(channel));
-			}
+		for (HudExtras extras : this.ctx.hudExtras()) {
+			extras.addLines(lines);
 		}
 
 		Font font = mc.font;
@@ -75,13 +76,5 @@ public final class BikeHud implements HudElement {
 		for (int i = 0; i < lines.size(); i++) {
 			graphics.text(font, lines.get(i), x + PADDING, y + PADDING + i * LINE_HEIGHT, 0xFFFFFFFF);
 		}
-	}
-
-	private Component sourceLine(ControlChannel channel) {
-		BikeInputSource source = this.ctx.inputManager.selected(channel);
-		boolean online = source.isActive();
-		Component dot = Component.literal("●").withStyle(online ? ChatFormatting.GREEN : ChatFormatting.RED);
-		Component label = Component.translatable("voxelvelo.sources." + channel.name().toLowerCase());
-		return Component.empty().append(dot).append(" ").append(label).append(": ").append(source.displayName());
 	}
 }

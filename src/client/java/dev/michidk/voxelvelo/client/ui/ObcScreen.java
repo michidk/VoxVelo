@@ -1,6 +1,7 @@
 package dev.michidk.voxelvelo.client.ui;
 
-import dev.michidk.voxelvelo.client.ClientContext;
+import dev.michidk.voxelvelo.client.fitness.FitnessContext;
+import dev.michidk.voxelvelo.client.fitness.FitnessStatus;
 import dev.michidk.voxelvelo.client.obc.ObcDevice;
 import java.util.List;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -16,7 +17,7 @@ public class ObcScreen extends Screen {
 	private static final int WIDTH = 310;
 
 	private final Screen parent;
-	private final ClientContext ctx = ClientContext.get();
+	private final FitnessContext ctx = FitnessContext.get();
 	private EditBox manual;
 	private String manualText = "";
 	private String signature = "";
@@ -129,7 +130,7 @@ public class ObcScreen extends Screen {
 		super.extractRenderState(graphics, mouseX, mouseY, a);
 		int cx = this.width / 2;
 		graphics.centeredText(this.font, this.title, cx, 20, 0xFFFFFFFF);
-		graphics.centeredText(this.font, ConfigScreen.obcStatus(this.ctx), cx, 36, 0xFFC0C0C0);
+		graphics.centeredText(this.font, FitnessStatus.obcStatus(this.ctx), cx, 36, 0xFFC0C0C0);
 		String error = this.ctx.obc.mdns().error();
 		if (!error.isEmpty() && this.ctx.config.obcNetworkEnabled()) {
 			graphics.centeredText(this.font, Component.translatable("voxelvelo.obc.network_unavailable", error), cx, 48, 0xFFFF8080);

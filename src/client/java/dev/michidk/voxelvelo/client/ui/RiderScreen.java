@@ -8,7 +8,7 @@ import net.minecraft.client.gui.components.CycleButton;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
-/** Rider mass, personal speed limit and HUD options. Mass and limit are sent to the server (and clamped there). */
+/** Rider mass, personal speed limit and the riding HUD. Mass and limit are sent to the server (and clamped there). */
 public class RiderScreen extends Screen {
 	private static final int WIDTH = 310;
 	private static final double MIN_MASS = 40.0;
@@ -36,18 +36,6 @@ public class RiderScreen extends Screen {
 		y += 28;
 		this.addRenderableWidget(CycleButton.onOffBuilder(this.ctx.config.hudEnabled)
 			.create(left, y, WIDTH, 20, Component.translatable("voxelvelo.rider.hud"), (button, value) -> this.ctx.config.hudEnabled = value));
-		y += 24;
-		this.addRenderableWidget(CycleButton.onOffBuilder(this.ctx.config.hudShowSources)
-			.create(left, y, WIDTH, 20, Component.translatable("voxelvelo.rider.hud_sources"), (button, value) -> this.ctx.config.hudShowSources = value));
-		y += 32;
-		this.addRenderableWidget(CycleButton.onOffBuilder(this.ctx.config.statsOverlayEnabled)
-			.create(left, y, WIDTH, 20, Component.translatable("voxelvelo.rider.stats"), (button, value) -> this.ctx.config.statsOverlayEnabled = value));
-		y += 24;
-		int half = (WIDTH - 10) / 2;
-		this.addRenderableWidget(CycleButton.onOffBuilder(this.ctx.config.shareWatts)
-			.create(left, y, half, 20, Component.translatable("voxelvelo.rider.share_watts"), (button, value) -> this.ctx.config.shareWatts = value));
-		this.addRenderableWidget(CycleButton.onOffBuilder(this.ctx.config.shareHeartRate)
-			.create(left + half + 10, y, half, 20, Component.translatable("voxelvelo.rider.share_hr"), (button, value) -> this.ctx.config.shareHeartRate = value));
 		this.addRenderableWidget(Button.builder(Component.translatable("gui.done"), button -> this.onClose())
 			.bounds(left, this.height - 30, WIDTH, 20).build());
 	}

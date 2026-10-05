@@ -20,7 +20,6 @@ public final class VoxelVeloKeys {
 	public static final KeyMapping SHIFT_UP = register("key.voxelvelo.shift_up", InputConstants.KEY_X);
 	public static final KeyMapping SHIFT_DOWN = register("key.voxelvelo.shift_down", InputConstants.KEY_Z);
 	public static final KeyMapping OPEN_CONFIG = register("key.voxelvelo.open_config", InputConstants.KEY_B);
-	public static final KeyMapping TOGGLE_STATS = register("key.voxelvelo.toggle_stats", InputConstants.KEY_H);
 
 	private VoxelVeloKeys() {
 	}

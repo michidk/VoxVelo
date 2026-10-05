@@ -6,7 +6,7 @@ version = project.mod_version
 group = project.maven_group
 
 base {
-	archivesName = project.archives_base_name
+	archivesName = "${project.archives_base_name}-fitness"
 }
 
 repositories {
@@ -78,5 +78,17 @@ jar {
 
 	from("LICENSE") {
 		rename { "${it}_${projectName}" }
+	}
+}
+
+// Dev clients start muted: make sure the master volume is 0 in this project's run directory before launching.
+def devOptions = layout.projectDirectory.file('run/options.txt').asFile
+tasks.matching { it.name == 'runClient' }.configureEach {
+	doFirst {
+		def lines = devOptions.exists() ? devOptions.readLines() : []
+		lines = lines.findAll { !it.startsWith('soundCategory_master:') }
+		lines << 'soundCategory_master:0.0'
+		devOptions.parentFile.mkdirs()
+		devOptions.text = lines.join('\n') + '\n'
 	}
 }

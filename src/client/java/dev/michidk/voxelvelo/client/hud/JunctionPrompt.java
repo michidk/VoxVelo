@@ -1,7 +1,7 @@
 package dev.michidk.voxelvelo.client.hud;
 
 import dev.michidk.voxelvelo.bike.BikeEntity;
-import dev.michidk.voxelvelo.client.ClientContext;
+import dev.michidk.voxelvelo.client.fitness.FitnessContext;
 import dev.michidk.voxelvelo.client.road.Junction;
 import dev.michidk.voxelvelo.client.road.JunctionNavigator;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
@@ -27,9 +27,9 @@ public final class JunctionPrompt implements HudElement {
 	private static final int OUTLINE_DEFAULT = 0xFFFFD34D;
 	private static final int OUTLINE = 0xFFB0B0B0;
 
-	private final ClientContext ctx;
+	private final FitnessContext ctx;
 
-	public JunctionPrompt(ClientContext ctx) {
+	public JunctionPrompt(FitnessContext ctx) {
 		this.ctx = ctx;
 	}
 

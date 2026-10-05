@@ -1,6 +1,7 @@
 package dev.michidk.voxelvelo.client.ui;
 
-import dev.michidk.voxelvelo.client.ClientContext;
+import dev.michidk.voxelvelo.client.fitness.FitnessContext;
+import dev.michidk.voxelvelo.client.fitness.FitnessStatus;
 import dev.michidk.voxelvelo.client.bluetooth.BluetoothDevice;
 import dev.michidk.voxelvelo.client.ftms.Ftms;
 import dev.michidk.voxelvelo.terrain.TerrainSlope;
@@ -17,7 +18,7 @@ public class TrainerScreen extends Screen {
 	private static final int WIDTH = 310;
 
 	private final Screen parent;
-	private final ClientContext ctx = ClientContext.get();
+	private final FitnessContext ctx = FitnessContext.get();
 	private String signature = "";
 
 	public TrainerScreen(Screen parent) {
@@ -128,7 +129,7 @@ public class TrainerScreen extends Screen {
 	}
 
 	private Component statusLine() {
-		return ConfigScreen.trainerStatus(this.ctx);
+		return FitnessStatus.trainerStatus(this.ctx);
 	}
 
 	@Override

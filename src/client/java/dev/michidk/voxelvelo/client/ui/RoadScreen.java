@@ -1,7 +1,7 @@
 package dev.michidk.voxelvelo.client.ui;
 
-import dev.michidk.voxelvelo.client.ClientContext;
-import dev.michidk.voxelvelo.client.config.VoxelVeloConfig;
+import dev.michidk.voxelvelo.client.fitness.FitnessContext;
+import dev.michidk.voxelvelo.client.fitness.FitnessConfig;
 import dev.michidk.voxelvelo.client.road.RoadBlocks;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +30,7 @@ public class RoadScreen extends Screen {
 	private static final int ROW = 22;
 
 	private final Screen parent;
-	private final ClientContext ctx = ClientContext.get();
+	private final FitnessContext ctx = FitnessContext.get();
 	private String inputText = "";
 	private int page;
 
@@ -127,7 +127,7 @@ public class RoadScreen extends Screen {
 		}
 		List<String> list = new ArrayList<>(this.ctx.config.roadBlocks);
 		list.add(entry);
-		this.ctx.config.roadBlocks = VoxelVeloConfig.sanitizeBlocks(list);
+		this.ctx.config.roadBlocks = FitnessConfig.sanitizeBlocks(list);
 		this.page = Integer.MAX_VALUE;
 		this.rebuildWidgets();
 	}

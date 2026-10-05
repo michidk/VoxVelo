@@ -4,7 +4,7 @@ import dev.michidk.voxelvelo.VoxelVelo;
 import dev.michidk.voxelvelo.client.bluetooth.BluetoothConnection;
 import dev.michidk.voxelvelo.client.bluetooth.BluetoothDevice;
 import dev.michidk.voxelvelo.client.bluetooth.BluetoothManager;
-import dev.michidk.voxelvelo.client.config.VoxelVeloConfig;
+import dev.michidk.voxelvelo.client.fitness.FitnessConfig;
 import dev.michidk.voxelvelo.client.ftms.TrainerState;
 import java.util.ArrayList;
 import java.util.List;
@@ -68,7 +68,7 @@ public final class ObcClient {
 	}
 
 	/** Devices the player can pick: network devices from mDNS and Bluetooth devices advertising the OBC service. */
-	public List<ObcDevice> discovered(VoxelVeloConfig config) {
+	public List<ObcDevice> discovered(FitnessConfig config) {
 		List<ObcDevice> list = new ArrayList<>();
 		if (config.obcNetworkEnabled()) {
 			list.addAll(this.mdns.devices());
@@ -84,7 +84,7 @@ public final class ObcClient {
 	}
 
 	/** Starts discovery for the transports the config enables (called while the picker is open). */
-	public void startDiscovery(VoxelVeloConfig config) {
+	public void startDiscovery(FitnessConfig config) {
 		if (config.obcNetworkEnabled()) {
 			this.mdns.start();
 		}
@@ -111,7 +111,7 @@ public final class ObcClient {
 	}
 
 	/** Called every client tick while a world is loaded. Starts auto-connect and reconnect attempts. */
-	public void tick(VoxelVeloConfig config) {
+	public void tick(FitnessConfig config) {
 		if (config.obcMode.equals("off")) {
 			if (this.state != TrainerState.DISCONNECTED) {
 				this.teardown("");
@@ -134,7 +134,7 @@ public final class ObcClient {
 	}
 
 	/** Turns the stored key back into a device, if it is currently reachable by its transport. */
-	private ObcDevice resolvePreferred(VoxelVeloConfig config) {
+	private ObcDevice resolvePreferred(FitnessConfig config) {
 		String key = config.obcPreferredKey;
 		String name = config.obcPreferredName;
 		if (key.startsWith("tcp:")) {

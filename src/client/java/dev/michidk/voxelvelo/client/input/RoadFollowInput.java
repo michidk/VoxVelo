@@ -1,7 +1,7 @@
 package dev.michidk.voxelvelo.client.input;
 
 import dev.michidk.voxelvelo.bike.BikeEntity;
-import dev.michidk.voxelvelo.client.config.VoxelVeloConfig;
+import dev.michidk.voxelvelo.client.fitness.FitnessConfig;
 import dev.michidk.voxelvelo.client.road.ClientRoadWorld;
 import dev.michidk.voxelvelo.client.road.JunctionNavigator;
 import dev.michidk.voxelvelo.client.road.RoadBlocks;
@@ -24,7 +24,7 @@ public final class RoadFollowInput implements BikeInputSource {
 	/** Below this speed the bike would only pivot on the spot, so no steering is applied. */
 	private static final double MIN_SPEED = 0.5;
 
-	private final VoxelVeloConfig config;
+	private final FitnessConfig config;
 	private final BikeInputManager manager;
 	private final RoadBlocks roadBlocks = new RoadBlocks();
 	private final JunctionNavigator navigator = new JunctionNavigator(new Random());
@@ -32,7 +32,7 @@ public final class RoadFollowInput implements BikeInputSource {
 	private boolean active;
 	private double steering;
 
-	public RoadFollowInput(VoxelVeloConfig config, BikeInputManager manager) {
+	public RoadFollowInput(FitnessConfig config, BikeInputManager manager) {
 		this.config = config;
 		this.manager = manager;
 	}

@@ -4,7 +4,7 @@ import dev.michidk.voxelvelo.VoxelVelo;
 import dev.michidk.voxelvelo.client.bluetooth.BluetoothConnection;
 import dev.michidk.voxelvelo.client.bluetooth.BluetoothDevice;
 import dev.michidk.voxelvelo.client.bluetooth.BluetoothManager;
-import dev.michidk.voxelvelo.client.config.VoxelVeloConfig;
+import dev.michidk.voxelvelo.client.fitness.FitnessConfig;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
@@ -84,7 +84,7 @@ public final class FtmsClient {
 	}
 
 	/** Called every client tick while a world is loaded. Starts auto-connect and reconnect attempts. */
-	public void tick(VoxelVeloConfig config) {
+	public void tick(FitnessConfig config) {
 		if (this.state != TrainerState.DISCONNECTED || this.userDisconnected || !config.autoConnectTrainer || !config.hasPreferredTrainer()) {
 			return;
 		}

@@ -1,7 +1,7 @@
 package dev.michidk.voxelvelo.client.ftms;
 
 import dev.michidk.voxelvelo.bike.BikeEntity;
-import dev.michidk.voxelvelo.client.ClientContext;
+import dev.michidk.voxelvelo.client.fitness.FitnessContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 
@@ -20,14 +20,14 @@ public final class TrainerFeedback {
 	private static final double GRADE_DEADBAND_PERCENT = 0.15;
 	private static final long NEUTRAL_WAIT_ON_EXIT_MILLIS = 400;
 
-	private final ClientContext ctx;
+	private final FitnessContext ctx;
 	private boolean applying;
 	private boolean hasSmoothed;
 	private double smoothedGrade;
 	private long lastSentAt;
 	private TrainerSimulation.Target lastSent = TrainerSimulation.Target.NEUTRAL;
 
-	public TrainerFeedback(ClientContext ctx) {
+	public TrainerFeedback(FitnessContext ctx) {
 		this.ctx = ctx;
 	}
 

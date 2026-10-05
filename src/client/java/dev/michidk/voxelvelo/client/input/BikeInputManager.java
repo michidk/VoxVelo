@@ -1,9 +1,9 @@
 package dev.michidk.voxelvelo.client.input;
 
 import dev.michidk.voxelvelo.bike.BikeControlState;
-import dev.michidk.voxelvelo.client.config.VoxelVeloConfig;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import net.minecraft.client.Minecraft;
 
 /**
@@ -21,15 +21,20 @@ public final class BikeInputManager {
 	/** Below this a source counts as idle and the keyboard may steer instead. */
 	private static final double STEERING_IDLE = 0.05;
 
-	private final VoxelVeloConfig config;
+	/** Which source id each control uses; the keyboard unless an add-on lets the player choose. */
+	private Function<ControlChannel, String> selection = channel -> "keyboard";
 	private final List<BikeInputSource> sources = new ArrayList<>();
 	private final BikeInputSource keyboard;
 	private int gear = BikeControlState.DEFAULT_GEAR;
 
-	public BikeInputManager(VoxelVeloConfig config, BikeInputSource keyboard) {
-		this.config = config;
+	public BikeInputManager(BikeInputSource keyboard) {
 		this.keyboard = keyboard;
 		this.sources.add(keyboard);
+	}
+
+	/** Lets an add-on decide which registered source drives each control. Unknown ids fall back to the keyboard. */
+	public void setSelection(Function<ControlChannel, String> selection) {
+		this.selection = selection;
 	}
 
 	public void register(BikeInputSource source) {
@@ -42,7 +47,7 @@ public final class BikeInputManager {
 
 	/** The source currently chosen for a channel, whether or not it is connected. Never null. */
 	public BikeInputSource selected(ControlChannel channel) {
-		String id = this.config.sourceFor(channel);
+		String id = this.selection.apply(channel);
 		for (BikeInputSource source : this.sources) {
 			if (source.id().equals(id) && source.supports(channel)) {
 				return source;

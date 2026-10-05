@@ -1,0 +1,148 @@
+plugins {
+	id 'net.fabricmc.fabric-loom' version "${loom_version}"
+}
+
+// The core build: bikes, keyboard and mouse riding, physics, collisions, parts. It is compiled from the same
+// source directories as the full build, but every fitness package is excluded and no Bluetooth, mDNS or other
+// fitness library is on its classpath, so core code that reaches for fitness code fails to compile.
+//
+// Anything that belongs to the fitness integration must live in one of the packages below. The root project
+// (the full build) compiles everything.
+ext.fitnessMain = [
+	'dev/michidk/voxelvelo/fitness/**',
+	'dev/michidk/voxelvelo/bike/RiderVitals.java',
+	'dev/michidk/voxelvelo/network/RiderVitalsPayload.java',
+	'dev/michidk/voxelvelo/network/RiderStatsPayload.java'
+]
+ext.fitnessClient = [
+	'dev/michidk/voxelvelo/client/fitness/**',
+	'dev/michidk/voxelvelo/client/bluetooth/**',
+	'dev/michidk/voxelvelo/client/ftms/**',
+	'dev/michidk/voxelvelo/client/obc/**',
+	'dev/michidk/voxelvelo/client/stats/**',
+	'dev/michidk/voxelvelo/client/road/**',
+	'dev/michidk/voxelvelo/client/input/FtmsTrainerInput.java',
+	'dev/michidk/voxelvelo/client/input/OpenBikeControlInput.java',
+	'dev/michidk/voxelvelo/client/input/RoadFollowInput.java',
+	'dev/michidk/voxelvelo/client/terrain/RideTerrain.java',
+	'dev/michidk/voxelvelo/client/hud/HeartRateHud.java',
+	'dev/michidk/voxelvelo/client/hud/JunctionPrompt.java',
+	'dev/michidk/voxelvelo/client/hud/StatsOverlay.java',
+	'dev/michidk/voxelvelo/client/ui/TrainerScreen.java',
+	'dev/michidk/voxelvelo/client/ui/ObcScreen.java',
+	'dev/michidk/voxelvelo/client/ui/RoadScreen.java',
+	'dev/michidk/voxelvelo/client/ui/SourcesScreen.java'
+]
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+	archivesName = project.archives_base_name
+}
+
+repositories {
+	exclusiveContent {
+		forRepository {
+			maven {
+				name = "GeckoLib"
+				url = "https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/"
+			}
+		}
+		filter {
+			includeGroup "com.geckolib"
+		}
+	}
+}
+
+loom {
+	splitEnvironmentSourceSets()
+
+	mods {
+		"voxelvelo" {
+			sourceSet sourceSets.main
+			sourceSet sourceSets.client
+		}
+	}
+}
+
+sourceSets {
+	main {
+		java {
+			setSrcDirs(['../src/main/java'])
+			exclude fitnessMain
+		}
+		resources {
+			setSrcDirs(['../src/main/resources'])
+			// The core jar has its own module metadata, see src/main/metadata.
+			exclude 'fabric.mod.json'
+		}
+	}
+	client {
+		java {
+			setSrcDirs(['../src/client/java'])
+			exclude fitnessClient
+		}
+		resources {
+			setSrcDirs(['../src/client/resources'])
+		}
+	}
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+	implementation "com.geckolib:geckolib-fabric-${project.minecraft_version}:${project.geckolib_version}"
+}
+
+// Language keys of the fitness integration. The shared language file lists them, the core jar does not ship them.
+def fitnessLangKey = ~/^\s*"(key\.voxelvelo\.toggle_stats|voxelvelo\.(hint\.trainer_not_connected|config\.(trainer|telemetry|choose_trainer|auto_connect|resistance|intensity|obc|sources|road|slope_window|stats)|sources\.|road\.|junction\.|stats\.|rider\.(stats|share_watts|share_hr|hud_sources)|hud\.heart|obc\.|trainer\.))[a-z_.]*":.*/
+
+processResources {
+	def modVersion = project.version
+	inputs.property "version", modVersion
+
+	from('src/main/metadata')
+
+	filesMatching('assets/voxelvelo/lang/*.json') {
+		filter { String line -> (line ==~ fitnessLangKey) ? null : line }
+	}
+	filesMatching("fabric.mod.json") {
+		expand "version": modVersion
+	}
+	doLast {
+		// Dropping lines must leave valid JSON behind.
+		new File(destinationDir, 'assets/voxelvelo/lang').listFiles().findAll { it.name.endsWith('.json') }.each {
+			new groovy.json.JsonSlurper().parse(it)
+		}
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 25
+}
+
+java {
+	withSourcesJar()
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
+}
+
+jar {
+	from("../LICENSE") {
+		rename { "${it}_voxelvelo" }
+	}
+}
+
+// Dev clients start muted: make sure the master volume is 0 in this project's run directory before launching.
+def devOptions = layout.projectDirectory.file('run/options.txt').asFile
+tasks.matching { it.name == 'runClient' }.configureEach {
+	doFirst {
+		def lines = devOptions.exists() ? devOptions.readLines() : []
+		lines = lines.findAll { !it.startsWith('soundCategory_master:') }
+		lines << 'soundCategory_master:0.0'
+		devOptions.parentFile.mkdirs()
+		devOptions.text = lines.join('\n') + '\n'
+	}
+}

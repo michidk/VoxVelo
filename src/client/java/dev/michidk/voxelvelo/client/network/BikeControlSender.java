@@ -3,13 +3,12 @@ package dev.michidk.voxelvelo.client.network;
 import dev.michidk.voxelvelo.bike.BikeControlState;
 import dev.michidk.voxelvelo.bike.BikeEntity;
 import dev.michidk.voxelvelo.client.input.BikeInputManager;
-import dev.michidk.voxelvelo.client.input.ControlChannel;
-import dev.michidk.voxelvelo.client.input.VoxelVeloKeys;
 import dev.michidk.voxelvelo.network.BikeControlPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import java.util.List;
+import java.util.function.Consumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 
 /**
@@ -21,6 +20,8 @@ public final class BikeControlSender {
 	private static final int HEARTBEAT_TICKS = 5;
 
 	private final BikeInputManager inputManager;
+	/** Called when the local player gets on a bike, e.g. for hints from add-ons. */
+	private final List<Consumer<LocalPlayer>> mountListeners;
 
 	private BikeEntity currentBike;
 	private BikeControlState lastSent;
@@ -29,8 +30,9 @@ public final class BikeControlSender {
 	private int sequence;
 	private float lastBikeYaw;
 
-	public BikeControlSender(BikeInputManager inputManager) {
+	public BikeControlSender(BikeInputManager inputManager, List<Consumer<LocalPlayer>> mountListeners) {
 		this.inputManager = inputManager;
+		this.mountListeners = mountListeners;
 	}
 
 	/** The controls composed on the last tick while riding, for the HUD. */
@@ -60,8 +62,8 @@ public final class BikeControlSender {
 			this.ticksSinceSend = HEARTBEAT_TICKS;
 			this.lastBikeYaw = bike.getYRot();
 			this.inputManager.onMount(bike.getGear());
-			if (!this.inputManager.selected(ControlChannel.PROPULSION).isActive()) {
-				player.sendOverlayMessage(Component.translatable("voxelvelo.hint.trainer_not_connected", VoxelVeloKeys.OPEN_CONFIG.getTranslatedKeyMessage()));
+			for (Consumer<LocalPlayer> listener : this.mountListeners) {
+				listener.accept(player);
 			}
 		}
 

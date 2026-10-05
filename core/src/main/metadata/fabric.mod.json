@@ -1,0 +1,33 @@
+{
+	"schemaVersion": 1,
+	"id": "voxelvelo",
+	"version": "${version}",
+	"name": "VoxelVelo",
+	"description": "Rideable multiplayer bicycles for Minecraft with their own physics, collisions, suspension and parts. Ride with the keyboard and mouse.",
+	"authors": [
+		"VoxelVelo contributors"
+	],
+	"license": "MIT",
+	"environment": "*",
+	"mixins": [
+		{
+			"config": "voxelvelo.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"entrypoints": {
+		"main": [
+			"dev.michidk.voxelvelo.VoxelVelo"
+		],
+		"client": [
+			"dev.michidk.voxelvelo.client.VoxelVeloClient"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=0.19.5",
+		"minecraft": "~26.3",
+		"java": ">=25",
+		"fabric-api": "*",
+		"geckolib": ">=5.5.7"
+	}
+}

@@ -10,3 +10,7 @@ pluginManagement {
 }
 
 rootProject.name = 'voxelvelo'
+
+// The raw bike mod: the same sources with every fitness package left out (see core/build.gradle).
+// The root project is the full build with the fitness integration.
+include 'core'

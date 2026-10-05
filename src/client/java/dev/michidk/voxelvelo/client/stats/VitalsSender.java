@@ -1,6 +1,6 @@
 package dev.michidk.voxelvelo.client.stats;
 
-import dev.michidk.voxelvelo.client.ClientContext;
+import dev.michidk.voxelvelo.client.fitness.FitnessContext;
 import dev.michidk.voxelvelo.client.ftms.TrainerTelemetry;
 import dev.michidk.voxelvelo.network.RiderVitalsPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -13,12 +13,12 @@ public final class VitalsSender {
 	private static final int CHECK_TICKS = 20;
 	private static final int HEARTBEAT_TICKS = 100;
 
-	private final ClientContext ctx;
+	private final FitnessContext ctx;
 	private int ticks;
 	private int sinceSent = HEARTBEAT_TICKS;
 	private RiderVitalsPayload last;
 
-	public VitalsSender(ClientContext ctx) {
+	public VitalsSender(FitnessContext ctx) {
 		this.ctx = ctx;
 	}
 

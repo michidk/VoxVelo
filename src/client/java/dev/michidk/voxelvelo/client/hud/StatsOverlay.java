@@ -1,6 +1,6 @@
 package dev.michidk.voxelvelo.client.hud;
 
-import dev.michidk.voxelvelo.client.ClientContext;
+import dev.michidk.voxelvelo.client.fitness.FitnessContext;
 import dev.michidk.voxelvelo.client.stats.RiderStatsStore;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,9 +23,9 @@ public final class StatsOverlay implements HudElement {
 	private static final int LINE_HEIGHT = 10;
 	private static final int BACKGROUND = 0x70000000;
 
-	private final ClientContext ctx;
+	private final FitnessContext ctx;
 
-	public StatsOverlay(ClientContext ctx) {
+	public StatsOverlay(FitnessContext ctx) {
 		this.ctx = ctx;
 	}
 

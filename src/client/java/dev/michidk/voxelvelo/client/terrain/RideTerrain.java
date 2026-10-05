@@ -1,7 +1,7 @@
 package dev.michidk.voxelvelo.client.terrain;
 
 import dev.michidk.voxelvelo.bike.BikeEntity;
-import dev.michidk.voxelvelo.client.config.VoxelVeloConfig;
+import dev.michidk.voxelvelo.client.fitness.FitnessConfig;
 import dev.michidk.voxelvelo.terrain.LevelGround;
 import dev.michidk.voxelvelo.terrain.TerrainSlope;
 import java.util.OptionalDouble;
@@ -16,11 +16,11 @@ import net.minecraft.client.player.LocalPlayer;
 public final class RideTerrain {
 	private static final int INTERVAL_TICKS = 4;
 
-	private final VoxelVeloConfig config;
+	private final FitnessConfig config;
 	private int ticks;
 	private OptionalDouble slope = OptionalDouble.empty();
 
-	public RideTerrain(VoxelVeloConfig config) {
+	public RideTerrain(FitnessConfig config) {
 		this.config = config;
 	}
 
