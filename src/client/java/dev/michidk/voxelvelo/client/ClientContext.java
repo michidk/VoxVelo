@@ -12,6 +12,7 @@ import dev.michidk.voxelvelo.client.input.FtmsTrainerInput;
 import dev.michidk.voxelvelo.client.input.KeyboardBikeInput;
 import dev.michidk.voxelvelo.client.terrain.RideTerrain;
 import dev.michidk.voxelvelo.client.input.OpenBikeControlInput;
+import dev.michidk.voxelvelo.client.input.RoadFollowInput;
 import dev.michidk.voxelvelo.client.obc.ObcClient;
 
 /** The client-side services of the mod, created once at startup. Nothing here is ever loaded on a server. */
@@ -35,6 +36,7 @@ public final class ClientContext {
 		this.inputManager = new BikeInputManager(this.config, new KeyboardBikeInput(this.config));
 		this.inputManager.register(new FtmsTrainerInput(this.ftms));
 		this.inputManager.register(new OpenBikeControlInput(this.obc));
+		this.inputManager.register(new RoadFollowInput(this.config));
 		this.rideTerrain = new RideTerrain(this.config);
 		this.trainerFeedback = new TrainerFeedback(this);
 	}

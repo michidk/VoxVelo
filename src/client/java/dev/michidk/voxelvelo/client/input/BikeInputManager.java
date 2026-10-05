@@ -65,10 +65,9 @@ public final class BikeInputManager {
 	}
 
 	public BikeControlState compose(Minecraft client) {
+		// Every source is ticked, connected or not: some (road follow) only learn that they are active by ticking.
 		for (BikeInputSource source : this.sources) {
-			if (source.isActive()) {
-				source.tick(client);
-			}
+			source.tick(client);
 		}
 
 		BikeInputSource propulsionSource = this.selected(ControlChannel.PROPULSION);

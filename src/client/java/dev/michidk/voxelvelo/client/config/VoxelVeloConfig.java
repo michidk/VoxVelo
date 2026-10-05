@@ -44,6 +44,11 @@ public final class VoxelVeloConfig {
 	public boolean hudEnabled = true;
 	public boolean hudShowSources = true;
 
+	/** Blocks that count as road for the road-follow steering source: block ids, or tags written as #namespace:tag. */
+	public java.util.List<String> roadBlocks = new java.util.ArrayList<>(java.util.List.of("minecraft:stone", "minecraft:gravel"));
+	/** Widest road the follower will centre on, in blocks each side of the bike. Wider areas count as open ground. */
+	public int roadMaxHalfWidth = 8;
+
 	/** Blocks each way (behind and ahead) over which the slope for the trainer and HUD is measured. */
 	public int slopeWindowBlocks = 10;
 
@@ -117,9 +122,24 @@ public final class VoxelVeloConfig {
 		this.trainerResistanceIntensity = clamp(this.trainerResistanceIntensity, 0.0, 2.0, 1.0);
 		this.riderMassKg = clamp(this.riderMassKg, 40.0, 150.0, 75.0);
 		this.speedLimitKmh = this.speedLimitKmh < 5.0 ? 0.0 : clamp(this.speedLimitKmh, 5.0, 100.0, 0.0);
+		this.roadBlocks = sanitizeBlocks(this.roadBlocks);
+		this.roadMaxHalfWidth = Math.max(2, Math.min(16, this.roadMaxHalfWidth));
 		this.slopeWindowBlocks = Math.max(10, Math.min(40, this.slopeWindowBlocks));
 		this.keyboardVirtualPower = clamp(this.keyboardVirtualPower, 50.0, 600.0, 200.0);
 		this.keyboardSteeringSensitivity = clamp(this.keyboardSteeringSensitivity, 0.3, 1.0, 1.0);
+	}
+
+	/** Trims, lower-cases, drops blanks and duplicates, and caps the list so a hand-edited file cannot get huge. */
+	public static java.util.List<String> sanitizeBlocks(java.util.List<String> blocks) {
+		java.util.LinkedHashSet<String> clean = new java.util.LinkedHashSet<>();
+		if (blocks != null) {
+			for (String block : blocks) {
+				if (block != null && !block.isBlank() && clean.size() < 64) {
+					clean.add(block.trim().toLowerCase(java.util.Locale.ROOT));
+				}
+			}
+		}
+		return new java.util.ArrayList<>(clean);
 	}
 
 	private static String orDefault(String id) {
