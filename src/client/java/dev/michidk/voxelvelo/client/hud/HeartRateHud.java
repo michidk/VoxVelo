@@ -1,7 +1,7 @@
 package dev.michidk.voxelvelo.client.hud;
 
 import dev.michidk.voxelvelo.bike.BikeEntity;
-import dev.michidk.voxelvelo.client.ClientContext;
+import dev.michidk.voxelvelo.client.fitness.FitnessContext;
 import dev.michidk.voxelvelo.client.ftms.TrainerTelemetry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
 import net.minecraft.client.DeltaTracker;
@@ -11,16 +11,16 @@ import net.minecraft.network.chat.Component;
 
 /** Personal pulse display; the heart flashes once per reported heartbeat. */
 public final class HeartRateHud implements HudElement {
-	private final ClientContext ctx;
+	private final FitnessContext ctx;
 
-	public HeartRateHud(ClientContext ctx) {
+	public HeartRateHud(FitnessContext ctx) {
 		this.ctx = ctx;
 	}
 
 	@Override
 	public void extractRenderState(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
 		Minecraft mc = Minecraft.getInstance();
-		if (!this.ctx.config.hudEnabled || mc.player == null
+		if (!this.ctx.core.config.hudEnabled || mc.player == null
 			|| !(mc.player.getVehicle() instanceof BikeEntity bike) || bike.getRider() != mc.player) {
 			return;
 		}

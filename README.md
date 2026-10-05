@@ -1,7 +1,8 @@
 # VoxelVelo
 
-Rideable, fully multiplayer bicycles for Minecraft (Fabric). Ride with the keyboard, or bring a smart
-trainer (Bluetooth FTMS) and OpenBikeControl steering such as the BikeControl phone app.
+Rideable, fully multiplayer bicycles for Minecraft (Fabric). Ride with the keyboard and mouse, or use the fitness
+build and bring a smart trainer (Bluetooth FTMS) and OpenBikeControl steering such as the BikeControl phone app.
+The mod comes in two builds, see [Two builds](#two-builds).
 
 > **Status:** Milestones 1 to 7 are implemented: multiplayer bicycles, keyboard riding, three bike types with their
 > own physics and models, terrain and collisions, FTMS trainer power with resistance feedback, OpenBikeControl steering,
@@ -27,12 +28,30 @@ trainer (Bluetooth FTMS) and OpenBikeControl steering such as the BikeControl ph
 | GeckoLib | 5.5.7 (required on clients and servers) |
 | Java | 25 |
 
+## Two builds
+
+One source tree builds two jars with the same mod id, so worlds, servers and clients of either build work together:
+
+| | `voxelvelo-<version>.jar` | `voxelvelo-fitness-<version>.jar` |
+|---|---|---|
+| Bikes, parts, physics, collisions, slopes, suspension | yes | yes |
+| Keyboard and mouse riding, rider mass, riding HUD | yes | yes |
+| FTMS trainer, Bluetooth, resistance feedback | no | yes |
+| OpenBikeControl (steering, brake, gears) | no | yes |
+| Road following and junction prompts | no | yes |
+| Rider stats overlay, heart rate, sharing | no | yes |
+| Bundled libraries (SimpleBLE, JmDNS) | none | yes |
+
+The **core** jar is the raw bike mod: it contains no trainer, Bluetooth, OpenBikeControl, road-following or stats
+code, none of their libraries and none of their text. The **fitness** jar is the full mod. Their packets are
+optional, so a fitness client on a core server (or the other way round) simply has no stats overlay.
+
 ## Installation
 
-- **Players:** put the mod jar, Fabric API and GeckoLib in `mods/`.
+- **Players:** put one of the two mod jars (core or fitness), Fabric API and GeckoLib in `mods/`. Do not install both.
 - **Servers:** put the same three jars in the server's `mods/`. The mod is required on the server because the
   bicycle is a real synchronized entity. Vanilla servers are not supported.
-- Dedicated servers never load any client code (input, rendering, and later Bluetooth/networking hardware).
+- Dedicated servers never load any client code (input, rendering, Bluetooth and networking hardware).
 
 ## Multiplayer
 
@@ -322,26 +341,43 @@ heart rate is validated at 30?250 bpm.
 
 ## Configuration
 
-Press `B` for the settings hub, which links to one page per topic:
+Press `B` for the settings hub, which links to one page per topic. Both builds have:
+
+- *Keyboard...*: keyboard virtual power (50-600 W) and keyboard steering sensitivity.
+- *Rider & HUD...*: rider mass, speed limit and the riding HUD.
+
+The fitness build adds:
 
 - *Trainer...*: trainer choice, auto-connect, resistance on/off, intensity and the slope window.
 - *OpenBikeControl...*: device and transports.
-- *Input Sources...*: the source of each control (propulsion, steering, brake, gears), keyboard virtual power
-  (50-600 W) and keyboard steering sensitivity.
+- *Input Sources...*: the source of each control (propulsion, steering, brake, gears).
 - *Road & Terrain...*: the road block list, the widest road (max half-width) and the junction prompt with its cooldown.
-- *Rider & HUD...*: rider mass, speed limit, HUD options, the rider stats overlay and what you share.
+- *Rider Stats...*: the rider stats overlay, what you share, and the input-source lines of the HUD.
 
-Settings live in `config/voxelvelo-client.json`.
+Settings live in `config/voxelvelo-client.json` (both builds). The fitness build keeps its own in
+`config/voxelvelo-fitness.json`, filled from the old shared file the first time it starts.
 
 ## Building
 
 Requires JDK 25.
 
 ```sh
-./gradlew build        # jar in build/libs
-./gradlew runClient    # dev client
-./gradlew runServer    # dev server (accept the Minecraft EULA in run/eula.txt first)
+./gradlew build                # both jars: core/build/libs/voxelvelo-<version>.jar, build/libs/voxelvelo-fitness-<version>.jar
+./gradlew :core:build          # only the core jar
+./gradlew runClient            # dev client, fitness build
+./gradlew :core:runClient      # dev client, core build
+./gradlew runServer            # dev server (accept the Minecraft EULA in run/eula.txt first)
 ```
+
+Dev clients start with the sound muted.
+
+The fitness build is the root project. The core build (`core/`) compiles the same source directories with the
+fitness packages left out and without the fitness libraries on its classpath, so core code that reaches for fitness
+code does not compile. Fitness code lives in these packages and files, listed in `core/build.gradle`:
+`client/{bluetooth,ftms,obc,stats,road,fitness}`, the trainer, OpenBikeControl and road-follow input sources,
+the stats and junction HUD, the trainer, OpenBikeControl, road and sources screens, and `fitness/` plus the vitals
+and stats packets on the common side. Core reaches them only through the `voxelvelo-extension` and
+`voxelvelo-client-extension` entrypoints that the fitness jar declares.
 
 ## Models
 
@@ -373,6 +409,7 @@ pedal. The pedal cranks in the models are short (about 1.6 units), so the rider'
 ```text
 src/main    common + server: BikeEntity, BikePhysics, BikeSurface, BikeControlState, packets, registries
 src/client  client only: keyboard/input composition, packet sender, GeckoLib renderer
+core/       the core build: same sources minus the fitness packages, its own module metadata
 ```
 
 ## Roadmap
