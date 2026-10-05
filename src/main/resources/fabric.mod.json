@@ -2,7 +2,7 @@
 	"schemaVersion": 1,
 	"id": "voxelvelo",
 	"version": "${version}",
-	"name": "VoxelVelo (Fitness)",
+	"name": "VoxelVelo",
 	"description": "Rideable multiplayer bicycles for Minecraft. Ride with the keyboard, or bring a smart trainer and OpenBikeControl steering.",
 	"authors": [
 		"VoxelVelo contributors"
