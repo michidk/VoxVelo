@@ -31,6 +31,15 @@ public class BikeItem extends Item {
 		return this.bikeType;
 	}
 
+    @Override
+    public void appendHoverText(ItemStack stack, TooltipContext context,
+            net.minecraft.world.item.component.TooltipDisplay display,
+            java.util.function.Consumer<net.minecraft.network.chat.Component> lines,
+            net.minecraft.world.item.TooltipFlag flag) {
+        super.appendHoverText(stack, context, display, lines, flag);
+        lines.accept(net.minecraft.network.chat.Component.translatable("tooltip.voxelvelo.bike_use"));
+    }
+
 	@Override
 	public InteractionResult use(Level level, Player player, InteractionHand hand) {
 		ItemStack stack = player.getItemInHand(hand);
@@ -45,6 +54,7 @@ public class BikeItem extends Item {
 		}
 		Vec3 location = hit.getLocation();
 		bike.setBikeType(this.bikeType);
+        bike.loadFromItem(stack);
 		bike.setInitialPos(location.x, location.y, location.z);
 		bike.setYRot(player.getYRot());
 		if (level instanceof ServerLevel serverLevel) {
@@ -55,7 +65,7 @@ public class BikeItem extends Item {
 		}
 
 		if (!level.isClientSide()) {
-			level.addFreshEntity(bike);
+			if (!level.addFreshEntity(bike)) return InteractionResult.FAIL;
 			level.gameEvent(player, GameEvent.ENTITY_PLACE, location);
 			stack.consume(1, player);
 		}

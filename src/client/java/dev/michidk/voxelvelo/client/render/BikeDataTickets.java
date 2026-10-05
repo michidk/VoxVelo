@@ -6,6 +6,8 @@ import dev.michidk.voxelvelo.bike.BikeType;
 
 /** Per-frame bike state copied into the GeckoLib render state so models, controllers and bone code can read it. */
 public final class BikeDataTickets {
+    public static final DataTicket<Integer> FRAME_COLOR = DataTicket.create("voxelvelo_frame_color", new TypeToken<>() {});
+    public static final DataTicket<Integer> COMPONENTS = DataTicket.create("voxelvelo_components", new TypeToken<>() {});
 	public static final DataTicket<BikeType> BIKE_TYPE = DataTicket.create("voxelvelo_bike_type", new TypeToken<>() {});
 	/** Accumulated wheel rotation in radians. */
 	public static final DataTicket<Float> WHEEL_ANGLE = DataTicket.create("voxelvelo_wheel_angle", new TypeToken<>() {});

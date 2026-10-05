@@ -24,12 +24,15 @@ public class BikeGeoRenderer extends GeoEntityRenderer<BikeEntity, EntityRenderS
 	public BikeGeoRenderer(EntityRendererProvider.Context context) {
 		super(context, new BikeGeoModel());
 		this.shadowRadius = 0.5F;
+        withRenderLayer(new BikeFrameTintLayer(this));
 		this.withScale(BikeRig.MODEL_SCALE);
 	}
 
 	@Override
 	public void extractRenderState(BikeEntity bike, EntityRenderState state, float partialTick) {
 		super.extractRenderState(bike, state, partialTick);
+		state.addGeckolibData(BikeDataTickets.FRAME_COLOR, bike.getFrameColor());
+        state.addGeckolibData(BikeDataTickets.COMPONENTS, bike.getComponentMask());
 		float steer = bike.getSteering() * (float) BikePhysics.maxSteerAngle(bike.getSpeed(), bike.getBikeType().params());
 		state.addGeckolibData(BikeDataTickets.BIKE_TYPE, bike.getBikeType());
 		state.addGeckolibData(BikeDataTickets.WHEEL_ANGLE, bike.getWheelAngle(partialTick));
@@ -60,7 +63,15 @@ public class BikeGeoRenderer extends GeoEntityRenderer<BikeEntity, EntityRenderS
 
 	@Override
 	public void adjustModelBonesForRender(RenderPassInfo<EntityRenderState> info, BoneSnapshots snapshots) {
-		float wheel = info.getOrDefaultGeckolibData(BikeDataTickets.WHEEL_ANGLE, 0.0F);
+		int parts = info.getOrDefaultGeckolibData(BikeDataTickets.COMPONENTS, 31);
+        String[] names = {"front_wheel", "rear_wheel", "handlebar", "saddle", "crank"};
+        for (int i = 0; i < names.length; i++) {
+            boolean missing = (parts & (1 << i)) == 0;
+            snapshots.ifPresent(names[i], bone -> { bone.skipRender(missing); bone.skipChildrenRender(missing); });
+        }
+        snapshots.ifPresent("left_pedal", bone -> bone.skipRender((parts & 16) == 0));
+        snapshots.ifPresent("right_pedal", bone -> bone.skipRender((parts & 16) == 0));
+        float wheel = info.getOrDefaultGeckolibData(BikeDataTickets.WHEEL_ANGLE, 0.0F);
 		float steer = info.getOrDefaultGeckolibData(BikeDataTickets.STEER_ANGLE, 0.0F);
 		snapshots.ifPresent("rear_wheel", bone -> bone.setRotX(-wheel));
 		snapshots.ifPresent("front_wheel", bone -> bone.setRotX(-wheel));
@@ -69,6 +80,13 @@ public class BikeGeoRenderer extends GeoEntityRenderer<BikeEntity, EntityRenderS
 		// the mirror image of model-space ones (wheel and plain steering both need a negated angle), hence -tilt, -steer.
 		float tilt = (float) type.rig.steeringTilt();
 		Vector3f euler = new Quaternionf().rotationX(-tilt).rotateY(-steer).rotateX(tilt).getEulerAnglesZYX(new Vector3f());
-		snapshots.ifPresent("front_assembly", bone -> bone.setRotation(euler.x, euler.y, euler.z));
+		if (snapshots.get("front_assembly").isPresent()) {
+            snapshots.ifPresent("front_assembly", bone -> bone.setRotation(euler.x, euler.y, euler.z));
+        } else {
+            // Final rigs may use a fork parent containing the wheel and handlebar.
+            snapshots.ifPresent("fork", bone -> bone.setRotation(euler.x, euler.y, euler.z));
+            if (info.model().getBone("handlebar").map(bone -> bone.parent() == null || !bone.parent().name().equals("fork")).orElse(false))
+                snapshots.ifPresent("handlebar", bone -> bone.setRotation(euler.x, euler.y, euler.z));
+        }
 	}
 }

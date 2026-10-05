@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "equipment",
+  "ingredients": [
+    "voxelvelo:bare_wheel",
+    "voxelvelo:tire"
+  ],
+  "result": {
+    "id": "voxelvelo:bike_wheel",
+    "count": 1
+  }
+}

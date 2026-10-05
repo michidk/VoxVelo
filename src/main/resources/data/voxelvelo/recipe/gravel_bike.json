@@ -1,18 +1,20 @@
 {
-	"type": "minecraft:crafting_shaped",
-	"category": "misc",
-	"key": {
-		"I": "minecraft:iron_ingot",
-		"L": "minecraft:leather",
-		"X": "minecraft:gravel"
-	},
-	"pattern": [
-		" L ",
-		"IXI",
-		"I I"
-	],
-	"result": {
-		"id": "voxelvelo:gravel_bike",
-		"count": 1
-	}
+  "type": "voxelvelo:bike_assembly",
+  "category": "equipment",
+  "pattern": [
+    " H ",
+    "WFW",
+    " SP"
+  ],
+  "key": {
+    "H": "voxelvelo:drop_handlebars",
+    "W": "voxelvelo:bike_wheel",
+    "F": "voxelvelo:gravel_bike_frame",
+    "S": "voxelvelo:bike_saddle",
+    "P": "voxelvelo:pedal_set"
+  },
+  "result": {
+    "id": "voxelvelo:gravel_bike",
+    "count": 1
+  }
 }

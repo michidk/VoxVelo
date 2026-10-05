@@ -10,6 +10,13 @@ import com.geckolib.util.GeckoLibUtil;
 import dev.michidk.voxelvelo.registry.ModItems;
 import dev.michidk.voxelvelo.terrain.LevelGround;
 import dev.michidk.voxelvelo.terrain.TerrainSlope;
+import dev.michidk.voxelvelo.inventory.BikeMaintenanceMenu;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.core.NonNullList;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.component.ItemContainerContents;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -91,6 +98,17 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 	private static final EntityDataAccessor<Boolean> DATA_PEDALING = SynchedEntityData.defineId(BikeEntity.class, EntityDataSerializers.BOOLEAN);
 	private static final EntityDataAccessor<Integer> DATA_SURFACE = SynchedEntityData.defineId(BikeEntity.class, EntityDataSerializers.INT);
 
+    private static final EntityDataAccessor<Integer> DATA_COLOR = SynchedEntityData.defineId(BikeEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_PARTS = SynchedEntityData.defineId(BikeEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_TIRES = SynchedEntityData.defineId(BikeEntity.class, EntityDataSerializers.INT);
+    private final SimpleContainer components = new SimpleContainer(BikeComponents.COUNT) {
+        @Override public void setChanged() {
+            super.setChanged();
+            BikeEntity.this.syncComponents();
+        }
+    };
+    private UUID mechanic;
+
 	// Server-only simulation state.
 	private BikeControlState control = BikeControlState.NEUTRAL;
 	private int lastControlTick = Integer.MIN_VALUE / 2;
@@ -116,6 +134,7 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 
 	public BikeEntity(EntityType<? extends BikeEntity> type, Level level) {
 		super(type, level);
+        initializeComponents();
 	}
 
 	public void setInitialPos(double x, double y, double z) {
@@ -128,7 +147,10 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 	@Override
 	protected void defineSynchedData(SynchedEntityData.Builder entityData) {
 		super.defineSynchedData(entityData);
-		entityData.define(DATA_TYPE, BikeType.GRAVEL.ordinal());
+		entityData.define(DATA_COLOR, BikeComponents.DEFAULT_COLOR);
+        entityData.define(DATA_PARTS, 31);
+        entityData.define(DATA_TIRES, 100 | (100 << 8));
+        entityData.define(DATA_TYPE, BikeType.GRAVEL.ordinal());
 		entityData.define(DATA_SPEED, 0.0F);
 		entityData.define(DATA_STEERING, 0.0F);
 		entityData.define(DATA_BRAKE, 0.0F);
@@ -144,7 +166,89 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 
 	public void setBikeType(BikeType type) {
 		this.entityData.set(DATA_TYPE, type.ordinal());
+        initializeComponents();
 	}
+
+    public SimpleContainer components() { return components; }
+    public int getFrameColor() { return entityData.get(DATA_COLOR); }
+    public int getComponentMask() { return entityData.get(DATA_PARTS); }
+    public boolean hasPart(int slot) { return (getComponentMask() & (1 << slot)) != 0; }
+    public int tirePercent(int slot) { return (entityData.get(DATA_TIRES) >> (slot * 8)) & 255; }
+    public boolean canRide() { return (getComponentMask() & 15) == 15 && mechanic == null; }
+
+    private void initializeComponents() {
+        for (int i = 0; i < BikeComponents.COUNT; i++) components.setItem(i, new ItemStack(BikeComponents.expected(getBikeType(), i)));
+        syncComponents();
+    }
+
+    public void syncComponents() {
+        if (level().isClientSide()) return;
+        int mask = 0;
+        for (int i = 0; i < BikeComponents.COUNT; i++) if (!components.getItem(i).isEmpty()) mask |= 1 << i;
+        entityData.set(DATA_PARTS, mask);
+        entityData.set(DATA_TIRES, (int) Math.ceil(BikeComponents.tire(components.getItem(0)) * 100)
+                | ((int) Math.ceil(BikeComponents.tire(components.getItem(1)) * 100) << 8));
+        if ((mask & 15) != 15) ejectPassengers();
+    }
+
+    public void loadFromItem(ItemStack stack) {
+        entityData.set(DATA_COLOR, BikeComponents.color(stack));
+        var contents = stack.get(DataComponents.CONTAINER);
+        if (contents != null) {
+            NonNullList<ItemStack> items = NonNullList.withSize(BikeComponents.COUNT, ItemStack.EMPTY);
+            contents.copyInto(items);
+            for (int i = 0; i < items.size(); i++) components.setItem(i,
+                    BikeComponents.accepts(getBikeType(), i, items.get(i)) ? items.get(i).copy() : ItemStack.EMPTY);
+        }
+        syncComponents();
+    }
+
+    public ItemStack toItem() {
+        ItemStack stack = new ItemStack(ModItems.forType(getBikeType()));
+        BikeComponents.color(stack, getFrameColor());
+        stack.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(components.getItems()));
+        return stack;
+    }
+
+    public boolean isMechanic(Player player) { return player.getUUID().equals(mechanic); }
+    public void releaseMechanic(Player player) { if (isMechanic(player)) mechanic = null; }
+    public boolean hasWrench(Player player) {
+        return player.getMainHandItem().is(ModItems.BIKE_WRENCH) || player.getOffhandItem().is(ModItems.BIKE_WRENCH);
+    }
+    public void useWrench(Player player) {
+        InteractionHand hand = player.getMainHandItem().is(ModItems.BIKE_WRENCH) ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
+        player.getItemInHand(hand).hurtAndBreak(1, player, hand);
+    }
+
+    public void disassemble(Player player) {
+        if (level().isClientSide() || isRemoved() || !hasWrench(player) || !getPassengers().isEmpty()
+                || mechanic != null || distanceToSqr(player) > 64) return;
+        ItemStack frame = new ItemStack(ModItems.frameFor(getBikeType()));
+        BikeComponents.color(frame, getFrameColor());
+        List<ItemStack> drops = new ArrayList<>();
+        drops.add(frame);
+        for (int i = 0; i < BikeComponents.COUNT; i++) drops.add(components.getItem(i).copy());
+        discard(); // Remove before returning anything, so another interaction cannot duplicate components.
+        components.clearContent();
+        for (ItemStack drop : drops) if (!drop.isEmpty()) {
+            if (!player.getInventory().add(drop)) player.spawnAtLocation((ServerLevel) level(), drop);
+        }
+        useWrench(player);
+    }
+
+    private void wearTires(double amount) {
+        if (!BikeServerConfig.INSTANCE.enableTireDamage || amount <= 0) return;
+        for (int slot = 0; slot < 2; slot++) {
+            ItemStack wheel = components.getItem(slot);
+            double before = BikeComponents.tire(wheel);
+            if (wheel.isEmpty() || before <= 0) continue;
+            double after = Math.max(0, before - amount * (slot == 0 ? 1.0 : 1.05));
+            BikeComponents.tire(wheel, after);
+            if (after == 0 && getRider() != null) getRider().sendSystemMessage(
+                    Component.translatable(slot == 0 ? "message.voxelvelo.front_burst" : "message.voxelvelo.rear_burst"));
+        }
+        syncComponents();
+    }
 
 	// ---------------------------------------------------------------- simulation
 
@@ -171,7 +275,7 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 		if (this.getRider() == null || this.tickCount - this.lastControlTick > CONTROL_TIMEOUT_TICKS) {
 			return 0.0;
 		}
-		return this.control.propulsion();
+		return hasPart(BikeComponents.PEDALS) && canRide() ? this.control.propulsion() : 0.0;
 	}
 
 	/** Called on the server when the rider client sends a control packet. Values are validated here. */
@@ -203,12 +307,13 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 		if (this.tickCount - this.lastControlTick > CONTROL_TIMEOUT_TICKS) {
 			return new BikeControlState(0.0, 0.0, 0.0, this.control.gear());
 		}
-		return this.control;
+		return new BikeControlState(hasPart(BikeComponents.PEDALS) ? this.control.propulsion() : 0, this.control.steering(), this.control.brake(), this.control.gear());
 	}
 
 	private void serverTick() {
 		BikeControlState input = this.effectiveControl();
 		Player rider = this.getRider();
+        if (!canRide()) { ejectPassengers(); input = new BikeControlState(0, 0, 1, input.gear()); }
 		BikePhysics.Params params = rider == null
 			? this.getBikeType().params()
 			: RiderSettings.apply(this.getBikeType().params(), RiderSettings.get(rider.getUUID()));
@@ -239,6 +344,9 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 		BlockState below = this.level().getBlockState(BlockPos.containing(this.getX(), this.getY() - 0.2, this.getZ()));
 		BikeSurface surface = BikeSurface.classify(below, this.isInWater());
 		this.speed = BikePhysics.stepSpeed(this.speed, DT, input.propulsion(), input.brake(), surface, this.gradient, params);
+        int burst = (hasPart(0) && tirePercent(0) == 0 ? 1 : 0) + (hasPart(1) && tirePercent(1) == 0 ? 1 : 0);
+        if (burst > 0) this.speed = Math.min(3.0 / burst, this.speed * Math.pow(0.985, burst));
+        if (!hasPart(0) || !hasPart(1)) this.speed = 0;
 
 		double yawRate = BikePhysics.yawRate(this.speed, this.steering, params);
 		this.setYRot(this.getYRot() + (float) Math.toDegrees(yawRate * DT));
@@ -287,6 +395,8 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 		// Gradient comes from how the bike actually moved through the terrain, smoothed so single
 		// stair steps do not cause spikes.
 		double moved = Math.hypot(this.getX() - startX, this.getZ() - startZ);
+        if (rider != null && onGround()) wearTires(moved * BikeServerConfig.INSTANCE.tireDamageRate
+                * (1 + surface.looseness * (BikeServerConfig.INSTANCE.roughTerrainTireDamageMultiplier - 1)));
 		if (probed) {
 			// The terrain probe above already set the gradient.
 		} else if (this.onGround() && moved > 0.02) {
@@ -306,6 +416,7 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 	}
 
 	private void handleImpact(double impact) {
+        if (impact > CRASH_DAMAGE_IMPACT) wearTires(BikeServerConfig.INSTANCE.collisionTireDamage * Math.min(2, impact / 12));
 		if (impact > CRASH_SOUND_IMPACT) {
 			this.playSound(SoundEvents.PLAYER_ATTACK_KNOCKBACK, (float) Math.min(1.0, impact / 12.0), 0.8F);
 		}
@@ -544,11 +655,19 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 	 */
 	@Override
 	public boolean causeFallDamage(double fallDistance, float damageModifier, DamageSource damageSource) {
+        if (!level().isClientSide() && fallDistance > 3)
+            wearTires(BikeServerConfig.INSTANCE.collisionTireDamage * Math.min(2, (fallDistance - 3) / 4));
 		BikeType type = this.getBikeType();
 		double effective = Math.max(0.0, fallDistance - type.fallAbsorbBlocks());
 		this.propagateFallToPassengers(effective, damageModifier * type.fallDamageMultiplier(), damageSource);
 		return false;
 	}
+
+    /** Bikes have no whole-vehicle durability; retrieve with sneak + empty hand. */
+    @Override
+    public boolean hurtServer(ServerLevel level, DamageSource source, float amount) {
+        return false;
+    }
 
 	@Override
 	protected Item getDropItem() {
@@ -557,23 +676,56 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 
 	@Override
 	public ItemStack getPickResult() {
-		return new ItemStack(ModItems.forType(this.getBikeType()));
+		return toItem();
 	}
 
 	@Override
 	protected void addAdditionalSaveData(ValueOutput output) {
 		output.putString("bike_type", this.getBikeType().id);
+        output.putInt("frame_color", getFrameColor());
+        output.store("components", ItemContainerContents.CODEC, ItemContainerContents.fromItems(components.getItems()));
 	}
 
 	@Override
 	protected void readAdditionalSaveData(ValueInput input) {
 		this.setBikeType(BikeType.byId(input.getStringOr("bike_type", BikeType.GRAVEL.id)));
+        entityData.set(DATA_COLOR, input.getIntOr("frame_color", BikeComponents.DEFAULT_COLOR) & 0xFFFFFF);
+        input.read("components", ItemContainerContents.CODEC).ifPresent(contents -> {
+            ItemStack stack = new ItemStack(ModItems.forType(getBikeType()));
+            BikeComponents.color(stack, getFrameColor());
+            stack.set(DataComponents.CONTAINER, contents);
+            loadFromItem(stack);
+        });
 	}
 
 	// ---------------------------------------------------------------- riding
 
 	@Override
 	public InteractionResult interact(Player player, InteractionHand hand, Vec3 location) {
+        if (player.getItemInHand(hand).is(ModItems.BIKE_WRENCH)) {
+            if (!level().isClientSide() && getPassengers().isEmpty() && mechanic == null && !isRemoved()) {
+                if (player.isSecondaryUseActive()) disassemble(player);
+                else {
+                    mechanic = player.getUUID();
+                    if (player.openMenu(new SimpleMenuProvider((id, inventory, owner) ->
+                            new BikeMaintenanceMenu(id, inventory, this), Component.translatable(
+                            "item.voxelvelo." + (getBikeType() == BikeType.ROAD ? "road" : getBikeType().id) + "_bike"))).isEmpty()) mechanic = null;
+                }
+            }
+            return InteractionResult.SUCCESS;
+        }
+        if (player.isSecondaryUseActive() && player.getItemInHand(hand).isEmpty()) {
+            if (!level().isClientSide() && getPassengers().isEmpty() && mechanic == null && !isRemoved()) {
+                ItemStack stack = toItem();
+                discard();
+                if (!player.getInventory().add(stack)) player.spawnAtLocation((ServerLevel) level(), stack);
+            }
+            return InteractionResult.SUCCESS;
+        }
+        if (!canRide()) {
+            if (!level().isClientSide()) player.sendOverlayMessage(Component.translatable("message.voxelvelo.missing_parts"));
+            return InteractionResult.FAIL;
+        }
 		InteractionResult result = super.interact(player, hand, location);
 		if (result != InteractionResult.PASS) {
 			return result;
@@ -581,7 +733,9 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 		if (player.isSecondaryUseActive() || !this.canAddPassenger(player)) {
 			return InteractionResult.PASS;
 		}
-		if (!this.level().isClientSide() && !player.startRiding(this)) {
+		if (!this.level().isClientSide() && !hasPart(BikeComponents.PEDALS))
+            player.sendOverlayMessage(Component.translatable("message.voxelvelo.no_pedals"));
+        if (!this.level().isClientSide() && !player.startRiding(this)) {
 			return InteractionResult.PASS;
 		}
 		return InteractionResult.SUCCESS;
@@ -589,7 +743,7 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 
 	@Override
 	protected boolean canAddPassenger(Entity passenger) {
-		return this.getPassengers().isEmpty() && !this.isEyeInFluid(FluidTags.WATER);
+		return canRide() && this.getPassengers().isEmpty() && !this.isEyeInFluid(FluidTags.WATER);
 	}
 
 	@Override

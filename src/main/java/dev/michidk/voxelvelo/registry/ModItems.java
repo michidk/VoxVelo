@@ -3,6 +3,7 @@ package dev.michidk.voxelvelo.registry;
 import dev.michidk.voxelvelo.VoxelVelo;
 import dev.michidk.voxelvelo.bike.BikeType;
 import dev.michidk.voxelvelo.item.BikeItem;
+import dev.michidk.voxelvelo.item.BikePartItem;
 import java.util.EnumMap;
 import java.util.Map;
 import net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents;
@@ -20,6 +21,20 @@ public final class ModItems {
 	public static final Item GRAVEL_BIKE = registerBike(BikeType.GRAVEL, "gravel_bike");
 	public static final Item MOUNTAIN_BIKE = registerBike(BikeType.MOUNTAIN, "mountain_bike");
 
+	public static final Item TIRE = registerPart("tire", false);
+	public static final Item BARE_WHEEL = registerPart("bare_wheel", false);
+	public static final Item BIKE_WHEEL = registerPart("bike_wheel", true);
+	public static final Item MOUNTAIN_BIKE_FRAME = registerPart("mountain_bike_frame", false);
+	public static final Item GRAVEL_BIKE_FRAME = registerPart("gravel_bike_frame", false);
+	public static final Item RACE_BIKE_FRAME = registerPart("race_bike_frame", false);
+	public static final Item FLAT_HANDLEBARS = registerPart("flat_handlebars", false);
+	public static final Item DROP_HANDLEBARS = registerPart("drop_handlebars", false);
+	public static final Item BIKE_SADDLE = registerPart("bike_saddle", false);
+	public static final Item PEDAL_SET = registerPart("pedal_set", false);
+	public static final Item BIKE_WRENCH = registerPart("bike_wrench", false);
+
+	public static final Item RACE_BIKE = registerBike(BikeType.ROAD, "race_bike");
+
 	private ModItems() {
 	}
 
@@ -30,13 +45,43 @@ public final class ModItems {
 		return item;
 	}
 
+    private static Item registerPart(String name, boolean wheel) {
+        ResourceKey<Item> key = ResourceKey.create(Registries.ITEM, VoxelVelo.id(name));
+        Item.Properties properties = new Item.Properties().setId(key);
+        if (name.equals("bike_wrench")) properties.durability(256);
+        return Registry.register(BuiltInRegistries.ITEM, key, new BikePartItem(properties, wheel));
+    }
+
+    public static Item frameFor(BikeType type) {
+        return switch (type) {
+            case MOUNTAIN -> MOUNTAIN_BIKE_FRAME;
+            case GRAVEL -> GRAVEL_BIKE_FRAME;
+            case ROAD -> RACE_BIKE_FRAME;
+        };
+    }
+
+    public static boolean isFrame(Item item) {
+        return item == MOUNTAIN_BIKE_FRAME || item == GRAVEL_BIKE_FRAME || item == RACE_BIKE_FRAME;
+    }
+
 	public static Item forType(BikeType type) {
 		return BIKES.get(type);
 	}
 
 	public static void register() {
 		CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.TOOLS_AND_UTILITIES).register(output -> {
-			output.accept(ROAD_BIKE);
+			output.accept(TIRE);
+			output.accept(BARE_WHEEL);
+			output.accept(BIKE_WHEEL);
+			output.accept(MOUNTAIN_BIKE_FRAME);
+			output.accept(GRAVEL_BIKE_FRAME);
+			output.accept(RACE_BIKE_FRAME);
+			output.accept(FLAT_HANDLEBARS);
+			output.accept(DROP_HANDLEBARS);
+			output.accept(BIKE_SADDLE);
+			output.accept(PEDAL_SET);
+			output.accept(BIKE_WRENCH);
+			output.accept(RACE_BIKE);
 			output.accept(GRAVEL_BIKE);
 			output.accept(MOUNTAIN_BIKE);
 		});

@@ -43,7 +43,7 @@ public final class BikeNetworking {
 		ServerPlayNetworking.registerGlobalReceiver(RiderVitalsPayload.TYPE, (payload, context) -> {
 			if (payload.isSupported()) {
 				RiderVitals.set(context.player().getUUID(),
-					RiderVitals.sanitize(payload.flags(), payload.heartRate(), context.server().getTickCount()));
+					RiderVitals.sanitize(payload.flags(), payload.heartRate(), payload.cadence(), context.server().getTickCount()));
 			}
 		});
 
@@ -58,7 +58,7 @@ public final class BikeNetworking {
 		});
 	}
 
-	/** Sends every player the watts and heart rate of the riders in their dimension, as far as those riders share. */
+	/** Sends every player the current bike riders, respecting watts and heart-rate sharing. */
 	private static void broadcastStats(MinecraftServer server) {
 		List<ServerPlayer> players = server.getPlayerList().getPlayers();
 		if (players.isEmpty()) {
@@ -66,37 +66,27 @@ public final class BikeNetworking {
 		}
 		int tick = server.getTickCount();
 		List<RiderStatsPayload.Entry> entries = new ArrayList<>();
-		List<ServerPlayer> entryPlayers = new ArrayList<>();
 		for (ServerPlayer player : players) {
+			if (!(player.getVehicle() instanceof BikeEntity bike) || bike.getRider() != player) {
+				continue;
+			}
 			RiderVitals.Vitals vitals = RiderVitals.fresh(player.getUUID(), tick);
 			// Without any vitals yet the rider is assumed to share watts (the mod is installed, they are riding).
 			boolean shareWatts = vitals == null || vitals.shareWatts();
 			int watts = RiderStatsPayload.NO_WATTS;
-			if (shareWatts && player.getVehicle() instanceof BikeEntity bike && bike.getRider() == player) {
+			if (shareWatts) {
 				watts = (int) Math.round(Math.min(2000.0, Math.max(0.0, bike.getAppliedPower())));
 			}
 			int heartRate = vitals != null && vitals.shareHeartRate() ? vitals.heartRate() : RiderStatsPayload.NO_HEART_RATE;
-			if (watts != RiderStatsPayload.NO_WATTS || heartRate != RiderStatsPayload.NO_HEART_RATE) {
-				entries.add(new RiderStatsPayload.Entry(player.getUUID(), watts, heartRate));
-				entryPlayers.add(player);
-			}
-		}
-		if (entries.isEmpty()) {
-			return;
+			int cadence = vitals != null && vitals.cadence() >= 0 ? vitals.cadence()
+				: bike.isPedaling() ? Math.round(bike.getCadenceRevsPerSecond() * 60.0F) : 0;
+			entries.add(new RiderStatsPayload.Entry(player.getUUID(), watts, heartRate, bike.getSpeed() * 3.6F, cadence));
 		}
 		for (ServerPlayer receiver : players) {
 			if (!ServerPlayNetworking.canSend(receiver, RiderStatsPayload.TYPE)) {
 				continue;
 			}
-			List<RiderStatsPayload.Entry> visible = new ArrayList<>();
-			for (int i = 0; i < entries.size(); i++) {
-				if (entryPlayers.get(i).level() == receiver.level()) {
-					visible.add(entries.get(i));
-				}
-			}
-			if (!visible.isEmpty()) {
-				ServerPlayNetworking.send(receiver, RiderStatsPayload.of(visible));
-			}
+			ServerPlayNetworking.send(receiver, RiderStatsPayload.of(entries));
 		}
 	}
 }

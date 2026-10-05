@@ -9,19 +9,19 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
 /**
- * Server to client: the watts and heart rate of the riders the receiver may see. Entries only carry what the
+ * Server to client: the ride metrics of the riders the receiver may see. Entries only carry what the
  * rider chose to share; a value the rider keeps private is sent as {@link #NO_WATTS} or {@link #NO_HEART_RATE}.
  *
- * <p>Wire format (version 1): u8 version, varint count, then per entry a UUID, u16 watts and u8 heart rate.
+ * <p>Wire format (version 2): u8 version, varint count, then per entry a UUID, u16 watts, u8 heart rate, float speed in km/h and u16 cadence rpm.
  * At most {@link #MAX_ENTRIES} entries are read; an unknown version is consumed and ignored.
  */
 public record RiderStatsPayload(int version, List<Entry> entries) implements CustomPacketPayload {
-	public static final int PROTOCOL_VERSION = 1;
+	public static final int PROTOCOL_VERSION = 2;
 	public static final int NO_WATTS = 0xFFFF;
 	public static final int NO_HEART_RATE = 0;
 	public static final int MAX_ENTRIES = 64;
 
-	public record Entry(UUID player, int watts, int heartRate) {}
+	public record Entry(UUID player, int watts, int heartRate, float speedKmh, int cadence) {}
 
 	public static final CustomPacketPayload.Type<RiderStatsPayload> TYPE = new CustomPacketPayload.Type<>(VoxelVelo.id("rider_stats"));
 	public static final StreamCodec<RegistryFriendlyByteBuf, RiderStatsPayload> CODEC = CustomPacketPayload.codec(RiderStatsPayload::write, RiderStatsPayload::read);
@@ -41,6 +41,8 @@ public record RiderStatsPayload(int version, List<Entry> entries) implements Cus
 			buf.writeUUID(entry.player());
 			buf.writeShort(entry.watts());
 			buf.writeByte(entry.heartRate());
+			buf.writeFloat(entry.speedKmh());
+			buf.writeShort(entry.cadence());
 		}
 	}
 
@@ -53,7 +55,7 @@ public record RiderStatsPayload(int version, List<Entry> entries) implements Cus
 		int count = Math.min(buf.readVarInt(), MAX_ENTRIES);
 		List<Entry> entries = new ArrayList<>(count);
 		for (int i = 0; i < count; i++) {
-			entries.add(new Entry(buf.readUUID(), buf.readUnsignedShort(), buf.readUnsignedByte()));
+			entries.add(new Entry(buf.readUUID(), buf.readUnsignedShort(), buf.readUnsignedByte(), buf.readFloat(), buf.readUnsignedShort()));
 		}
 		return new RiderStatsPayload(version, entries);
 	}

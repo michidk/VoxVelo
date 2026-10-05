@@ -20,12 +20,12 @@ public class BikeGeoModel extends GeoModel<BikeEntity> {
 
 	@Override
 	public Identifier getModelResource(GeoRenderState renderState) {
-		return VoxelVelo.id("entity/" + typeOf(renderState).id + "_bike");
+		return VoxelVelo.id("entity/bikes/" + (typeOf(renderState) == BikeType.ROAD ? "race" : typeOf(renderState).id) + "_bike");
 	}
 
 	@Override
 	public Identifier getTextureResource(GeoRenderState renderState) {
-		return VoxelVelo.id("textures/entity/bicycle_" + typeOf(renderState).id + ".png");
+		return VoxelVelo.id("textures/entity/bikes/" + (typeOf(renderState) == BikeType.ROAD ? "race" : typeOf(renderState).id) + "_bike.png");
 	}
 
 	@Override

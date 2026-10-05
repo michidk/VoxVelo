@@ -105,7 +105,6 @@ At 200 W on flat stone the three cruise at roughly 34, 32 and 28 km/h; on sand 1
   once, a mountain bike rings for a few bounces. Climbing also makes the body settle a little lower. The effect is
   drawn on the client only (a small bob of the whole bike); a true front and rear travel animation would need the
   model split into body and wheels.
-
 ## Keyboard riding
 
 Keyboard riding is a permanent, fully supported mode. Minecraft's movement keys work, plus the arrow keys.
@@ -302,21 +301,24 @@ The pedal phase is read from the same GeckoLib controller that turns the crank, 
 This needs two small client-side mixins (`AvatarRendererMixin`, `HumanoidModelMixin`) because Fabric has no hook
 for posing a player model; they only touch players that are riding a bike.
 
-## Other riders' watts and pulse
+## Rider stats and heart rate
 
-A small overlay in the top-left lists the other riders on the server with their **watts** and **heart rate**,
-strongest first. It is empty (and invisible) when nobody shares. Toggle it with `H` (rebindable, *Toggle Rider
-Stats*) or in the settings (`B` > *Rider & HUD...*).
+The top-left overlay lists current bike riders across the server, including you, with colored **watts**, **speed
+(km/h)**, **cadence (rpm)** and **heart rate**, strongest first. Riders disappear on the next update when they
+dismount. Toggle it with `H` (rebindable, *Toggle Rider Stats*) or in `B` > *Rider & HUD...*. The list fits the
+available screen height and the server sends up to 64 riders.
 
-How it works: your client tells the server your heart rate (from the trainer, if it relays one) and what you share
-(`rider_vitals` packet, protocol v1, sent on change and every 5 s). Twice a second the server sends every player a
-compact list (`rider_stats` packet) of the riders in the same dimension: UUID, the watts the server is actually
-applying to that rider's bike, and their heart rate. Values a rider does not share are simply left out, and a
-pulse the trainer stops sending disappears after about 10 s. The server clamps every value (heart rate 30-250 bpm).
+While riding, the top-right panel displays your trainer's heart rate and a heart that pulses at the reported
+BPM. Missing telemetry shows `-- bpm`. It follows the riding HUD visibility setting.
 
-**Privacy:** heart rate is health data, so sharing is explicit and per kind: *Share My Watts* and *Share My Heart
-Rate* in the settings (both on by default, so a group sees each other out of the box; switch them off to stay
-private). Nothing is sent about players who are not riding or have nothing to share.
+Your client sends trainer cadence and heart rate in the version 2 `rider_vitals` packet. Twice a second the
+server sends a complete version 2 `rider_stats` snapshot with current riders, applied watts, bike speed,
+cadence and shared heart rate. Without trainer cadence, cadence is estimated from the bike. Both server and
+clients need the updated mod for these version 2 packets.
+
+*Share My Watts* and *Share My Heart Rate* still control those values; hidden or unavailable values show
+`--`. Speed and cadence are shown for every current rider. Trainer cadence is clamped to 0?300 rpm and
+heart rate is validated at 30?250 bpm.
 
 ## Configuration
 

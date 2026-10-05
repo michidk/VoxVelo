@@ -1,0 +1,20 @@
+{
+  "type": "voxelvelo:bike_assembly",
+  "category": "equipment",
+  "pattern": [
+    " H ",
+    "WFW",
+    " SP"
+  ],
+  "key": {
+    "H": "voxelvelo:drop_handlebars",
+    "W": "voxelvelo:bike_wheel",
+    "F": "voxelvelo:race_bike_frame",
+    "S": "voxelvelo:bike_saddle",
+    "P": "voxelvelo:pedal_set"
+  },
+  "result": {
+    "id": "voxelvelo:race_bike",
+    "count": 1
+  }
+}

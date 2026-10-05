@@ -36,7 +36,9 @@ public final class VitalsSender {
 		this.sinceSent += CHECK_TICKS;
 		TrainerTelemetry telemetry = this.ctx.ftms.freshTelemetry();
 		int heartRate = telemetry != null && telemetry.heartRate() != null ? telemetry.heartRate() : 0;
-		RiderVitalsPayload now = RiderVitalsPayload.of(this.ctx.config.shareWatts, this.ctx.config.shareHeartRate, heartRate);
+		int cadence = telemetry != null && telemetry.cadenceRpm() != null
+			? (int) Math.round(Math.max(0, Math.min(300, telemetry.cadenceRpm()))) : 65535;
+		RiderVitalsPayload now = RiderVitalsPayload.of(this.ctx.config.shareWatts, this.ctx.config.shareHeartRate, heartRate, cadence);
 		if ((!now.equals(this.last) || this.sinceSent >= HEARTBEAT_TICKS) && ClientPlayNetworking.canSend(RiderVitalsPayload.TYPE)) {
 			ClientPlayNetworking.send(now);
 			this.last = now;

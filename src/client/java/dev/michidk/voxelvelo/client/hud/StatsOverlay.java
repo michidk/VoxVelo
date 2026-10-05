@@ -4,7 +4,7 @@ import dev.michidk.voxelvelo.client.ClientContext;
 import dev.michidk.voxelvelo.client.stats.RiderStatsStore;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+import net.minecraft.ChatFormatting;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -14,11 +14,10 @@ import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.network.chat.Component;
 
 /**
- * Top-left list of the other riders and what they share: watts and heart rate. Toggled with a key or in the
- * settings, and empty (so invisible) when nobody is sharing.
+ * Top-left list of current bike riders with power, speed, cadence and shared heart rate. Toggled with a key or in the
+ * settings, and empty (so invisible) when nobody is riding.
  */
 public final class StatsOverlay implements HudElement {
-	private static final int MAX_LINES = 10;
 	private static final int MARGIN = 6;
 	private static final int PADDING = 4;
 	private static final int LINE_HEIGHT = 10;
@@ -36,17 +35,21 @@ public final class StatsOverlay implements HudElement {
 		if (!this.ctx.config.statsOverlayEnabled || mc.player == null || mc.getConnection() == null) {
 			return;
 		}
-		UUID self = mc.player.getUUID();
+
 		List<Component> lines = new ArrayList<>();
 		for (RiderStatsStore.Stats stats : this.ctx.riderStats.fresh()) {
-			if (stats.player().equals(self) || lines.size() >= MAX_LINES) {
+			if (lines.size() >= Math.min(64, (graphics.guiHeight() / 2 - PADDING * 2) / LINE_HEIGHT)) {
 				continue;
 			}
 			PlayerInfo info = mc.getConnection().getPlayerInfo(stats.player());
 			String name = info == null ? "?" : info.getProfile().name();
 			String watts = stats.watts() >= 0 ? stats.watts() + " W" : "-- W";
 			String pulse = stats.heartRate() > 0 ? "♥ " + stats.heartRate() : "♥ --";
-			lines.add(Component.translatable("voxelvelo.stats.line", name, watts, pulse));
+			lines.add(Component.translatable("voxelvelo.stats.line", name,
+				Component.literal(watts).withStyle(ChatFormatting.GOLD),
+				Component.translatable("voxelvelo.hud.speed", String.format("%.1f", stats.speedKmh())).withStyle(ChatFormatting.GREEN),
+				Component.translatable("voxelvelo.hud.cadence", stats.cadence()).withStyle(ChatFormatting.AQUA),
+				Component.literal(pulse).withStyle(ChatFormatting.RED)));
 		}
 		if (lines.isEmpty()) {
 			return;

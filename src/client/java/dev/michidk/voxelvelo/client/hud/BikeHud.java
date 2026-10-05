@@ -49,11 +49,13 @@ public final class BikeHud implements HudElement {
 		long cadence = telemetry != null && telemetry.cadenceRpm() != null
 			? Math.round(telemetry.cadenceRpm())
 			: bike.isPedaling() ? Math.round(bike.getCadenceRevsPerSecond() * 60.0F) : 0;
-		lines.add(Component.translatable("voxelvelo.hud.main", Math.round(power), cadence, String.format("%.1f", bike.getSpeed() * 3.6F)));
-		lines.add(Component.translatable("voxelvelo.hud.terrain", String.format("%+.1f", this.ctx.rideTerrain.slope().orElse(bike.getGradient()) * 100.0), bike.getGear()));
-		if (telemetry != null && telemetry.heartRate() != null) {
-			lines.add(Component.translatable("voxelvelo.hud.heart", telemetry.heartRate()));
-		}
+		lines.add(Component.translatable("voxelvelo.hud.main",
+			Component.translatable("voxelvelo.hud.power", Math.round(power)).withStyle(ChatFormatting.GOLD),
+			Component.translatable("voxelvelo.hud.cadence", cadence).withStyle(ChatFormatting.AQUA),
+			Component.translatable("voxelvelo.hud.speed", String.format("%.1f", bike.getSpeed() * 3.6F)).withStyle(ChatFormatting.GREEN)));
+		lines.add(Component.translatable("voxelvelo.hud.terrain",
+			Component.translatable("voxelvelo.hud.slope", String.format("%+.1f", this.ctx.rideTerrain.slope().orElse(bike.getGradient()) * 100.0))
+				.withStyle(ChatFormatting.YELLOW), bike.getGear()));
 		if (this.ctx.config.hudShowSources) {
 			for (ControlChannel channel : ControlChannel.values()) {
 				lines.add(this.sourceLine(channel));

@@ -2,6 +2,7 @@ package dev.michidk.voxelvelo.client;
 
 import dev.michidk.voxelvelo.VoxelVelo;
 import dev.michidk.voxelvelo.client.hud.BikeHud;
+import dev.michidk.voxelvelo.client.hud.HeartRateHud;
 import dev.michidk.voxelvelo.client.hud.JunctionPrompt;
 import dev.michidk.voxelvelo.client.hud.StatsOverlay;
 import dev.michidk.voxelvelo.network.RiderStatsPayload;
@@ -26,11 +27,14 @@ public class VoxelVeloClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		VoxelVeloKeys.register();
+        net.minecraft.client.gui.screens.MenuScreens.register(dev.michidk.voxelvelo.registry.ModMenus.MAINTENANCE,
+                dev.michidk.voxelvelo.client.ui.BikeMaintenanceScreen::new);
 		EntityRenderers.register(ModEntities.BICYCLE, BikeGeoRenderer::new);
 
 		ClientContext ctx = ClientContext.init();
 		BikeControlSender sender = new BikeControlSender(ctx.inputManager);
 		HudElementRegistry.attachElementAfter(VanillaHudElements.HOTBAR, VoxelVelo.id("bike_hud"), new BikeHud(ctx, sender));
+		HudElementRegistry.attachElementAfter(VanillaHudElements.HOTBAR, VoxelVelo.id("heart_rate_hud"), new HeartRateHud(ctx));
 		HudElementRegistry.attachElementAfter(VanillaHudElements.HOTBAR, VoxelVelo.id("stats_overlay"), new StatsOverlay(ctx));
 		HudElementRegistry.attachElementAfter(VanillaHudElements.HOTBAR, VoxelVelo.id("junction_prompt"), new JunctionPrompt(ctx));
 		ClientPlayNetworking.registerGlobalReceiver(RiderStatsPayload.TYPE, (payload, context) -> {

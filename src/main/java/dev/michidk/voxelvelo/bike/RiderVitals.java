@@ -14,7 +14,7 @@ public final class RiderVitals {
 	public static final int MIN_HEART_RATE = 30;
 	public static final int MAX_HEART_RATE = 250;
 
-	public record Vitals(boolean shareWatts, boolean shareHeartRate, int heartRate, int updatedTick) {}
+	public record Vitals(boolean shareWatts, boolean shareHeartRate, int heartRate, int cadence, int updatedTick) {}
 
 	private static final Map<UUID, Vitals> BY_PLAYER = new ConcurrentHashMap<>();
 
@@ -22,9 +22,9 @@ public final class RiderVitals {
 	}
 
 	/** Turns raw client values into safe ones: unknown flag bits are dropped, implausible heart rates become none. */
-	public static Vitals sanitize(int flags, int heartRate, int tick) {
+	public static Vitals sanitize(int flags, int heartRate, int cadence, int tick) {
 		int hr = heartRate >= MIN_HEART_RATE && heartRate <= MAX_HEART_RATE ? heartRate : 0;
-		return new Vitals((flags & 1) != 0, (flags & 2) != 0, hr, tick);
+		return new Vitals((flags & 1) != 0, (flags & 2) != 0, hr, cadence == 65535 ? -1 : Math.max(0, Math.min(300, cadence)), tick);
 	}
 
 	public static void set(UUID player, Vitals vitals) {
