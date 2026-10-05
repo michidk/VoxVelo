@@ -10,6 +10,12 @@ import net.minecraft.client.Minecraft;
 public interface BikeInputSource {
 	String id();
 
+	/** Whether this source can drive the given control at all (used to filter configuration choices). */
+	boolean supports(ControlChannel channel);
+
+	/** Short name for the UI. */
+	String displayName();
+
 	/** Whether this source is currently usable (e.g. a trainer is connected). The keyboard is always active. */
 	boolean isActive();
 

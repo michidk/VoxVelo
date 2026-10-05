@@ -42,6 +42,11 @@ dependencies {
 	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 	implementation "com.geckolib:geckolib-fabric-${project.minecraft_version}:${project.geckolib_version}"
+
+	// Bluetooth LE for the FTMS trainer. Bundled into the mod jar (it carries native libraries for Windows, Linux and macOS).
+	// NOTE: SimpleBLE is licensed under BUSL-1.1, free for non-commercial use. See README.
+	implementation "org.simpleble:simplejavable:${project.simpleble_version}"
+	include "org.simpleble:simplejavable:${project.simpleble_version}"
 }
 
 processResources {

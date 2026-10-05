@@ -3,9 +3,9 @@
 Rideable, fully multiplayer bicycles for Minecraft (Fabric). Ride with the keyboard, or bring a smart
 trainer (Bluetooth FTMS) and OpenBikeControl steering such as the BikeControl phone app.
 
-> **Status:** Milestones 1 and 2 (multiplayer bicycles, keyboard riding, three bike types, physics, terrain,
-> gradients and collisions) are implemented. FTMS, OpenBikeControl, mixed-input configuration, trainer feedback
-> and the HUD/config UI are planned (see [Roadmap](#roadmap)).
+> **Status:** Milestones 1 to 3 (multiplayer bicycles, keyboard riding, three bike types, physics, terrain,
+> gradients, collisions and FTMS trainer power) are implemented. OpenBikeControl, full mixed-input configuration,
+> trainer feedback and the HUD are planned (see [Roadmap](#roadmap)).
 
 ## What it does
 
@@ -87,12 +87,15 @@ All keys are rebindable under *Controls > VoxelVelo Bicycle*.
 | Hard brake | `Left Alt` |
 | Shift gear up / down | `X` / `Z` |
 | Dismount | `Shift` (vanilla sneak) |
+| Bike settings | `B` |
 
 Holding the pedal key produces 200 W of virtual power.
 
-## Mixed input modes (planned)
+## Mixed input modes
 
-Each control (propulsion, steering, brake, gear) will pick its own source, so these will all work:
+Each control (propulsion, steering, brake, gear) picks its own source (`propulsionSource`, `steeringSource`,
+`brakeSource`, `gearSource` in the config file). So far the keyboard and the FTMS trainer (propulsion only) exist;
+the settings screen exposes propulsion. The combinations the design supports:
 
 ```text
 No hardware:   keyboard propulsion  + keyboard steering
@@ -101,13 +104,36 @@ Full setup:    FTMS propulsion      + OpenBikeControl steering
 Hybrid:        keyboard propulsion  + OpenBikeControl steering
 ```
 
-The composition layer (`BikeInputManager`, `BikeInputSource`, `ControlChannel`) already exists; today only
-the keyboard source is registered.
+The composition layer is `BikeInputManager`. A disconnected propulsion source gives zero power (coasting); for
+steering, brake and gear a disconnected source falls back to the keyboard so the bike stays controllable.
 
-## FTMS trainer support (planned, Milestone 3)
+## FTMS trainer support
 
-Client-side Bluetooth LE behind a `BluetoothBackend` abstraction. Trainer power drives the bike; trainer speed
-is never used as Minecraft speed.
+Any smart trainer or indoor bike that exposes the standard Bluetooth **Fitness Machine Service** works. The
+trainer power becomes the rider power in the same physics the keyboard uses; the speed a trainer reports is
+only shown as telemetry and never moves the bike.
+
+1. Press `B` (rebindable, *Open Bike Settings*) to open the settings.
+2. *Choose Trainer...* > *Scan*, then click your trainer (devices advertising a fitness machine are marked
+   with a star and sorted first).
+3. Set *Propulsion* to *FTMS trainer*. Steering and braking stay on the keyboard.
+
+What is read: instantaneous power, cadence, speed, resistance level and heart rate (when the trainer relays
+one). With *Auto-connect Trainer* on, the mod reconnects to the chosen trainer when you are in a world and
+retries with growing delays (4 s up to 30 s) after a drop, unless you pressed *Disconnect*.
+
+If the trainer disconnects or stops sending for 3 s, its power becomes zero and the bike coasts; you can keep
+riding by switching propulsion back to the keyboard. Mounting a bike while FTMS is selected but not connected
+shows a hint.
+
+Bluetooth uses [SimpleBLE](https://github.com/simpleble/simpleble) (WinRT on Windows, BlueZ on Linux,
+CoreBluetooth on macOS), bundled in the mod jar and loaded only on the client, behind a `BluetoothBackend`
+interface so it can be replaced. **SimpleBLE is licensed under BUSL-1.1: free for non-commercial use, a
+commercial licence is needed otherwise** (see its `LICENSE.md`). Bluetooth being off or missing never affects
+normal riding; the settings screen just says so.
+
+Not verified on real hardware yet: the GATT code was written against the FTMS specification and the parser was
+checked with hand-built payloads, but no trainer has been connected.
 
 ## OpenBikeControl and BikeControl phone steering (planned, Milestone 4)
 
@@ -120,10 +146,11 @@ actions with no BikeControl-specific code.
 The server already measures gradient from real movement and the surface is a central abstraction
 (`BikeSurface`), so uphill/sand can later raise FTMS resistance (optional, configurable, safely clamped).
 
-## Configuration (planned)
+## Configuration
 
-Preferred devices, per-control sources, masses, max speed, HUD, resistance intensity, keyboard virtual power
-and steering sensitivity. Today these are constants in `BikePhysics.Params` and `KeyboardBikeInput`.
+Press `B` for the settings screen: trainer choice, auto-connect, propulsion source, keyboard virtual power
+(50-600 W) and keyboard steering sensitivity. Settings live in `config/voxelvelo-client.json`. Rider and bike
+mass, maximum speed, HUD and trainer-resistance options are planned.
 
 ## Building
 
@@ -155,7 +182,7 @@ src/client  client only: keyboard/input composition, packet sender, GeckoLib ren
 
 1. Multiplayer bicycle (done)
 2. Bicycle behavior polish and balancing
-3. FTMS
+3. FTMS (done)
 4. OpenBikeControl
 5. Mixed input configuration
 6. Trainer feedback

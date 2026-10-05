@@ -1,28 +1,47 @@
 package dev.michidk.voxelvelo.client.input;
 
 import dev.michidk.voxelvelo.bike.BikeControlState;
+import dev.michidk.voxelvelo.client.config.VoxelVeloConfig;
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.List;
-import java.util.Map;
 import net.minecraft.client.Minecraft;
 
 /**
- * Composes the final {@link BikeControlState} from independently selected sources. Each logical
- * control channel names its own source, so e.g. trainer propulsion and keyboard steering can mix.
- * Today only the keyboard exists; other sources register here and are chosen per channel.
+ * Composes the final BikeControlState from independently selected sources. Each logical control
+ * channel names its own source in the config, so e.g. trainer propulsion and keyboard steering mix.
+ *
+ * <p>If the selected source for a channel is disconnected: propulsion falls to zero (the bike coasts),
+ * every other channel falls back to the keyboard so the bike stays steerable and brakeable.
  */
 public final class BikeInputManager {
+	private final VoxelVeloConfig config;
 	private final List<BikeInputSource> sources = new ArrayList<>();
-	private final Map<ControlChannel, BikeInputSource> selection = new EnumMap<>(ControlChannel.class);
-	private final KeyboardBikeInput keyboard = new KeyboardBikeInput();
+	private final KeyboardBikeInput keyboard;
 	private int gear = BikeControlState.DEFAULT_GEAR;
 
-	public BikeInputManager() {
-		this.sources.add(this.keyboard);
-		for (ControlChannel channel : ControlChannel.values()) {
-			this.selection.put(channel, this.keyboard);
+	public BikeInputManager(VoxelVeloConfig config, KeyboardBikeInput keyboard) {
+		this.config = config;
+		this.keyboard = keyboard;
+		this.sources.add(keyboard);
+	}
+
+	public void register(BikeInputSource source) {
+		this.sources.add(source);
+	}
+
+	public List<BikeInputSource> sources() {
+		return this.sources;
+	}
+
+	/** The source currently chosen for a channel, whether or not it is connected. Never null. */
+	public BikeInputSource selected(ControlChannel channel) {
+		String id = this.config.sourceFor(channel);
+		for (BikeInputSource source : this.sources) {
+			if (source.id().equals(id) && source.supports(channel)) {
+				return source;
+			}
 		}
+		return this.keyboard;
 	}
 
 	/** Called when the local player gets on a bike. */
@@ -45,16 +64,17 @@ public final class BikeInputManager {
 			}
 		}
 
-		double propulsion = this.source(ControlChannel.PROPULSION).propulsion().orElse(0.0);
-		double steering = this.source(ControlChannel.STEERING).steering().orElse(0.0);
-		double brake = this.source(ControlChannel.BRAKE).brake().orElse(0.0);
-		this.gear = clampGear(this.gear + this.source(ControlChannel.GEAR).consumeGearShift());
+		BikeInputSource propulsionSource = this.selected(ControlChannel.PROPULSION);
+		double propulsion = propulsionSource.isActive() ? propulsionSource.propulsion().orElse(0.0) : 0.0;
+		double steering = this.active(ControlChannel.STEERING).steering().orElse(0.0);
+		double brake = this.active(ControlChannel.BRAKE).brake().orElse(0.0);
+		this.gear = clampGear(this.gear + this.active(ControlChannel.GEAR).consumeGearShift());
 
 		return new BikeControlState(propulsion, steering, brake, this.gear).sanitized();
 	}
 
-	private BikeInputSource source(ControlChannel channel) {
-		BikeInputSource source = this.selection.get(channel);
+	private BikeInputSource active(ControlChannel channel) {
+		BikeInputSource source = this.selected(channel);
 		return source.isActive() ? source : this.keyboard;
 	}
 

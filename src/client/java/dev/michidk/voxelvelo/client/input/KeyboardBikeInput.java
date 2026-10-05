@@ -1,5 +1,6 @@
 package dev.michidk.voxelvelo.client.input;
 
+import dev.michidk.voxelvelo.client.config.VoxelVeloConfig;
 import java.util.OptionalDouble;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -10,23 +11,34 @@ import net.minecraft.client.Options;
  * virtual rider power that feeds exactly the same physics as real trainer power.
  */
 public final class KeyboardBikeInput implements BikeInputSource {
-	public static final double DEFAULT_VIRTUAL_POWER_WATTS = 200.0;
-	public static final double DEFAULT_STEERING_SENSITIVITY = 1.0;
 	private static final double BRAKE_STRENGTH = 0.6;
 	private static final double STEER_TURN_IN_PER_TICK = 0.3;
 	private static final double STEER_RETURN_PER_TICK = 0.45;
 
-	private double virtualPower = DEFAULT_VIRTUAL_POWER_WATTS;
-	private double steeringSensitivity = DEFAULT_STEERING_SENSITIVITY;
+	private final VoxelVeloConfig config;
 
 	private double propulsion;
 	private double steering;
 	private double brake;
 	private int gearShift;
 
+	public KeyboardBikeInput(VoxelVeloConfig config) {
+		this.config = config;
+	}
+
 	@Override
 	public String id() {
 		return "keyboard";
+	}
+
+	@Override
+	public boolean supports(ControlChannel channel) {
+		return true;
+	}
+
+	@Override
+	public String displayName() {
+		return "Keyboard";
 	}
 
 	@Override
@@ -39,11 +51,11 @@ public final class KeyboardBikeInput implements BikeInputSource {
 		Options options = client.options;
 
 		boolean pedal = options.keyUp.isDown() || VoxelVeloKeys.PEDAL.isDown();
-		this.propulsion = pedal ? this.virtualPower : 0.0;
+		this.propulsion = pedal ? this.config.keyboardVirtualPower : 0.0;
 
 		boolean left = options.keyLeft.isDown() || VoxelVeloKeys.STEER_LEFT.isDown();
 		boolean right = options.keyRight.isDown() || VoxelVeloKeys.STEER_RIGHT.isDown();
-		double target = ((right ? 1.0 : 0.0) - (left ? 1.0 : 0.0)) * this.steeringSensitivity;
+		double target = ((right ? 1.0 : 0.0) - (left ? 1.0 : 0.0)) * this.config.keyboardSteeringSensitivity;
 		target = Math.max(-1.0, Math.min(1.0, target));
 		boolean returning = Math.abs(target) < Math.abs(this.steering) || Math.signum(target) != Math.signum(this.steering);
 		double step = returning ? STEER_RETURN_PER_TICK : STEER_TURN_IN_PER_TICK;

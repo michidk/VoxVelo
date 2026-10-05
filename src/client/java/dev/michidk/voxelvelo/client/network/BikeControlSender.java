@@ -3,10 +3,13 @@ package dev.michidk.voxelvelo.client.network;
 import dev.michidk.voxelvelo.bike.BikeControlState;
 import dev.michidk.voxelvelo.bike.BikeEntity;
 import dev.michidk.voxelvelo.client.input.BikeInputManager;
+import dev.michidk.voxelvelo.client.input.ControlChannel;
+import dev.michidk.voxelvelo.client.input.VoxelVeloKeys;
 import dev.michidk.voxelvelo.network.BikeControlPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 
 /**
@@ -51,6 +54,9 @@ public final class BikeControlSender {
 			this.ticksSinceSend = HEARTBEAT_TICKS;
 			this.lastBikeYaw = bike.getYRot();
 			this.inputManager.onMount(bike.getGear());
+			if (!this.inputManager.selected(ControlChannel.PROPULSION).isActive()) {
+				player.sendOverlayMessage(Component.translatable("voxelvelo.hint.trainer_not_connected", VoxelVeloKeys.OPEN_CONFIG.getTranslatedKeyMessage()));
+			}
 		}
 
 		this.followBikeYaw(player, bike);

@@ -19,6 +19,7 @@ public final class VoxelVeloKeys {
 	public static final KeyMapping STEER_RIGHT = register("key.voxelvelo.steer_right", InputConstants.KEY_RIGHT);
 	public static final KeyMapping SHIFT_UP = register("key.voxelvelo.shift_up", InputConstants.KEY_X);
 	public static final KeyMapping SHIFT_DOWN = register("key.voxelvelo.shift_down", InputConstants.KEY_Z);
+	public static final KeyMapping OPEN_CONFIG = register("key.voxelvelo.open_config", InputConstants.KEY_B);
 
 	private VoxelVeloKeys() {
 	}
