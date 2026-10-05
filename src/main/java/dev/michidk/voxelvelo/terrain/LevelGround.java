@@ -1,4 +1,4 @@
-package dev.michidk.voxelvelo.client.terrain;
+package dev.michidk.voxelvelo.terrain;
 
 import java.util.OptionalDouble;
 import net.minecraft.core.BlockPos;

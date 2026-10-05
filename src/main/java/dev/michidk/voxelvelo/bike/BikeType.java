@@ -5,17 +5,17 @@ package dev.michidk.voxelvelo.bike;
  * is identical for all of them, so tuning a bike never means touching physics code.
  *
  * <ul>
- *   <li><b>Road</b>: light and fast on hard ground, nervous and slow off-road.</li>
- *   <li><b>Gravel</b>: the all-rounder; slightly slower on tarmac, copes well with loose ground.</li>
- *   <li><b>Mountain</b>: heavy and draggy, but grippy, stable and able to roll over blocks.</li>
+ *   <li><b>Road</b>: light and fast on hard ground, nervous and slow off-road; stiff, almost no suspension.</li>
+ *   <li><b>Gravel</b>: the all-rounder; slightly slower on tarmac, copes well with loose ground; some give.</li>
+ *   <li><b>Mountain</b>: heavy and draggy, but grippy, stable and soaks up bumps and landings with long travel.</li>
  * </ul>
  */
 public enum BikeType {
-	ROAD("road", new BikeRig(20.9, 6.075, 3.2, 19.6, -7.75, 6.3, 2.0, 1.5652, 1.1071, 0.3084), 0.5F,
+	ROAD("road", new BikeRig(20.9, 6.075, 3.2, 19.6, -7.75, 6.3, 2.0, 1.5652, 1.1071, 0.3084), 1.0F, 0.15F,
 		new BikePhysics.Params(75.0, 8.5, 26.0, 0.30, 0.98, 2.0, 7.0, 0.4, 1.00, 30.0, 6.0, 8.0, 1.00, 2.30, 0.65)),
-	GRAVEL("gravel", new BikeRig(20.9, 6.075, 3.2, 19.6, -7.75, 6.8, 2.0, 1.5652, 1.1071, 0.3084), 0.6F,
+	GRAVEL("gravel", new BikeRig(20.9, 6.075, 3.2, 19.6, -7.75, 6.8, 2.0, 1.5652, 1.1071, 0.3084), 1.0F, 0.45F,
 		new BikePhysics.Params(75.0, 10.5, 22.0, 0.36, 0.97, 2.2, 8.0, 0.4, 1.05, 35.0, 7.0, 7.0, 1.20, 1.00, 0.95)),
-	MOUNTAIN("mountain", new BikeRig(19.9, 6.075, 4.35, 19.85, -6.9, 7.2, 2.0, 1.5652, 1.1071, 0.2954), 1.0F,
+	MOUNTAIN("mountain", new BikeRig(19.9, 6.075, 4.35, 19.85, -6.9, 7.2, 2.0, 1.5652, 1.1071, 0.2954), 1.0F, 0.90F,
 		new BikePhysics.Params(75.0, 14.0, 17.0, 0.46, 0.94, 2.5, 8.5, 0.4, 1.12, 40.0, 9.0, 6.0, 1.60, 0.85, 1.10));
 
 	public final String id;
@@ -23,13 +23,34 @@ public enum BikeType {
 	public final BikeRig rig;
 	/** How tall a ledge the bike rolls over without stopping, in blocks. */
 	public final float stepHeight;
+	/**
+	 * Suspension travel and softness, 0 (rigid) to 1 (long travel). More suspension means softer landings, smaller
+	 * speed loss on bumps, and a springier, bouncier ride.
+	 */
+	public final float suspension;
 	private final BikePhysics.Params baseParams;
 
-	BikeType(String id, BikeRig rig, float stepHeight, BikePhysics.Params baseParams) {
+	BikeType(String id, BikeRig rig, float stepHeight, float suspension, BikePhysics.Params baseParams) {
 		this.id = id;
 		this.rig = rig;
 		this.stepHeight = stepHeight;
+		this.suspension = suspension;
 		this.baseParams = baseParams;
+	}
+
+	/** Share of the fall damage the rider still takes: a bike always softens a landing, suspension softens it more. */
+	public float fallDamageMultiplier() {
+		return 0.8F - 0.55F * this.suspension;
+	}
+
+	/** Extra blocks of a fall the suspension swallows before the rider notices. */
+	public float fallAbsorbBlocks() {
+		return 1.5F * this.suspension;
+	}
+
+	/** Share of the speed kept when rolling up a ledge taller than a slab: stiff bikes feel every block. */
+	public double bumpSpeedFactor() {
+		return 0.75 + 0.2 * this.suspension;
 	}
 
 	public BikePhysics.Params params() {

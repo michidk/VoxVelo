@@ -8,10 +8,13 @@ import com.geckolib.animation.RawAnimation;
 import com.geckolib.animation.object.PlayState;
 import com.geckolib.util.GeckoLibUtil;
 import dev.michidk.voxelvelo.registry.ModItems;
+import dev.michidk.voxelvelo.terrain.LevelGround;
+import dev.michidk.voxelvelo.terrain.TerrainSlope;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalDouble;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -68,7 +71,11 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 	private static final int SUBMERGED_EJECT_TICKS = 40;
 	private static final double DT = 1.0 / 20.0;
 	/** Largest drop the bike stays glued to the ground over (down slopes, stairs). */
-	private static final double GROUND_SNAP = 0.6;
+	private static final double GROUND_SNAP = 1.0;
+	/** Blocks each way along the heading over which the terrain slope that drives gravity is measured. */
+	private static final int SLOPE_PROBE_BLOCKS = 4;
+	/** Share of the way to the measured slope the bike gradient moves per tick, so single steps do not jerk it. */
+	private static final double SLOPE_SMOOTHING = 0.2;
 	/** Rising more than this in one tick counts as hopping a ledge and costs speed. */
 	private static final double LEDGE_PENALTY_HEIGHT = 0.55;
 	private static final double CRASH_SOUND_IMPACT = 4.0;
@@ -99,6 +106,13 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 	// Client-only animation state, derived from synced data so every client animates identically.
 	private float wheelAngle;
 	private float wheelAngleO;
+	// Client-only suspension spring: the body lags behind sudden vertical movement (steps, landings) and rings out.
+	private double suspensionOffset;
+	private double suspensionOffsetO;
+	private double suspensionVelocity;
+	private double lastY;
+	private double lastVerticalSpeed;
+	private boolean hasLastY;
 
 	public BikeEntity(EntityType<? extends BikeEntity> type, Level level) {
 		super(type, level);
@@ -209,6 +223,19 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 
 		this.steering = BikePhysics.smoothSteering(this.steering, input.steering());
 
+		// Gravity follows the slope under the wheels. It is read from the terrain along the heading, so it also works
+		// at a standstill, over stairs and when rolling downhill, instead of being inferred from how far the bike moved.
+		boolean probed = false;
+		if (this.onGround()) {
+			double headingYaw = Math.toRadians(this.getYRot());
+			OptionalDouble probe = TerrainSlope.measureWindow(new LevelGround(this.level()), this.getX(), this.getZ(),
+				-Math.sin(headingYaw), Math.cos(headingYaw), this.getY(), SLOPE_PROBE_BLOCKS);
+			if (probe.isPresent()) {
+				this.gradient += (Mth.clamp(probe.getAsDouble(), -0.6, 0.6) - this.gradient) * SLOPE_SMOOTHING;
+				probed = true;
+			}
+		}
+
 		BlockState below = this.level().getBlockState(BlockPos.containing(this.getX(), this.getY() - 0.2, this.getZ()));
 		BikeSurface surface = BikeSurface.classify(below, this.isInWater());
 		this.speed = BikePhysics.stepSpeed(this.speed, DT, input.propulsion(), input.brake(), surface, this.gradient, params);
@@ -245,7 +272,7 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 
 		// Hopping up a tall ledge (mountain bike) is not free.
 		if (this.onGround() && this.getY() - startY > LEDGE_PENALTY_HEIGHT) {
-			this.speed *= 0.7;
+			this.speed *= this.getBikeType().bumpSpeedFactor();
 		}
 
 		// Stay glued to the ground over down slopes and stairs instead of launching off them.
@@ -260,7 +287,9 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 		// Gradient comes from how the bike actually moved through the terrain, smoothed so single
 		// stair steps do not cause spikes.
 		double moved = Math.hypot(this.getX() - startX, this.getZ() - startZ);
-		if (this.onGround() && moved > 0.02) {
+		if (probed) {
+			// The terrain probe above already set the gradient.
+		} else if (this.onGround() && moved > 0.02) {
 			double rawGradient = Mth.clamp((this.getY() - startY) / moved, -0.6, 0.6);
 			this.gradient += (rawGradient - this.gradient) * 0.25;
 		} else if (this.onGround()) {
@@ -373,6 +402,40 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 		this.wheelAngleO = this.wheelAngle;
 		float metersPerTick = this.getSpeed() * (float) DT;
 		this.wheelAngle += metersPerTick / WHEEL_RADIUS;
+		this.updateSuspension();
+	}
+
+	/**
+	 * A damped spring driven by the vertical acceleration of the bike. Climbing a step or landing makes the body sag
+	 * and then rebound; a stiff road bike barely moves and settles at once, a mountain bike sags further and rings
+	 * for longer. Climbing also settles the body a little lower. Rendering only, the server never sees it.
+	 */
+	private void updateSuspension() {
+		this.suspensionOffsetO = this.suspensionOffset;
+		double y = this.getY();
+		double verticalSpeed = this.hasLastY ? Mth.clamp(y - this.lastY, -1.0, 1.0) : 0.0;
+		double lift = verticalSpeed - this.lastVerticalSpeed;
+		this.lastY = y;
+		this.lastVerticalSpeed = verticalSpeed;
+		this.hasLastY = true;
+
+		float softness = this.getBikeType().suspension;
+		double omega = Mth.lerp(softness, 0.75F, 0.42F);
+		double damping = Mth.lerp(softness, 0.8F, 0.2F);
+		double travel = 0.04 + 0.16 * softness;
+		double rest = -Math.max(0.0, this.getGradient()) * softness * 0.12;
+		this.suspensionVelocity += -omega * omega * (this.suspensionOffset - rest) - 2.0 * damping * omega * this.suspensionVelocity
+			- lift * (0.25 + 0.75 * softness);
+		this.suspensionOffset += this.suspensionVelocity;
+		if (Math.abs(this.suspensionOffset) > travel) {
+			this.suspensionOffset = Math.signum(this.suspensionOffset) * travel;
+			this.suspensionVelocity *= -0.3;
+		}
+	}
+
+	/** Vertical offset of the body from the suspension, in blocks (client only; negative is compressed). */
+	public float getSuspensionOffset(float partialTick) {
+		return (float) Mth.lerp(partialTick, this.suspensionOffsetO, this.suspensionOffset);
 	}
 
 	// ---------------------------------------------------------------- synced state for rendering / HUD
@@ -475,11 +538,16 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 		return !this.isRemoved();
 	}
 
+	/**
+	 * A landing is passed on to the rider, softened by the bike: it always takes some of the blow, and the more
+	 * suspension the type has the more it takes. The bike itself is not hurt.
+	 */
 	@Override
-	protected void checkFallDamage(double ya, boolean onGround, BlockState onState, BlockPos pos) {
-		if (onGround) {
-			this.resetFallDistance();
-		}
+	public boolean causeFallDamage(double fallDistance, float damageModifier, DamageSource damageSource) {
+		BikeType type = this.getBikeType();
+		double effective = Math.max(0.0, fallDistance - type.fallAbsorbBlocks());
+		this.propagateFallToPassengers(effective, damageModifier * type.fallDamageMultiplier(), damageSource);
+		return false;
 	}
 
 	@Override
@@ -531,7 +599,7 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 
 	@Override
 	protected Vec3 getPassengerAttachmentPoint(Entity passenger, EntityDimensions dimensions, float scale) {
-		return new Vec3(0.0, this.getBikeType().rig.seatHeight(), this.getBikeType().rig.seatOffset()).yRot(-this.getYRot() * (float) (Math.PI / 180.0));
+		return new Vec3(0.0, this.getBikeType().rig.seatHeight() + (this.level().isClientSide() ? this.suspensionOffset : 0.0), this.getBikeType().rig.seatOffset()).yRot(-this.getYRot() * (float) (Math.PI / 180.0));
 	}
 
 	@Override

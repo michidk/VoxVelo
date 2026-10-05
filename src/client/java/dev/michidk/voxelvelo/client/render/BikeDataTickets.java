@@ -13,6 +13,8 @@ public final class BikeDataTickets {
 	public static final DataTicket<Float> STEER_ANGLE = DataTicket.create("voxelvelo_steer_angle", new TypeToken<>() {});
 	public static final DataTicket<Float> HURT_TIME = DataTicket.create("voxelvelo_hurt_time", new TypeToken<>() {});
 	public static final DataTicket<Integer> HURT_DIR = DataTicket.create("voxelvelo_hurt_dir", new TypeToken<>() {});
+	/** Vertical offset of the body from the suspension spring, in blocks. */
+	public static final DataTicket<Float> SUSPENSION = DataTicket.create("voxelvelo_suspension", new TypeToken<>() {});
 	public static final DataTicket<Float> DAMAGE = DataTicket.create("voxelvelo_damage", new TypeToken<>() {});
 
 	private BikeDataTickets() {

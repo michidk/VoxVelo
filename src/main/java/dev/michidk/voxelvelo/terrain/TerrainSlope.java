@@ -1,4 +1,4 @@
-package dev.michidk.voxelvelo.client.terrain;
+package dev.michidk.voxelvelo.terrain;
 
 import java.util.OptionalDouble;
 
@@ -38,7 +38,15 @@ public final class TerrainSlope {
 	 * @param startY  surface height at the position
 	 */
 	public static OptionalDouble measure(Ground ground, double px, double pz, double fx, double fz, double startY, int window) {
-		int w = Math.max(MIN_WINDOW, Math.min(MAX_WINDOW, window));
+		return measureWindow(ground, px, pz, fx, fz, startY, Math.max(MIN_WINDOW, Math.min(MAX_WINDOW, window)));
+	}
+
+	/**
+	 * Like {@link #measure} but over exactly {@code window} blocks each way, however short. The bike physics uses a
+	 * short window, since gravity should follow the slope under the wheels rather than the trend of the whole road.
+	 */
+	public static OptionalDouble measureWindow(Ground ground, double px, double pz, double fx, double fz, double startY, int window) {
+		int w = Math.max(1, window);
 		int count = 2 * w + 1;
 		double[] heights = new double[count];
 		boolean[] known = new boolean[count];

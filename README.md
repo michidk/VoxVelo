@@ -53,7 +53,8 @@ Three bikes share one simulation and differ only in their parameters (`BikeType`
 | Loose ground (sand, dirt) | very slow, little grip | good | best, most grip |
 | Braking | weakest off-road | good | strongest |
 | Turning | quick at speed | balanced | tight lock, stable |
-| Ledges | slabs | slabs | full blocks (costs speed) |
+| Ledges | full blocks, stiff (costs speed) | full blocks (costs less) | full blocks (costs least) |
+| Suspension | stiff | some | long travel |
 
 At 200 W on flat stone the three cruise at roughly 34, 32 and 28 km/h; on sand 12, 21 and 21 km/h.
 
@@ -85,6 +86,25 @@ At 200 W on flat stone the three cruise at roughly 34, 32 and 28 km/h; on sand 1
     to the bike-on-bike collision below.
 - Other bikes, boats and minecarts are solid for a bike. Parked bikes are not solid for walking players.
 - The bike stays glued to slopes and stairs instead of launching off them.
+
+## Slopes, falls and suspension
+
+- **Climbing:** every bike rolls up a one-block step, so ordinary hills are rideable. Slabs and stairs are free;
+  a full-block ledge costs speed, and the stiffer the bike the more (road 21 %, gravel 16 %, mountain 8 %).
+- **Gravity follows the terrain.** The slope under the wheels is read from the blocks along your heading (4 blocks
+  each way, smoothed), not guessed from how far you moved. A 25 % climb slows a bike at 200 W to about 11 km/h,
+  and a coasting bike rolls downhill, speeding up (about 28 km/h after a 25 % descent of a few blocks, from
+  18 km/h on the flat). Minecraft hills are steep, so the pull of gravity is scaled down, as for the trainer.
+- **Fall damage:** the bike takes the blow for you. The rider still takes a share of the fall damage, less the
+  more suspension the bike has, plus a few blocks of fall that the suspension swallows. An 8-block drop costs
+  5 health points (2.5 hearts) on foot, about 3 on the road bike, 2 on the gravel bike and 1 on the mountain
+  bike. The bike itself is not hurt.
+- **Suspension** is a property of each bike type (`suspension`, 0 rigid to 1 long travel: road 0.15, gravel 0.45,
+  mountain 0.90). More suspension means less fall damage, less speed lost on ledges, and a springier ride: the
+  bike and rider sag and rebound when a slope starts or ends, on steps and on landings. A road bike settles at
+  once, a mountain bike rings for a few bounces. Climbing also makes the body settle a little lower. The effect is
+  drawn on the client only (a small bob of the whole bike); a true front and rear travel animation would need the
+  model split into body and wheels.
 
 ## Keyboard riding
 

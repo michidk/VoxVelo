@@ -3,7 +3,7 @@ package dev.michidk.voxelvelo.client.ui;
 import dev.michidk.voxelvelo.client.ClientContext;
 import dev.michidk.voxelvelo.client.bluetooth.BluetoothDevice;
 import dev.michidk.voxelvelo.client.ftms.Ftms;
-import dev.michidk.voxelvelo.client.terrain.TerrainSlope;
+import dev.michidk.voxelvelo.terrain.TerrainSlope;
 import java.util.List;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;

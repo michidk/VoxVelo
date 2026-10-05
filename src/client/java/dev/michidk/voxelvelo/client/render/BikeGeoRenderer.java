@@ -34,6 +34,7 @@ public class BikeGeoRenderer extends GeoEntityRenderer<BikeEntity, EntityRenderS
 		state.addGeckolibData(BikeDataTickets.BIKE_TYPE, bike.getBikeType());
 		state.addGeckolibData(BikeDataTickets.WHEEL_ANGLE, bike.getWheelAngle(partialTick));
 		state.addGeckolibData(BikeDataTickets.STEER_ANGLE, steer);
+		state.addGeckolibData(BikeDataTickets.SUSPENSION, bike.getSuspensionOffset(partialTick));
 		state.addGeckolibData(BikeDataTickets.HURT_TIME, bike.getHurtTime() - partialTick);
 		state.addGeckolibData(BikeDataTickets.HURT_DIR, bike.getHurtDir());
 		state.addGeckolibData(BikeDataTickets.DAMAGE, Math.max(bike.getDamage() - partialTick, 0.0F));
@@ -48,6 +49,7 @@ public class BikeGeoRenderer extends GeoEntityRenderer<BikeEntity, EntityRenderS
 	@Override
 	protected void applyRotations(RenderPassInfo<EntityRenderState> info, PoseStack poseStack, float nativeScale) {
 		super.applyRotations(info, poseStack, nativeScale);
+		poseStack.translate(0.0F, info.getOrDefaultGeckolibData(BikeDataTickets.SUSPENSION, 0.0F), 0.0F);
 		float hurt = info.getOrDefaultGeckolibData(BikeDataTickets.HURT_TIME, 0.0F);
 		if (hurt > 0.0F) {
 			float damage = info.getOrDefaultGeckolibData(BikeDataTickets.DAMAGE, 0.0F);

@@ -2,6 +2,8 @@ package dev.michidk.voxelvelo.client.terrain;
 
 import dev.michidk.voxelvelo.bike.BikeEntity;
 import dev.michidk.voxelvelo.client.config.VoxelVeloConfig;
+import dev.michidk.voxelvelo.terrain.LevelGround;
+import dev.michidk.voxelvelo.terrain.TerrainSlope;
 import java.util.OptionalDouble;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
