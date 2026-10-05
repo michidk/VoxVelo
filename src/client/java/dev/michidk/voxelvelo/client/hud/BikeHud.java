@@ -50,7 +50,7 @@ public final class BikeHud implements HudElement {
 			? Math.round(telemetry.cadenceRpm())
 			: bike.isPedaling() ? Math.round(bike.getCadenceRevsPerSecond() * 60.0F) : 0;
 		lines.add(Component.translatable("voxelvelo.hud.main", Math.round(power), cadence, String.format("%.1f", bike.getSpeed() * 3.6F)));
-		lines.add(Component.translatable("voxelvelo.hud.terrain", String.format("%+.1f", bike.getGradient() * 100.0F), bike.getGear()));
+		lines.add(Component.translatable("voxelvelo.hud.terrain", String.format("%+.1f", this.ctx.rideTerrain.slope().orElse(bike.getGradient()) * 100.0), bike.getGear()));
 		if (telemetry != null && telemetry.heartRate() != null) {
 			lines.add(Component.translatable("voxelvelo.hud.heart", telemetry.heartRate()));
 		}

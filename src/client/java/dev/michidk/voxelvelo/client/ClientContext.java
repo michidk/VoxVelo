@@ -10,6 +10,7 @@ import dev.michidk.voxelvelo.client.ftms.TrainerFeedback;
 import dev.michidk.voxelvelo.client.input.BikeInputManager;
 import dev.michidk.voxelvelo.client.input.FtmsTrainerInput;
 import dev.michidk.voxelvelo.client.input.KeyboardBikeInput;
+import dev.michidk.voxelvelo.client.terrain.RideTerrain;
 import dev.michidk.voxelvelo.client.input.OpenBikeControlInput;
 import dev.michidk.voxelvelo.client.obc.ObcClient;
 
@@ -23,6 +24,7 @@ public final class ClientContext {
 	public final ObcClient obc;
 	public final BikeInputManager inputManager;
 	public final TrainerFeedback trainerFeedback;
+	public final RideTerrain rideTerrain;
 
 	private ClientContext() {
 		this.config = VoxelVeloConfig.load();
@@ -33,6 +35,7 @@ public final class ClientContext {
 		this.inputManager = new BikeInputManager(this.config, new KeyboardBikeInput(this.config));
 		this.inputManager.register(new FtmsTrainerInput(this.ftms));
 		this.inputManager.register(new OpenBikeControlInput(this.obc));
+		this.rideTerrain = new RideTerrain(this.config);
 		this.trainerFeedback = new TrainerFeedback(this);
 	}
 

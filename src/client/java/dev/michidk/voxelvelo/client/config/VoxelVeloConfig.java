@@ -44,6 +44,9 @@ public final class VoxelVeloConfig {
 	public boolean hudEnabled = true;
 	public boolean hudShowSources = true;
 
+	/** Blocks each way (behind and ahead) over which the slope for the trainer and HUD is measured. */
+	public int slopeWindowBlocks = 10;
+
 	public double keyboardVirtualPower = 200.0;
 	public double keyboardSteeringSensitivity = 1.0;
 
@@ -114,6 +117,7 @@ public final class VoxelVeloConfig {
 		this.trainerResistanceIntensity = clamp(this.trainerResistanceIntensity, 0.0, 2.0, 1.0);
 		this.riderMassKg = clamp(this.riderMassKg, 40.0, 150.0, 75.0);
 		this.speedLimitKmh = this.speedLimitKmh < 5.0 ? 0.0 : clamp(this.speedLimitKmh, 5.0, 100.0, 0.0);
+		this.slopeWindowBlocks = Math.max(10, Math.min(40, this.slopeWindowBlocks));
 		this.keyboardVirtualPower = clamp(this.keyboardVirtualPower, 50.0, 600.0, 200.0);
 		this.keyboardSteeringSensitivity = clamp(this.keyboardSteeringSensitivity, 0.3, 1.0, 1.0);
 	}

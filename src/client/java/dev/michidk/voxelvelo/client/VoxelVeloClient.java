@@ -35,6 +35,7 @@ public class VoxelVeloClient implements ClientModInitializer {
 				ctx.obc.tick(ctx.config);
 			}
 			sender.tick(client);
+			ctx.rideTerrain.tick(client);
 			ctx.trainerFeedback.tick(client);
 			openConfigOnKey(client);
 		});

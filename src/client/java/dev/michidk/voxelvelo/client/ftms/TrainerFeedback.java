@@ -48,8 +48,9 @@ public final class TrainerFeedback {
 			return;
 		}
 
+		double gradient = this.ctx.rideTerrain.slope().orElse(bike.getGradient());
 		TrainerSimulation.Target raw = TrainerSimulation.target(
-			bike.getGradient(), bike.getSurface(), bike.getBikeType().params(), this.ctx.config.trainerResistanceIntensity);
+			gradient, bike.getSurface(), bike.getBikeType().params(), this.ctx.config.trainerResistanceIntensity);
 		this.smoothedGrade = this.hasSmoothed ? this.smoothedGrade + (raw.gradePercent() - this.smoothedGrade) * SMOOTHING : raw.gradePercent();
 		this.hasSmoothed = true;
 		TrainerSimulation.Target target = new TrainerSimulation.Target(this.smoothedGrade, raw.crr());
