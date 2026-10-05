@@ -68,7 +68,9 @@ public final class BikeInputManager {
 		double propulsion = propulsionSource.isActive() ? propulsionSource.propulsion().orElse(0.0) : 0.0;
 		double steering = this.active(ControlChannel.STEERING).steering().orElse(0.0);
 		double brake = this.active(ControlChannel.BRAKE).brake().orElse(0.0);
-		this.gear = clampGear(this.gear + this.active(ControlChannel.GEAR).consumeGearShift());
+		BikeInputSource gearSource = this.active(ControlChannel.GEAR);
+		gearSource.consumeGearSet().ifPresent(set -> this.gear = clampGear(set));
+		this.gear = clampGear(this.gear + gearSource.consumeGearShift());
 
 		return new BikeControlState(propulsion, steering, brake, this.gear).sanitized();
 	}

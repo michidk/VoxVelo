@@ -3,9 +3,9 @@
 Rideable, fully multiplayer bicycles for Minecraft (Fabric). Ride with the keyboard, or bring a smart
 trainer (Bluetooth FTMS) and OpenBikeControl steering such as the BikeControl phone app.
 
-> **Status:** Milestones 1 to 3 (multiplayer bicycles, keyboard riding, three bike types, physics, terrain,
-> gradients, collisions and FTMS trainer power) are implemented. OpenBikeControl, full mixed-input configuration,
-> trainer feedback and the HUD are planned (see [Roadmap](#roadmap)).
+> **Status:** Milestones 1 to 4 (multiplayer bicycles, keyboard riding, three bike types, physics, terrain,
+> gradients, collisions, FTMS trainer power and OpenBikeControl steering) are implemented.
+> Mixed-input polish, trainer feedback and the HUD are planned (see [Roadmap](#roadmap)).
 
 ## What it does
 
@@ -94,8 +94,8 @@ Holding the pedal key produces 200 W of virtual power.
 ## Mixed input modes
 
 Each control (propulsion, steering, brake, gear) picks its own source (`propulsionSource`, `steeringSource`,
-`brakeSource`, `gearSource` in the config file). So far the keyboard and the FTMS trainer (propulsion only) exist;
-the settings screen exposes propulsion. The combinations the design supports:
+`brakeSource`, `gearSource` in the config file). The keyboard, the FTMS trainer (propulsion only) and OpenBikeControl (steering, brake, gears) exist;
+the settings screen lets you pick each one. The combinations the design supports:
 
 ```text
 No hardware:   keyboard propulsion  + keyboard steering
@@ -135,11 +135,42 @@ normal riding; the settings screen just says so.
 Not verified on real hardware yet: the GATT code was written against the FTMS specification and the parser was
 checked with hand-built payloads, but no trainer has been connected.
 
-## OpenBikeControl and BikeControl phone steering (planned, Milestone 4)
+## OpenBikeControl and BikeControl phone steering
 
-Direct OpenBikeControl support over mDNS and BLE for steer left/right, brake and shifting; unknown actions are
-ignored. A phone mounted on the handlebars running BikeControl will steer through standard OpenBikeControl
-actions with no BikeControl-specific code.
+[OpenBikeControl](https://github.com/OpenBikeControl/openbikecontrol-protocol) (OBC) is the open protocol that
+controllers such as the [BikeControl](https://bikecontrol.app) phone app use to talk to trainer apps. VoxelVelo
+implements it directly, with no BikeControl-specific code. It is optional; the bike is fully playable without it.
+
+Both official transports are supported:
+
+- **Network:** the device advertises `_openbikecontrol._tcp.local.` over mDNS and VoxelVelo connects to it over
+  TCP. You can also type `host:port` by hand, which skips mDNS (useful for a controller running on the same
+  machine, or when multicast is blocked).
+- **Bluetooth LE:** devices advertising the OBC service are listed next to the network ones.
+
+Actions used (everything else is ignored):
+
+| OBC action | Effect |
+|---|---|
+| Steer Left / Steer Right (`0x18`/`0x19`) | steering; pressed is full lock, analog values scale it; ramped smoothly |
+| Brake (`0x1A`) | brake; 1 is full, otherwise (value - 1) percent, capped at 100 % |
+| Shift Up / Shift Down (`0x01`/`0x02`) | one gear per press |
+| Gear Set (`0x03`) | absolute gear (value - 1), clamped to 1-12 |
+
+Setup: press `B` > *OpenBikeControl...*, pick the transports, click your device (or enter `host:port`), then in
+*Input Sources...* set *Steering* (and optionally *Brake* and *Gears*) to *OpenBikeControl*. The selected device
+is remembered and reconnected automatically unless you press *Disconnect*. If the device disconnects, every
+button is released at once and the controls it drove fall back to the keyboard; the server smooths the steering
+back to centre.
+
+For the BikeControl phone setup, mount the phone on the handlebars, let BikeControl turn its orientation into
+steering, and select it here: Minecraft only ever sees standard OBC actions, never the phone sensors.
+
+Verified against the spec with a throwaway mock device (mDNS discovery, TCP, every decoded action, in game up to
+the server-side steering value). Not yet verified with the real BikeControl app or a hardware controller, so the
+exact transport BikeControl offers on your phone is unconfirmed; that is what the manual `host:port` and the
+two transports are for. The TCP stream has no length prefix in the spec; like the reference app, each received
+chunk is treated as one message.
 
 ## Trainer resistance feedback (planned, Milestone 6)
 
@@ -148,8 +179,9 @@ The server already measures gradient from real movement and the surface is a cen
 
 ## Configuration
 
-Press `B` for the settings screen: trainer choice, auto-connect, propulsion source, keyboard virtual power
-(50-600 W) and keyboard steering sensitivity. Settings live in `config/voxelvelo-client.json`. Rider and bike
+Press `B` for the settings screen: trainer choice and auto-connect, OpenBikeControl device and transports, the
+input source of each control (propulsion, steering, brake, gears), keyboard virtual power (50-600 W) and keyboard
+steering sensitivity. Settings live in `config/voxelvelo-client.json`. Rider and bike
 mass, maximum speed, HUD and trainer-resistance options are planned.
 
 ## Building
@@ -183,7 +215,7 @@ src/client  client only: keyboard/input composition, packet sender, GeckoLib ren
 1. Multiplayer bicycle (done)
 2. Bicycle behavior polish and balancing
 3. FTMS (done)
-4. OpenBikeControl
+4. OpenBikeControl (done)
 5. Mixed input configuration
 6. Trainer feedback
 7. HUD, config UI, better model and rider pose

@@ -104,7 +104,7 @@ public final class FtmsClient {
 		}
 		this.bluetooth.find(deviceId, FIND_TIMEOUT_MILLIS)
 			.thenCompose(device -> {
-				this.bluetooth.stopScan();
+				this.bluetooth.releaseScan();
 				if (gen == this.generation) {
 					this.message = "Connecting...";
 				}

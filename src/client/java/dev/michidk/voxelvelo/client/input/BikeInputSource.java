@@ -36,4 +36,9 @@ public interface BikeInputSource {
 
 	/** Net number of gear changes (+ up, - down) since the last call; consumes them. */
 	int consumeGearShift();
+
+	/** An absolute gear (1-based) requested by the source, if any; consumes it. */
+	default java.util.OptionalInt consumeGearSet() {
+		return java.util.OptionalInt.empty();
+	}
 }

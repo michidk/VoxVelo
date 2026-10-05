@@ -27,6 +27,12 @@ public final class VoxelVeloConfig {
 	public String preferredTrainerName = "";
 	public boolean autoConnectTrainer = true;
 
+	/** Which OpenBikeControl transports are used: off, network, bluetooth or both. */
+	public String obcMode = "both";
+	public String obcPreferredKey = "";
+	public String obcPreferredName = "";
+	public boolean obcAutoConnect = true;
+
 	public double keyboardVirtualPower = 200.0;
 	public double keyboardSteeringSensitivity = 1.0;
 
@@ -46,6 +52,14 @@ public final class VoxelVeloConfig {
 			case BRAKE -> this.brakeSource = sourceId;
 			case GEAR -> this.gearSource = sourceId;
 		}
+	}
+
+	public boolean obcNetworkEnabled() {
+		return this.obcMode.equals("both") || this.obcMode.equals("network");
+	}
+
+	public boolean obcBluetoothEnabled() {
+		return this.obcMode.equals("both") || this.obcMode.equals("bluetooth");
 	}
 
 	public boolean hasPreferredTrainer() {
@@ -80,6 +94,12 @@ public final class VoxelVeloConfig {
 		this.gearSource = orDefault(this.gearSource);
 		this.preferredTrainerId = this.preferredTrainerId == null ? "" : this.preferredTrainerId;
 		this.preferredTrainerName = this.preferredTrainerName == null ? "" : this.preferredTrainerName;
+		this.obcMode = switch (this.obcMode == null ? "" : this.obcMode) {
+			case "off", "network", "bluetooth" -> this.obcMode;
+			default -> "both";
+		};
+		this.obcPreferredKey = this.obcPreferredKey == null ? "" : this.obcPreferredKey;
+		this.obcPreferredName = this.obcPreferredName == null ? "" : this.obcPreferredName;
 		this.keyboardVirtualPower = clamp(this.keyboardVirtualPower, 50.0, 600.0, 200.0);
 		this.keyboardSteeringSensitivity = clamp(this.keyboardSteeringSensitivity, 0.3, 1.0, 1.0);
 	}

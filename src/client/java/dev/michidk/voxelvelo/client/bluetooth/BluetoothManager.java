@@ -103,6 +103,16 @@ public final class BluetoothManager {
 		return result;
 	}
 
+	/** Stops scanning unless another search is still waiting for a device. */
+	public void releaseScan() {
+		synchronized (this.searches) {
+			if (!this.searches.isEmpty()) {
+				return;
+			}
+		}
+		this.stopScan();
+	}
+
 	/** Expires scans and searches. Call from the client tick. */
 	public void tick() {
 		long now = System.currentTimeMillis();

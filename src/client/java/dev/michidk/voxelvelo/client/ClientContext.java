@@ -7,6 +7,8 @@ import dev.michidk.voxelvelo.client.ftms.FtmsClient;
 import dev.michidk.voxelvelo.client.input.BikeInputManager;
 import dev.michidk.voxelvelo.client.input.FtmsTrainerInput;
 import dev.michidk.voxelvelo.client.input.KeyboardBikeInput;
+import dev.michidk.voxelvelo.client.input.OpenBikeControlInput;
+import dev.michidk.voxelvelo.client.obc.ObcClient;
 
 /** The client-side services of the mod, created once at startup. Nothing here is ever loaded on a server. */
 public final class ClientContext {
@@ -15,6 +17,7 @@ public final class ClientContext {
 	public final VoxelVeloConfig config;
 	public final BluetoothManager bluetooth;
 	public final FtmsClient ftms;
+	public final ObcClient obc;
 	public final BikeInputManager inputManager;
 
 	private ClientContext() {
@@ -22,8 +25,10 @@ public final class ClientContext {
 		// The Bluetooth backend does nothing (and loads no native code) until first used.
 		this.bluetooth = new BluetoothManager(new SimpleBleBackend());
 		this.ftms = new FtmsClient(this.bluetooth);
+		this.obc = new ObcClient(this.bluetooth);
 		this.inputManager = new BikeInputManager(this.config, new KeyboardBikeInput(this.config));
 		this.inputManager.register(new FtmsTrainerInput(this.ftms));
+		this.inputManager.register(new OpenBikeControlInput(this.obc));
 	}
 
 	public static ClientContext init() {

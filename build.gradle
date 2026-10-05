@@ -47,6 +47,10 @@ dependencies {
 	// NOTE: SimpleBLE is licensed under BUSL-1.1, free for non-commercial use. See README.
 	implementation "org.simpleble:simplejavable:${project.simpleble_version}"
 	include "org.simpleble:simplejavable:${project.simpleble_version}"
+
+	// mDNS discovery of OpenBikeControl devices on the local network (Apache-2.0). Bundled; slf4j comes from Minecraft.
+	implementation "org.jmdns:jmdns:${project.jmdns_version}"
+	include("org.jmdns:jmdns:${project.jmdns_version}") { transitive = false }
 }
 
 processResources {

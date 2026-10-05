@@ -3,10 +3,6 @@ package dev.michidk.voxelvelo.client.ui;
 import dev.michidk.voxelvelo.client.ClientContext;
 import dev.michidk.voxelvelo.client.ftms.TrainerState;
 import dev.michidk.voxelvelo.client.ftms.TrainerTelemetry;
-import dev.michidk.voxelvelo.client.input.BikeInputSource;
-import dev.michidk.voxelvelo.client.input.ControlChannel;
-import java.util.ArrayList;
-import java.util.List;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.Button;
@@ -33,33 +29,46 @@ public class ConfigScreen extends Screen {
 	@Override
 	protected void init() {
 		int left = this.width / 2 - WIDTH / 2;
-		int y = 64;
+		int y = 76;
 
 		this.addRenderableWidget(Button.builder(Component.translatable("voxelvelo.config.choose_trainer"),
 			button -> this.minecraft.gui.setScreen(new TrainerScreen(this))).bounds(left, y, WIDTH, 20).build());
 		y += 24;
-
 		this.addRenderableWidget(CycleButton.onOffBuilder(this.ctx.config.autoConnectTrainer)
 			.create(left, y, WIDTH, 20, Component.translatable("voxelvelo.config.auto_connect"), (button, value) -> this.ctx.config.autoConnectTrainer = value));
 		y += 24;
-
-		List<BikeInputSource> choices = new ArrayList<>();
-		for (BikeInputSource source : this.ctx.inputManager.sources()) {
-			if (source.supports(ControlChannel.PROPULSION)) {
-				choices.add(source);
-			}
-		}
-		this.addRenderableWidget(CycleButton.<BikeInputSource>builder(source -> Component.literal(source.displayName()), this.ctx.inputManager.selected(ControlChannel.PROPULSION))
-			.withValues(choices)
-			.create(left, y, WIDTH, 20, Component.translatable("voxelvelo.config.propulsion"), (button, value) -> this.ctx.config.setSource(ControlChannel.PROPULSION, value.id())));
+		this.addRenderableWidget(Button.builder(Component.translatable("voxelvelo.config.obc"),
+			button -> this.minecraft.gui.setScreen(new ObcScreen(this))).bounds(left, y, WIDTH, 20).build());
 		y += 24;
-
+		this.addRenderableWidget(Button.builder(Component.translatable("voxelvelo.config.sources"),
+			button -> this.minecraft.gui.setScreen(new SourcesScreen(this))).bounds(left, y, WIDTH, 20).build());
+		y += 24;
 		this.addRenderableWidget(new PowerSlider(left, y));
 		y += 24;
 		this.addRenderableWidget(new SensitivitySlider(left, y));
 
 		this.addRenderableWidget(Button.builder(Component.translatable("gui.done"), button -> this.onClose())
 			.bounds(left, this.height - 30, WIDTH, 20).build());
+	}
+
+	/** One-line OpenBikeControl status, shared with the picker and sources screens. */
+	static Component obcStatus(ClientContext ctx) {
+		String name = ctx.obc.deviceName();
+		if (name.isEmpty()) {
+			name = ctx.config.obcPreferredName;
+		}
+		if (name.isEmpty()) {
+			return Component.translatable("voxelvelo.config.obc.none");
+		}
+		TrainerState state = ctx.obc.state();
+		String stateKey = switch (state) {
+			case CONNECTED -> "voxelvelo.config.trainer.connected";
+			case CONNECTING -> "voxelvelo.config.trainer.connecting";
+			case DISCONNECTED -> "voxelvelo.config.trainer.disconnected";
+		};
+		Component line = Component.translatable("voxelvelo.config.obc.status", name, Component.translatable(stateKey));
+		String message = ctx.obc.message();
+		return state != TrainerState.CONNECTED && !message.isEmpty() ? line.copy().append(" - " + message) : line;
 	}
 
 	/** One-line trainer status shared with the trainer picker. */
@@ -99,6 +108,7 @@ public class ConfigScreen extends Screen {
 		graphics.centeredText(this.font, this.title, cx, 20, 0xFFFFFFFF);
 		graphics.centeredText(this.font, trainerStatus(this.ctx), cx, 36, 0xFFC0C0C0);
 		graphics.centeredText(this.font, this.telemetryLine(), cx, 48, 0xFF909090);
+		graphics.centeredText(this.font, obcStatus(this.ctx), cx, 60, 0xFFC0C0C0);
 	}
 
 	@Override

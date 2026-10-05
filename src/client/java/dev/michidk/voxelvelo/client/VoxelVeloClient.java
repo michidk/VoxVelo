@@ -25,6 +25,7 @@ public class VoxelVeloClient implements ClientModInitializer {
 			ctx.bluetooth.tick();
 			if (client.level != null) {
 				ctx.ftms.tick(ctx.config);
+				ctx.obc.tick(ctx.config);
 			}
 			sender.tick(client);
 			openConfigOnKey(client);
@@ -32,6 +33,7 @@ public class VoxelVeloClient implements ClientModInitializer {
 
 		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
 			ctx.config.save();
+			ctx.obc.shutdown();
 			ctx.bluetooth.shutdown();
 		});
 	}
