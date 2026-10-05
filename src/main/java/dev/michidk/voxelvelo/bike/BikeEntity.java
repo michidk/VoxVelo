@@ -153,6 +153,14 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 		}
 	}
 
+	/** Watts the server is currently applying for the rider (zero without a rider or when their input timed out). */
+	public double getAppliedPower() {
+		if (this.getRider() == null || this.tickCount - this.lastControlTick > CONTROL_TIMEOUT_TICKS) {
+			return 0.0;
+		}
+		return this.control.propulsion();
+	}
+
 	/** Called on the server when the rider client sends a control packet. Values are validated here. */
 	public void applyRiderControl(int sequence, BikeControlState state) {
 		if (this.level().isClientSide()) {

@@ -41,6 +41,11 @@ public final class VoxelVeloConfig {
 	public double riderMassKg = 75.0;
 	public double speedLimitKmh = 0.0;
 
+	/** Show other riders watts and heart rate on screen, and whether this player shares theirs with the others. */
+	public boolean statsOverlayEnabled = true;
+	public boolean shareWatts = true;
+	public boolean shareHeartRate = true;
+
 	public boolean hudEnabled = true;
 	public boolean hudShowSources = true;
 

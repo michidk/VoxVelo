@@ -1,0 +1,46 @@
+package dev.michidk.voxelvelo.client.stats;
+
+import dev.michidk.voxelvelo.client.ClientContext;
+import dev.michidk.voxelvelo.client.ftms.TrainerTelemetry;
+import dev.michidk.voxelvelo.network.RiderVitalsPayload;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+
+/**
+ * Tells the server this player's heart rate and what they share. Sent when something changes (at most once a
+ * second) and as a heartbeat every five seconds, so the server can drop a pulse when the trainer goes quiet.
+ */
+public final class VitalsSender {
+	private static final int CHECK_TICKS = 20;
+	private static final int HEARTBEAT_TICKS = 100;
+
+	private final ClientContext ctx;
+	private int ticks;
+	private int sinceSent = HEARTBEAT_TICKS;
+	private RiderVitalsPayload last;
+
+	public VitalsSender(ClientContext ctx) {
+		this.ctx = ctx;
+	}
+
+	/** Forget what was sent, so the next tick sends again (a new world or server). */
+	public void reset() {
+		this.last = null;
+		this.sinceSent = HEARTBEAT_TICKS;
+		this.ticks = 0;
+	}
+
+	public void tick() {
+		if (this.ticks++ % CHECK_TICKS != 0) {
+			return;
+		}
+		this.sinceSent += CHECK_TICKS;
+		TrainerTelemetry telemetry = this.ctx.ftms.freshTelemetry();
+		int heartRate = telemetry != null && telemetry.heartRate() != null ? telemetry.heartRate() : 0;
+		RiderVitalsPayload now = RiderVitalsPayload.of(this.ctx.config.shareWatts, this.ctx.config.shareHeartRate, heartRate);
+		if ((!now.equals(this.last) || this.sinceSent >= HEARTBEAT_TICKS) && ClientPlayNetworking.canSend(RiderVitalsPayload.TYPE)) {
+			ClientPlayNetworking.send(now);
+			this.last = now;
+			this.sinceSent = 0;
+		}
+	}
+}

@@ -2,6 +2,10 @@ package dev.michidk.voxelvelo.client;
 
 import dev.michidk.voxelvelo.VoxelVelo;
 import dev.michidk.voxelvelo.client.hud.BikeHud;
+import dev.michidk.voxelvelo.client.hud.StatsOverlay;
+import dev.michidk.voxelvelo.network.RiderStatsPayload;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.minecraft.network.chat.Component;
 import dev.michidk.voxelvelo.client.input.VoxelVeloKeys;
 import dev.michidk.voxelvelo.client.network.BikeControlSender;
 import dev.michidk.voxelvelo.client.render.BikeGeoRenderer;
@@ -26,18 +30,30 @@ public class VoxelVeloClient implements ClientModInitializer {
 		ClientContext ctx = ClientContext.init();
 		BikeControlSender sender = new BikeControlSender(ctx.inputManager);
 		HudElementRegistry.attachElementAfter(VanillaHudElements.HOTBAR, VoxelVelo.id("bike_hud"), new BikeHud(ctx, sender));
-		ClientPlayConnectionEvents.JOIN.register((handler, packetSender, minecraft) -> ctx.sendRiderSettings());
+		HudElementRegistry.attachElementAfter(VanillaHudElements.HOTBAR, VoxelVelo.id("stats_overlay"), new StatsOverlay(ctx));
+		ClientPlayNetworking.registerGlobalReceiver(RiderStatsPayload.TYPE, (payload, context) -> {
+			if (payload.isSupported()) {
+				ctx.riderStats.update(payload);
+			}
+		});
+		ClientPlayConnectionEvents.JOIN.register((handler, packetSender, minecraft) -> {
+			ctx.sendRiderSettings();
+			ctx.riderStats.clear();
+			ctx.vitalsSender.reset();
+		});
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			ctx.bluetooth.tick();
 			if (client.level != null) {
 				ctx.ftms.tick(ctx.config);
+				ctx.vitalsSender.tick();
 				ctx.obc.tick(ctx.config);
 			}
 			sender.tick(client);
 			ctx.rideTerrain.tick(client);
 			ctx.trainerFeedback.tick(client);
 			openConfigOnKey(client);
+			toggleStatsOnKey(client, ctx);
 		});
 
 		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
@@ -46,6 +62,20 @@ public class VoxelVeloClient implements ClientModInitializer {
 			ctx.obc.shutdown();
 			ctx.bluetooth.shutdown();
 		});
+	}
+
+	private static void toggleStatsOnKey(Minecraft client, ClientContext ctx) {
+		boolean pressed = false;
+		while (VoxelVeloKeys.TOGGLE_STATS.consumeClick()) {
+			pressed = true;
+		}
+		if (pressed && client.gui.screen() == null) {
+			ctx.config.statsOverlayEnabled = !ctx.config.statsOverlayEnabled;
+			ctx.config.save();
+			if (client.player != null) {
+				client.player.sendOverlayMessage(Component.translatable(ctx.config.statsOverlayEnabled ? "voxelvelo.stats.shown" : "voxelvelo.stats.hidden"));
+			}
+		}
 	}
 
 	private static void openConfigOnKey(Minecraft client) {

@@ -228,6 +228,22 @@ The pedal phase is read from the same GeckoLib controller that turns the crank, 
 This needs two small client-side mixins (`AvatarRendererMixin`, `HumanoidModelMixin`) because Fabric has no hook
 for posing a player model; they only touch players that are riding a bike.
 
+## Other riders' watts and pulse
+
+A small overlay in the top-left lists the other riders on the server with their **watts** and **heart rate**,
+strongest first. It is empty (and invisible) when nobody shares. Toggle it with `H` (rebindable, *Toggle Rider
+Stats*) or in the settings (`B` > *Rider & HUD...*).
+
+How it works: your client tells the server your heart rate (from the trainer, if it relays one) and what you share
+(`rider_vitals` packet, protocol v1, sent on change and every 5 s). Twice a second the server sends every player a
+compact list (`rider_stats` packet) of the riders in the same dimension: UUID, the watts the server is actually
+applying to that rider's bike, and their heart rate. Values a rider does not share are simply left out, and a
+pulse the trainer stops sending disappears after about 10 s. The server clamps every value (heart rate 30-250 bpm).
+
+**Privacy:** heart rate is health data, so sharing is explicit and per kind: *Share My Watts* and *Share My Heart
+Rate* in the settings (both on by default, so a group sees each other out of the box; switch them off to stay
+private). Nothing is sent about players who are not riding or have nothing to share.
+
 ## Configuration
 
 Press `B` for the settings screen: trainer choice and auto-connect, OpenBikeControl device and transports, the
