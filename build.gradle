@@ -9,6 +9,21 @@ base {
 	archivesName = project.archives_base_name
 }
 
+repositories {
+	// GeckoLib (animation and model engine) is hosted on Cloudsmith.
+	exclusiveContent {
+		forRepository {
+			maven {
+				name = "GeckoLib"
+				url = "https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/"
+			}
+		}
+		filter {
+			includeGroup "com.geckolib"
+		}
+	}
+}
+
 loom {
 	// Client-only code (input devices, rendering, HUD, hardware) lives in src/client
 	// so it can never be loaded on a dedicated server.
@@ -26,6 +41,7 @@ dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+	implementation "com.geckolib:geckolib-fabric-${project.minecraft_version}:${project.geckolib_version}"
 }
 
 processResources {

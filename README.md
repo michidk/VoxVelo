@@ -23,12 +23,13 @@ trainer (Bluetooth FTMS) and OpenBikeControl steering such as the BikeControl ph
 | Minecraft | 26.3 |
 | Fabric Loader | >= 0.19.5 |
 | Fabric API | 0.161.0+26.3 |
+| GeckoLib | 5.5.7 (required on clients and servers) |
 | Java | 25 |
 
 ## Installation
 
-- **Players:** put the mod jar and Fabric API in `mods/`.
-- **Servers:** put the same two jars in the server's `mods/`. The mod is required on the server because the
+- **Players:** put the mod jar, Fabric API and GeckoLib in `mods/`.
+- **Servers:** put the same three jars in the server's `mods/`. The mod is required on the server because the
   bicycle is a real synchronized entity. Vanilla servers are not supported.
 - Dedicated servers never load any client code (input, rendering, and later Bluetooth/networking hardware).
 
@@ -134,11 +135,20 @@ Requires JDK 25.
 ./gradlew runServer    # dev server (accept the Minecraft EULA in run/eula.txt first)
 ```
 
+## Models
+
+Bikes are rendered with [GeckoLib](https://github.com/bernie-g/geckolib): models live in
+`assets/voxelvelo/geckolib/models/entity/{road,gravel,mountain}_bike.geo.json` and share one animation file,
+`geckolib/animations/entity/bicycle.animation.json` (crank and pedals). Wheel rotation and steering come from the
+synced physics state in `BikeGeoRenderer` instead of keyframes, because they depend continuously on speed. Bones
+the code relies on: `rear_wheel`, `front_wheel`, `front_assembly`, `crank`, `pedal_left`, `pedal_right`.
+
 ## Layout
 
 ```text
 src/main    common + server: BikeEntity, BikePhysics, BikeSurface, BikeControlState, packets, registries
-src/client  client only: keyboard/input composition, packet sender, renderer/model
+src/client  client only: keyboard/input composition, packet sender, GeckoLib renderer
+./tools      one-off seed generator for the GeckoLib bike models (they are meant to be edited in Blockbench)
 ```
 
 ## Roadmap

@@ -1,5 +1,12 @@
 package dev.michidk.voxelvelo.bike;
 
+import com.geckolib.animatable.GeoEntity;
+import com.geckolib.animatable.instance.AnimatableInstanceCache;
+import com.geckolib.animatable.manager.AnimatableManager;
+import com.geckolib.animation.AnimationController;
+import com.geckolib.animation.RawAnimation;
+import com.geckolib.animation.object.PlayState;
+import com.geckolib.util.GeckoLibUtil;
 import dev.michidk.voxelvelo.registry.ModItems;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -49,7 +56,10 @@ import org.jspecify.annotations.Nullable;
  * <p>One entity class serves all {@link BikeType}s; the type only selects physics parameters, step
  * height, seat height, drop item and the model/texture on the client.
  */
-public class BikeEntity extends VehicleEntity {
+public class BikeEntity extends VehicleEntity implements GeoEntity {
+	public static final String ANIM_PEDAL = "animation.voxelvelo.bicycle.pedal";
+	private static final RawAnimation PEDAL = RawAnimation.begin().thenLoop(ANIM_PEDAL);
+
 	/** Server ticks without a control packet after which the rider input is considered gone. */
 	public static final int CONTROL_TIMEOUT_TICKS = 15;
 	public static final float WHEEL_RADIUS = 0.375F;
@@ -84,11 +94,11 @@ public class BikeEntity extends VehicleEntity {
 	private int submergedTicks;
 	private final Map<UUID, Integer> recentHits = new HashMap<>();
 
+	private final AnimatableInstanceCache geoCache = GeckoLibUtil.createInstanceCache(this);
+
 	// Client-only animation state, derived from synced data so every client animates identically.
 	private float wheelAngle;
 	private float wheelAngleO;
-	private float crankAngle;
-	private float crankAngleO;
 
 	public BikeEntity(EntityType<? extends BikeEntity> type, Level level) {
 		super(type, level);
@@ -306,13 +316,8 @@ public class BikeEntity extends VehicleEntity {
 		this.setDeltaMovement(Vec3.ZERO);
 
 		this.wheelAngleO = this.wheelAngle;
-		this.crankAngleO = this.crankAngle;
 		float metersPerTick = this.getSpeed() * (float) DT;
 		this.wheelAngle += metersPerTick / WHEEL_RADIUS;
-		if (this.isPedaling()) {
-			float gearRatio = 1.0F + this.getGear() * 0.25F;
-			this.crankAngle += metersPerTick / WHEEL_RADIUS / gearRatio;
-		}
 	}
 
 	// ---------------------------------------------------------------- synced state for rendering / HUD
@@ -348,8 +353,31 @@ public class BikeEntity extends VehicleEntity {
 		return Mth.lerp(partialTick, this.wheelAngleO, this.wheelAngle);
 	}
 
-	public float getCrankAngle(float partialTick) {
-		return Mth.lerp(partialTick, this.crankAngleO, this.crankAngle);
+	// ---------------------------------------------------------------- GeckoLib
+
+	/** Crank revolutions per second implied by the wheel speed and the selected gear. */
+	public float getCadenceRevsPerSecond() {
+		float wheelRevs = this.getSpeed() / (2.0F * (float) Math.PI * WHEEL_RADIUS);
+		return wheelRevs / (1.0F + this.getGear() * 0.25F);
+	}
+
+	@Override
+	public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
+		// The pedal loop is one crank revolution per second, so the controller speed is the cadence in rev/s.
+		// When not pedaling the animation is paused, leaving the crank where it stopped (the bike coasts).
+		controllers.add(new AnimationController<BikeEntity>("drive", 2, test -> {
+			BikeEntity bike = test.animatable();
+			if (!bike.isPedaling()) {
+				return PlayState.PAUSE;
+			}
+			test.setControllerSpeed(Math.max(0.2F, bike.getCadenceRevsPerSecond()));
+			return test.setAndContinue(PEDAL);
+		}));
+	}
+
+	@Override
+	public AnimatableInstanceCache getAnimatableInstanceCache() {
+		return this.geoCache;
 	}
 
 	// ---------------------------------------------------------------- entity plumbing
