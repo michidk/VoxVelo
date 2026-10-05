@@ -20,7 +20,7 @@ public final class BikeFrameTintLayer extends CustomBoneTextureGeoLayer<BikeEnti
     public static final String[] TUBES = {"top_tube", "down_tube", "seat_tube", "rear_stays"};
 
     public BikeFrameTintLayer(BikeGeoRenderer renderer) {
-        super(renderer, "frame_colored", VoxelVelo.id("textures/entity/bicycle_gravel.png"));
+        super(renderer, "frame_colored", VoxelVelo.id("textures/entity/bikes/gravel_bike.png"));
     }
 
     @Override protected Identifier getTextureResource(EntityRenderState state) {
