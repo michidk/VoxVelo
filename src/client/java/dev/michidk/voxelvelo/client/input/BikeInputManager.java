@@ -12,14 +12,21 @@ import net.minecraft.client.Minecraft;
  *
  * <p>If the selected source for a channel is disconnected: propulsion falls to zero (the bike coasts),
  * every other channel falls back to the keyboard so the bike stays steerable and brakeable.
+ *
+ * <p>The keyboard also coexists with a non-keyboard source instead of being switched off: it still brakes
+ * (the stronger of the two brakes wins), steers whenever the other source is idle, and its shift keys still
+ * shift gears. Propulsion is the exception: the selected source alone provides it.
  */
 public final class BikeInputManager {
+	/** Below this a source counts as idle and the keyboard may steer instead. */
+	private static final double STEERING_IDLE = 0.05;
+
 	private final VoxelVeloConfig config;
 	private final List<BikeInputSource> sources = new ArrayList<>();
-	private final KeyboardBikeInput keyboard;
+	private final BikeInputSource keyboard;
 	private int gear = BikeControlState.DEFAULT_GEAR;
 
-	public BikeInputManager(VoxelVeloConfig config, KeyboardBikeInput keyboard) {
+	public BikeInputManager(VoxelVeloConfig config, BikeInputSource keyboard) {
 		this.config = config;
 		this.keyboard = keyboard;
 		this.sources.add(keyboard);
@@ -67,10 +74,17 @@ public final class BikeInputManager {
 		BikeInputSource propulsionSource = this.selected(ControlChannel.PROPULSION);
 		double propulsion = propulsionSource.isActive() ? propulsionSource.propulsion().orElse(0.0) : 0.0;
 		double steering = this.active(ControlChannel.STEERING).steering().orElse(0.0);
-		double brake = this.active(ControlChannel.BRAKE).brake().orElse(0.0);
+		if (Math.abs(steering) < STEERING_IDLE) {
+			steering = this.keyboard.steering().orElse(0.0);
+		}
+		double brake = Math.max(this.active(ControlChannel.BRAKE).brake().orElse(0.0), this.keyboard.brake().orElse(0.0));
 		BikeInputSource gearSource = this.active(ControlChannel.GEAR);
 		gearSource.consumeGearSet().ifPresent(set -> this.gear = clampGear(set));
-		this.gear = clampGear(this.gear + gearSource.consumeGearShift());
+		int shifts = gearSource.consumeGearShift();
+		if (gearSource != this.keyboard) {
+			shifts += this.keyboard.consumeGearShift();
+		}
+		this.gear = clampGear(this.gear + shifts);
 
 		return new BikeControlState(propulsion, steering, brake, this.gear).sanitized();
 	}

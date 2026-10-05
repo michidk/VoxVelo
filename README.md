@@ -3,9 +3,9 @@
 Rideable, fully multiplayer bicycles for Minecraft (Fabric). Ride with the keyboard, or bring a smart
 trainer (Bluetooth FTMS) and OpenBikeControl steering such as the BikeControl phone app.
 
-> **Status:** Milestones 1 to 4 (multiplayer bicycles, keyboard riding, three bike types, physics, terrain,
-> gradients, collisions, FTMS trainer power and OpenBikeControl steering) are implemented.
-> Mixed-input polish, trainer feedback and the HUD are planned (see [Roadmap](#roadmap)).
+> **Status:** Milestones 1 to 5 (multiplayer bicycles, keyboard riding, three bike types, physics, terrain,
+> gradients, collisions, FTMS trainer power, OpenBikeControl steering and free source mixing) are implemented.
+> Trainer feedback and the HUD are planned (see [Roadmap](#roadmap)).
 
 ## What it does
 
@@ -93,19 +93,28 @@ Holding the pedal key produces 200 W of virtual power.
 
 ## Mixed input modes
 
-Each control (propulsion, steering, brake, gear) picks its own source (`propulsionSource`, `steeringSource`,
-`brakeSource`, `gearSource` in the config file). The keyboard, the FTMS trainer (propulsion only) and OpenBikeControl (steering, brake, gears) exist;
-the settings screen lets you pick each one. The combinations the design supports:
+Each control (propulsion, steering, brake, gear) picks its own source: press `B` > *Input Sources...* (stored as
+`propulsionSource`, `steeringSource`, `brakeSource` and `gearSource` in the config file). The keyboard, the FTMS
+trainer (propulsion only) and OpenBikeControl (steering, brake, gears) can be combined freely:
 
 ```text
-No hardware:   keyboard propulsion  + keyboard steering
-Trainer only:  FTMS propulsion      + keyboard steering
-Full setup:    FTMS propulsion      + OpenBikeControl steering
-Hybrid:        keyboard propulsion  + OpenBikeControl steering
+No hardware:                  keyboard propulsion + keyboard steering
+Trainer only:                 FTMS propulsion
+Trainer + keyboard steering:  FTMS propulsion + keyboard steering
+Trainer + keyboard brake:     FTMS propulsion + keyboard brake
+Full setup:                   FTMS propulsion + OpenBikeControl steering (+ brake, gears)
+Hybrid:                       keyboard propulsion + OpenBikeControl steering
 ```
 
-The composition layer is `BikeInputManager`. A disconnected propulsion source gives zero power (coasting); for
-steering, brake and gear a disconnected source falls back to the keyboard so the bike stays controllable.
+The keyboard keeps working next to the other sources instead of being switched off:
+
+- **Brake:** the keyboard brake always works; with OpenBikeControl braking, the stronger of the two wins.
+- **Steering:** the selected source steers; while it is idle (steering near zero) the keyboard can steer.
+- **Gears:** shifts from the keyboard and from the selected source both count.
+- **Propulsion:** only the selected source provides power, so a connected trainer is never mixed with the pedal
+  key. A disconnected trainer means zero power (coasting), not a silent switch to the keyboard.
+
+A disconnected source for steering, brake or gears falls back to the keyboard so the bike stays controllable.
 
 ## FTMS trainer support
 
@@ -216,7 +225,7 @@ src/client  client only: keyboard/input composition, packet sender, GeckoLib ren
 2. Bicycle behavior polish and balancing
 3. FTMS (done)
 4. OpenBikeControl (done)
-5. Mixed input configuration
+5. Mixed input configuration (done)
 6. Trainer feedback
 7. HUD, config UI, better model and rider pose
 
