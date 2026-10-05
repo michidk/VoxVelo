@@ -146,3 +146,11 @@ tasks.matching { it.name == 'runClient' }.configureEach {
 		devOptions.text = lines.join('\n') + '\n'
 	}
 }
+
+// A bare "runClient" or "runServer" runs that task in every project, which would start the core game next to the
+// fitness one. The core runs are skipped then; ask for them explicitly as ":core:runClient" / ":core:runServer".
+tasks.matching { it.name == 'runClient' || it.name == 'runServer' }.configureEach {
+	if (gradle.startParameter.taskNames.any { it == 'runClient' || it == 'runServer' }) {
+		enabled = false
+	}
+}

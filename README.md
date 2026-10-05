@@ -364,7 +364,7 @@ Requires JDK 25.
 ```sh
 ./gradlew build                # both jars: core/build/libs/voxelvelo-<version>.jar, build/libs/voxelvelo-fitness-<version>.jar
 ./gradlew :core:build          # only the core jar
-./gradlew runClient            # dev client, fitness build
+./gradlew :runClient           # dev client, fitness build (a bare runClient also skips the core client)
 ./gradlew :core:runClient      # dev client, core build
 ./gradlew runServer            # dev server (accept the Minecraft EULA in run/eula.txt first)
 ```
