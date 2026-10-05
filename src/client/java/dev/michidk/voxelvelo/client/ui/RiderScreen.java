@@ -35,6 +35,7 @@ public class RiderScreen extends Screen {
 		this.addRenderableWidget(new LimitSlider(left, y));
 		y += 28;
 		this.addRenderableWidget(CycleButton.onOffBuilder(this.ctx.config.hudEnabled)
+			.withTooltip(value -> Tips.of("voxelvelo.rider.hud"))
 			.create(left, y, WIDTH, 20, Component.translatable("voxelvelo.rider.hud"), (button, value) -> this.ctx.config.hudEnabled = value));
 		this.addRenderableWidget(Button.builder(Component.translatable("gui.done"), button -> this.onClose())
 			.bounds(left, this.height - 30, WIDTH, 20).build());
@@ -58,6 +59,7 @@ public class RiderScreen extends Screen {
 		MassSlider(int x, int y) {
 			super(x, y, WIDTH, 20, Component.empty(), (RiderScreen.this.ctx.config.riderMassKg - MIN_MASS) / (MAX_MASS - MIN_MASS));
 			this.updateMessage();
+			this.setTooltip(Tips.of("voxelvelo.rider.mass"));
 		}
 
 		private double mass() {
@@ -79,6 +81,7 @@ public class RiderScreen extends Screen {
 		LimitSlider(int x, int y) {
 			super(x, y, WIDTH, 20, Component.empty(), initial(RiderScreen.this.ctx.config.speedLimitKmh));
 			this.updateMessage();
+			this.setTooltip(Tips.of("voxelvelo.rider.limit"));
 		}
 
 		private static double initial(double limit) {

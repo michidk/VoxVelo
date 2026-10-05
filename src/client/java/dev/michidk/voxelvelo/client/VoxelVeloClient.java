@@ -7,6 +7,7 @@ import dev.michidk.voxelvelo.client.input.VoxelVeloKeys;
 import dev.michidk.voxelvelo.client.network.BikeControlSender;
 import dev.michidk.voxelvelo.client.render.BikeGeoRenderer;
 import dev.michidk.voxelvelo.client.ui.ConfigScreen;
+import dev.michidk.voxelvelo.client.ui.Tips;
 import dev.michidk.voxelvelo.registry.ModEntities;
 import java.util.List;
 import net.fabricmc.api.ClientModInitializer;
@@ -47,7 +48,7 @@ public class VoxelVeloClient implements ClientModInitializer {
 		ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {
 			if (screen instanceof OptionsScreen || screen instanceof PauseScreen) {
 				Screens.getWidgets(screen).add(Button.builder(Component.translatable("voxelvelo.menu.button"),
-					button -> client.gui.setScreen(new ConfigScreen(screen))).bounds(6, 6, 90, 20).build());
+					button -> client.gui.setScreen(new ConfigScreen(screen))).tooltip(Tips.of("voxelvelo.menu.button")).bounds(6, 6, 90, 20).build());
 			}
 		});
 

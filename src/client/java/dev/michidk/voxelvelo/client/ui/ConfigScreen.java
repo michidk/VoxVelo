@@ -55,7 +55,7 @@ public class ConfigScreen extends Screen {
 	private void page(int x, int y, int width, ClientContext.SettingsPage page) {
 		Function<Screen, Screen> factory = page.factory();
 		this.addRenderableWidget(Button.builder(Component.translatable(page.labelKey()), button -> this.minecraft.gui.setScreen(factory.apply(this)))
-			.bounds(x, y, width, 20).build());
+			.tooltip(Tips.of(page.labelKey())).bounds(x, y, width, 20).build());
 	}
 
 	@Override

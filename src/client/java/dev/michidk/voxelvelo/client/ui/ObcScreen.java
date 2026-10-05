@@ -35,6 +35,7 @@ public class ObcScreen extends Screen {
 
 		this.addRenderableWidget(CycleButton.<String>builder(mode -> Component.translatable("voxelvelo.obc.mode." + mode), this.ctx.config.obcMode)
 			.withValues("off", "network", "bluetooth", "both")
+			.withTooltip(mode -> Tips.of("voxelvelo.obc.mode"))
 			.create(left, y, WIDTH, 20, Component.translatable("voxelvelo.obc.mode"), (button, value) -> {
 				this.ctx.config.obcMode = value;
 				this.ctx.obc.stopDiscovery();
@@ -43,25 +44,29 @@ public class ObcScreen extends Screen {
 		y += 24;
 
 		this.addRenderableWidget(Button.builder(Component.translatable("voxelvelo.trainer.disconnect"), button -> this.ctx.obc.disconnect())
+			.tooltip(Tips.of("voxelvelo.trainer.disconnect"))
 			.bounds(left, y, 150, 20).build());
 		this.addRenderableWidget(Button.builder(Component.translatable("voxelvelo.trainer.forget"), button -> this.forget())
+			.tooltip(Tips.of("voxelvelo.trainer.forget"))
 			.bounds(left + 160, y, 150, 20).build());
 		y += 28;
 
 		List<ObcDevice> devices = this.ctx.obc.discovered(this.ctx.config);
 		for (int i = 0; i < Math.min(MAX_ROWS, devices.size()); i++) {
 			ObcDevice device = devices.get(i);
-			this.addRenderableWidget(Button.builder(this.rowLabel(device), button -> this.choose(device)).bounds(left, y, WIDTH, 20).build());
+			this.addRenderableWidget(Button.builder(this.rowLabel(device), button -> this.choose(device)).tooltip(Tips.of("voxelvelo.obc.device")).bounds(left, y, WIDTH, 20).build());
 			y += 24;
 		}
 
 		int bottom = this.height - 56;
 		this.manual = this.addRenderableWidget(new EditBox(this.font, left, bottom, 200, 20, Component.translatable("voxelvelo.obc.manual")));
+		this.manual.setTooltip(Tips.of("voxelvelo.obc.manual"));
 		this.manual.setHint(Component.translatable("voxelvelo.obc.manual_hint"));
 		this.manual.setMaxLength(64);
 		this.manual.setValue(this.manualText);
 		this.manual.setResponder(text -> this.manualText = text);
 		this.addRenderableWidget(Button.builder(Component.translatable("voxelvelo.obc.connect"), button -> this.connectManual())
+			.tooltip(Tips.of("voxelvelo.obc.connect"))
 			.bounds(left + 210, bottom, 100, 20).build());
 
 		this.addRenderableWidget(Button.builder(Component.translatable("gui.done"), button -> this.onClose())

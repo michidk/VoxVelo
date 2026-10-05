@@ -64,6 +64,7 @@ public class RoadScreen extends Screen {
 
 		y = 50;
 		EditBox input = this.addRenderableWidget(new EditBox(this.font, right, y, COLUMN, 20, Component.translatable("voxelvelo.road.input")));
+		input.setTooltip(Tips.of("voxelvelo.road.input"));
 		input.setHint(Component.translatable("voxelvelo.road.input_hint"));
 		input.setMaxLength(80);
 		input.setValue(this.inputText);
@@ -72,27 +73,30 @@ public class RoadScreen extends Screen {
 		this.addRenderableWidget(Button.builder(Component.translatable("voxelvelo.road.add"), button -> {
 			this.add(this.inputText);
 			this.inputText = "";
-		}).bounds(right, y, COLUMN, 20).build());
+		}).tooltip(Tips.of("voxelvelo.road.add")).bounds(right, y, COLUMN, 20).build());
 		y += ROW;
 		this.addRenderableWidget(Button.builder(Component.translatable("voxelvelo.road.add_under"), button -> this.add(this.blockUnderPlayer()))
+			.tooltip(Tips.of("voxelvelo.road.add_under"))
 			.bounds(right, y, COLUMN, 20).build());
 		y += ROW;
 		this.addRenderableWidget(Button.builder(Component.translatable("voxelvelo.road.add_looking"), button -> this.add(this.blockLookedAt()))
+			.tooltip(Tips.of("voxelvelo.road.add_looking"))
 			.bounds(right, y, COLUMN, 20).build());
 		y += ROW;
 		this.addRenderableWidget(Button.builder(Component.translatable("voxelvelo.road.reset"), button -> {
 			this.ctx.config.roadBlocks = new ArrayList<>(List.of("minecraft:stone", "minecraft:gravel"));
 			this.rebuildWidgets();
-		}).bounds(right, y, COLUMN, 20).build());
+		}).tooltip(Tips.of("voxelvelo.road.reset")).bounds(right, y, COLUMN, 20).build());
 		y += ROW + 6;
 		this.addRenderableWidget(new ValueSlider(right, y, COLUMN, 2.0, 16.0, 1.0, this.ctx.config.roadMaxHalfWidth,
-			v -> Component.translatable("voxelvelo.road.half_width", Math.round(v)), v -> this.ctx.config.roadMaxHalfWidth = (int) Math.round(v)));
+			v -> Component.translatable("voxelvelo.road.half_width", Math.round(v)), v -> this.ctx.config.roadMaxHalfWidth = (int) Math.round(v)).tip("voxelvelo.road.half_width"));
 		y += ROW + 6;
 		this.addRenderableWidget(CycleButton.onOffBuilder(this.ctx.config.junctionPrompt)
+			.withTooltip(value -> Tips.of("voxelvelo.road.junction"))
 			.create(right, y, COLUMN, 20, Component.translatable("voxelvelo.road.junction"), (button, value) -> this.ctx.config.junctionPrompt = value));
 		y += ROW;
 		this.addRenderableWidget(new ValueSlider(right, y, COLUMN, 5.0, 120.0, 5.0, this.ctx.config.junctionCooldownSeconds,
-			v -> Component.translatable("voxelvelo.road.cooldown", Math.round(v)), v -> this.ctx.config.junctionCooldownSeconds = (int) Math.round(v)));
+			v -> Component.translatable("voxelvelo.road.cooldown", Math.round(v)), v -> this.ctx.config.junctionCooldownSeconds = (int) Math.round(v)).tip("voxelvelo.road.cooldown"));
 
 		this.addRenderableWidget(Button.builder(Component.translatable("gui.done"), button -> this.onClose())
 			.bounds(left, this.height - 30, WIDTH, 20).build());

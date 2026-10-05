@@ -23,10 +23,10 @@ public class KeyboardScreen extends Screen {
 		int left = this.width / 2 - WIDTH / 2;
 		int y = 46;
 		this.addRenderableWidget(new ValueSlider(left, y, WIDTH, 50.0, 600.0, 10.0, this.ctx.config.keyboardVirtualPower,
-			v -> Component.translatable("voxelvelo.config.virtual_power", Math.round(v)), v -> this.ctx.config.keyboardVirtualPower = v));
+			v -> Component.translatable("voxelvelo.config.virtual_power", Math.round(v)), v -> this.ctx.config.keyboardVirtualPower = v).tip("voxelvelo.config.virtual_power"));
 		y += 24;
 		this.addRenderableWidget(new ValueSlider(left, y, WIDTH, 0.3, 1.0, 0.05, this.ctx.config.keyboardSteeringSensitivity,
-			v -> Component.translatable("voxelvelo.config.steering_sensitivity", Math.round(v * 100)), v -> this.ctx.config.keyboardSteeringSensitivity = v));
+			v -> Component.translatable("voxelvelo.config.steering_sensitivity", Math.round(v * 100)), v -> this.ctx.config.keyboardSteeringSensitivity = v).tip("voxelvelo.config.steering_sensitivity"));
 
 		this.addRenderableWidget(Button.builder(Component.translatable("gui.done"), button -> this.onClose())
 			.bounds(left, this.height - 30, WIDTH, 20).build());

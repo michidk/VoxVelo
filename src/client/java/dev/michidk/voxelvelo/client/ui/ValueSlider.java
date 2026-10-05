@@ -24,6 +24,12 @@ public final class ValueSlider extends AbstractSliderButton {
 		this.updateMessage();
 	}
 
+	/** Shows the tooltip of the control labelled with {@code labelKey}, see {@link Tips}. */
+	public ValueSlider tip(String labelKey) {
+		this.setTooltip(Tips.of(labelKey));
+		return this;
+	}
+
 	private double current() {
 		double raw = this.min + this.value * (this.max - this.min);
 		return Math.max(this.min, Math.min(this.max, Math.round(raw / this.step) * this.step));

@@ -31,17 +31,19 @@ public class TrainerScreen extends Screen {
 		int left = this.width / 2 - WIDTH / 2;
 		int y = 60;
 
-		this.addRenderableWidget(Button.builder(this.scanLabel(), button -> this.toggleScan()).bounds(left, y, 100, 20).build());
+		this.addRenderableWidget(Button.builder(this.scanLabel(), button -> this.toggleScan()).tooltip(Tips.of("voxelvelo.trainer.scan")).bounds(left, y, 100, 20).build());
 		this.addRenderableWidget(Button.builder(Component.translatable("voxelvelo.trainer.disconnect"), button -> this.ctx.ftms.disconnect())
+			.tooltip(Tips.of("voxelvelo.trainer.disconnect"))
 			.bounds(left + 105, y, 100, 20).build());
 		this.addRenderableWidget(Button.builder(Component.translatable("voxelvelo.trainer.forget"), button -> this.forget())
+			.tooltip(Tips.of("voxelvelo.trainer.forget"))
 			.bounds(left + 210, y, 100, 20).build());
 		y += 28;
 
 		List<BluetoothDevice> devices = this.ctx.bluetooth.devices(Ftms.SERVICE);
 		for (int i = 0; i < Math.min(MAX_ROWS, devices.size()); i++) {
 			BluetoothDevice device = devices.get(i);
-			this.addRenderableWidget(Button.builder(this.rowLabel(device), button -> this.choose(device)).bounds(left, y, WIDTH, 20).build());
+			this.addRenderableWidget(Button.builder(this.rowLabel(device), button -> this.choose(device)).tooltip(Tips.of("voxelvelo.trainer.device")).bounds(left, y, WIDTH, 20).build());
 			y += 24;
 		}
 
@@ -50,13 +52,15 @@ public class TrainerScreen extends Screen {
 		int right = left + half + 10;
 		int by = this.height - 30 - 48;
 		this.addRenderableWidget(CycleButton.onOffBuilder(this.ctx.config.autoConnectTrainer)
+			.withTooltip(value -> Tips.of("voxelvelo.config.auto_connect"))
 			.create(left, by, half, 20, Component.translatable("voxelvelo.config.auto_connect"), (button, value) -> this.ctx.config.autoConnectTrainer = value));
 		this.addRenderableWidget(CycleButton.onOffBuilder(this.ctx.config.trainerResistanceEnabled)
+			.withTooltip(value -> Tips.of("voxelvelo.config.resistance"))
 			.create(right, by, half, 20, Component.translatable("voxelvelo.config.resistance"), (button, value) -> this.ctx.config.trainerResistanceEnabled = value));
 		this.addRenderableWidget(new ValueSlider(left, by + 24, half, 0.0, 2.0, 0.1, this.ctx.config.trainerResistanceIntensity,
-			v -> Component.translatable("voxelvelo.config.intensity", Math.round(v * 100)), v -> this.ctx.config.trainerResistanceIntensity = v));
+			v -> Component.translatable("voxelvelo.config.intensity", Math.round(v * 100)), v -> this.ctx.config.trainerResistanceIntensity = v).tip("voxelvelo.config.intensity"));
 		this.addRenderableWidget(new ValueSlider(right, by + 24, half, TerrainSlope.MIN_WINDOW, TerrainSlope.MAX_WINDOW, 1.0, this.ctx.config.slopeWindowBlocks,
-			v -> Component.translatable("voxelvelo.config.slope_window", Math.round(v)), v -> this.ctx.config.slopeWindowBlocks = (int) Math.round(v)));
+			v -> Component.translatable("voxelvelo.config.slope_window", Math.round(v)), v -> this.ctx.config.slopeWindowBlocks = (int) Math.round(v)).tip("voxelvelo.config.slope_window"));
 
 		this.addRenderableWidget(Button.builder(Component.translatable("gui.done"), button -> this.onClose())
 			.bounds(left, this.height - 30, WIDTH, 20).build());
