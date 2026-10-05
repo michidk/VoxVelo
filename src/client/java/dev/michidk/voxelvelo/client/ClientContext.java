@@ -4,6 +4,7 @@ import dev.michidk.voxelvelo.client.bluetooth.BluetoothManager;
 import dev.michidk.voxelvelo.client.bluetooth.SimpleBleBackend;
 import dev.michidk.voxelvelo.client.config.VoxelVeloConfig;
 import dev.michidk.voxelvelo.client.ftms.FtmsClient;
+import dev.michidk.voxelvelo.client.ftms.TrainerFeedback;
 import dev.michidk.voxelvelo.client.input.BikeInputManager;
 import dev.michidk.voxelvelo.client.input.FtmsTrainerInput;
 import dev.michidk.voxelvelo.client.input.KeyboardBikeInput;
@@ -19,6 +20,7 @@ public final class ClientContext {
 	public final FtmsClient ftms;
 	public final ObcClient obc;
 	public final BikeInputManager inputManager;
+	public final TrainerFeedback trainerFeedback;
 
 	private ClientContext() {
 		this.config = VoxelVeloConfig.load();
@@ -29,6 +31,7 @@ public final class ClientContext {
 		this.inputManager = new BikeInputManager(this.config, new KeyboardBikeInput(this.config));
 		this.inputManager.register(new FtmsTrainerInput(this.ftms));
 		this.inputManager.register(new OpenBikeControlInput(this.obc));
+		this.trainerFeedback = new TrainerFeedback(this);
 	}
 
 	public static ClientContext init() {

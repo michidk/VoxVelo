@@ -33,6 +33,10 @@ public final class VoxelVeloConfig {
 	public String obcPreferredName = "";
 	public boolean obcAutoConnect = true;
 
+	/** Send terrain gradient and surface to the trainer as resistance. Intensity 1.0 matches the game physics. */
+	public boolean trainerResistanceEnabled = true;
+	public double trainerResistanceIntensity = 1.0;
+
 	public double keyboardVirtualPower = 200.0;
 	public double keyboardSteeringSensitivity = 1.0;
 
@@ -100,6 +104,7 @@ public final class VoxelVeloConfig {
 		};
 		this.obcPreferredKey = this.obcPreferredKey == null ? "" : this.obcPreferredKey;
 		this.obcPreferredName = this.obcPreferredName == null ? "" : this.obcPreferredName;
+		this.trainerResistanceIntensity = clamp(this.trainerResistanceIntensity, 0.0, 2.0, 1.0);
 		this.keyboardVirtualPower = clamp(this.keyboardVirtualPower, 50.0, 600.0, 200.0);
 		this.keyboardSteeringSensitivity = clamp(this.keyboardSteeringSensitivity, 0.3, 1.0, 1.0);
 	}

@@ -83,6 +83,7 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 	private static final EntityDataAccessor<Float> DATA_GRADIENT = SynchedEntityData.defineId(BikeEntity.class, EntityDataSerializers.FLOAT);
 	private static final EntityDataAccessor<Integer> DATA_GEAR = SynchedEntityData.defineId(BikeEntity.class, EntityDataSerializers.INT);
 	private static final EntityDataAccessor<Boolean> DATA_PEDALING = SynchedEntityData.defineId(BikeEntity.class, EntityDataSerializers.BOOLEAN);
+	private static final EntityDataAccessor<Integer> DATA_SURFACE = SynchedEntityData.defineId(BikeEntity.class, EntityDataSerializers.INT);
 
 	// Server-only simulation state.
 	private BikeControlState control = BikeControlState.NEUTRAL;
@@ -121,6 +122,7 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 		entityData.define(DATA_GRADIENT, 0.0F);
 		entityData.define(DATA_GEAR, BikeControlState.DEFAULT_GEAR);
 		entityData.define(DATA_PEDALING, false);
+		entityData.define(DATA_SURFACE, BikeSurface.PATH.ordinal());
 	}
 
 	public BikeType getBikeType() {
@@ -261,6 +263,7 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 		this.entityData.set(DATA_GRADIENT, quantize(this.gradient, 100.0));
 		this.entityData.set(DATA_GEAR, input.gear());
 		this.entityData.set(DATA_PEDALING, input.propulsion() > 5.0 && this.getRider() != null);
+		this.entityData.set(DATA_SURFACE, surface.ordinal());
 	}
 
 	private void handleImpact(double impact) {
@@ -343,6 +346,13 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 
 	public int getGear() {
 		return this.entityData.get(DATA_GEAR);
+	}
+
+	/** Terrain under the bike as last measured by the server; used for trainer resistance feedback. */
+	public BikeSurface getSurface() {
+		BikeSurface[] all = BikeSurface.values();
+		int index = this.entityData.get(DATA_SURFACE);
+		return index >= 0 && index < all.length ? all[index] : BikeSurface.PATH;
 	}
 
 	public boolean isPedaling() {

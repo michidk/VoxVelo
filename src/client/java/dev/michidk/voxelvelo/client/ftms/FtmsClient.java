@@ -30,6 +30,7 @@ public final class FtmsClient {
 	private volatile String deviceName = "";
 	private volatile String message = "";
 	private volatile BluetoothConnection connection;
+	private volatile FtmsControl control;
 	/** Incremented on every connect/disconnect so late callbacks from an older attempt are ignored. */
 	private volatile int generation;
 
@@ -56,6 +57,11 @@ public final class FtmsClient {
 	/** Short status for the UI, e.g. an error from the last attempt. May be empty. */
 	public String message() {
 		return this.message;
+	}
+
+	/** Resistance control of the connected trainer, or null when not connected. */
+	public FtmsControl control() {
+		return this.control;
 	}
 
 	/** Latest telemetry, or null if the trainer is not connected or has gone silent. */
@@ -128,6 +134,8 @@ public final class FtmsClient {
 			throw new IllegalStateException("Device is not an FTMS fitness machine");
 		}
 		this.connection = conn;
+		FtmsControl newControl = new FtmsControl(conn);
+		this.control = newControl;
 		return conn.subscribe(Ftms.SERVICE, Ftms.INDOOR_BIKE_DATA, data -> this.onBikeData(gen, data)).thenRun(() -> {
 			if (gen != this.generation) {
 				return;
@@ -136,6 +144,7 @@ public final class FtmsClient {
 			this.message = "";
 			this.retryDelay = MIN_RETRY_MILLIS;
 			VoxelVelo.LOGGER.info("Connected to trainer {}", this.deviceName);
+			newControl.initialise();
 		});
 	}
 
@@ -169,6 +178,7 @@ public final class FtmsClient {
 		this.generation++;
 		BluetoothConnection old = this.connection;
 		this.connection = null;
+		this.control = null;
 		this.telemetry = null;
 		this.state = TrainerState.DISCONNECTED;
 		this.message = reason;

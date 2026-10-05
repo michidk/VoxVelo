@@ -28,11 +28,13 @@ public class VoxelVeloClient implements ClientModInitializer {
 				ctx.obc.tick(ctx.config);
 			}
 			sender.tick(client);
+			ctx.trainerFeedback.tick(client);
 			openConfigOnKey(client);
 		});
 
 		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
 			ctx.config.save();
+			ctx.trainerFeedback.shutdown();
 			ctx.obc.shutdown();
 			ctx.bluetooth.shutdown();
 		});

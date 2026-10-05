@@ -30,22 +30,26 @@ public class ConfigScreen extends Screen {
 	protected void init() {
 		int left = this.width / 2 - WIDTH / 2;
 		int y = 76;
+		int half = (WIDTH - 10) / 2;
+		int right = left + half + 10;
 
 		this.addRenderableWidget(Button.builder(Component.translatable("voxelvelo.config.choose_trainer"),
-			button -> this.minecraft.gui.setScreen(new TrainerScreen(this))).bounds(left, y, WIDTH, 20).build());
-		y += 24;
+			button -> this.minecraft.gui.setScreen(new TrainerScreen(this))).bounds(left, y, half, 20).build());
 		this.addRenderableWidget(CycleButton.onOffBuilder(this.ctx.config.autoConnectTrainer)
-			.create(left, y, WIDTH, 20, Component.translatable("voxelvelo.config.auto_connect"), (button, value) -> this.ctx.config.autoConnectTrainer = value));
+			.create(right, y, half, 20, Component.translatable("voxelvelo.config.auto_connect"), (button, value) -> this.ctx.config.autoConnectTrainer = value));
 		y += 24;
 		this.addRenderableWidget(Button.builder(Component.translatable("voxelvelo.config.obc"),
-			button -> this.minecraft.gui.setScreen(new ObcScreen(this))).bounds(left, y, WIDTH, 20).build());
-		y += 24;
+			button -> this.minecraft.gui.setScreen(new ObcScreen(this))).bounds(left, y, half, 20).build());
 		this.addRenderableWidget(Button.builder(Component.translatable("voxelvelo.config.sources"),
-			button -> this.minecraft.gui.setScreen(new SourcesScreen(this))).bounds(left, y, WIDTH, 20).build());
+			button -> this.minecraft.gui.setScreen(new SourcesScreen(this))).bounds(right, y, half, 20).build());
 		y += 24;
-		this.addRenderableWidget(new PowerSlider(left, y));
+		this.addRenderableWidget(CycleButton.onOffBuilder(this.ctx.config.trainerResistanceEnabled)
+			.create(left, y, half, 20, Component.translatable("voxelvelo.config.resistance"), (button, value) -> this.ctx.config.trainerResistanceEnabled = value));
+		this.addRenderableWidget(new IntensitySlider(right, y, half));
 		y += 24;
-		this.addRenderableWidget(new SensitivitySlider(left, y));
+		this.addRenderableWidget(new PowerSlider(left, y, WIDTH));
+		y += 24;
+		this.addRenderableWidget(new SensitivitySlider(left, y, WIDTH));
 
 		this.addRenderableWidget(Button.builder(Component.translatable("gui.done"), button -> this.onClose())
 			.bounds(left, this.height - 30, WIDTH, 20).build());
@@ -118,8 +122,8 @@ public class ConfigScreen extends Screen {
 	}
 
 	private final class PowerSlider extends AbstractSliderButton {
-		PowerSlider(int x, int y) {
-			super(x, y, WIDTH, 20, Component.empty(), (ConfigScreen.this.ctx.config.keyboardVirtualPower - MIN_POWER) / (MAX_POWER - MIN_POWER));
+		PowerSlider(int x, int y, int width) {
+			super(x, y, width, 20, Component.empty(), (ConfigScreen.this.ctx.config.keyboardVirtualPower - MIN_POWER) / (MAX_POWER - MIN_POWER));
 			this.updateMessage();
 		}
 
@@ -139,8 +143,8 @@ public class ConfigScreen extends Screen {
 	}
 
 	private final class SensitivitySlider extends AbstractSliderButton {
-		SensitivitySlider(int x, int y) {
-			super(x, y, WIDTH, 20, Component.empty(), (ConfigScreen.this.ctx.config.keyboardSteeringSensitivity - MIN_SENSITIVITY) / (1.0 - MIN_SENSITIVITY));
+		SensitivitySlider(int x, int y, int width) {
+			super(x, y, width, 20, Component.empty(), (ConfigScreen.this.ctx.config.keyboardSteeringSensitivity - MIN_SENSITIVITY) / (1.0 - MIN_SENSITIVITY));
 			this.updateMessage();
 		}
 
@@ -156,6 +160,28 @@ public class ConfigScreen extends Screen {
 		@Override
 		protected void applyValue() {
 			ConfigScreen.this.ctx.config.keyboardSteeringSensitivity = this.sensitivity();
+		}
+	}
+
+	/** How strongly game terrain is turned into trainer resistance: 0 to 200 percent. */
+	private final class IntensitySlider extends AbstractSliderButton {
+		IntensitySlider(int x, int y, int width) {
+			super(x, y, width, 20, Component.empty(), ConfigScreen.this.ctx.config.trainerResistanceIntensity / 2.0);
+			this.updateMessage();
+		}
+
+		private double intensity() {
+			return Math.round(this.value * 2.0 * 10.0) / 10.0;
+		}
+
+		@Override
+		protected void updateMessage() {
+			this.setMessage(Component.translatable("voxelvelo.config.intensity", Math.round(this.intensity() * 100)));
+		}
+
+		@Override
+		protected void applyValue() {
+			ConfigScreen.this.ctx.config.trainerResistanceIntensity = this.intensity();
 		}
 	}
 }

@@ -3,9 +3,9 @@
 Rideable, fully multiplayer bicycles for Minecraft (Fabric). Ride with the keyboard, or bring a smart
 trainer (Bluetooth FTMS) and OpenBikeControl steering such as the BikeControl phone app.
 
-> **Status:** Milestones 1 to 5 (multiplayer bicycles, keyboard riding, three bike types, physics, terrain,
-> gradients, collisions, FTMS trainer power, OpenBikeControl steering and free source mixing) are implemented.
-> Trainer feedback and the HUD are planned (see [Roadmap](#roadmap)).
+> **Status:** Milestones 1 to 6 (multiplayer bicycles, keyboard riding, three bike types, physics, terrain,
+> gradients, collisions, FTMS trainer power, OpenBikeControl steering, free source mixing and trainer resistance feedback) are
+> implemented. The HUD and visual polish are planned (see [Roadmap](#roadmap)).
 
 ## What it does
 
@@ -181,17 +181,40 @@ exact transport BikeControl offers on your phone is unconfirmed; that is what th
 two transports are for. The TCP stream has no length prefix in the spec; like the reference app, each received
 chunk is treated as one message.
 
-## Trainer resistance feedback (planned, Milestone 6)
+## Trainer resistance feedback
 
-The server already measures gradient from real movement and the surface is a central abstraction
-(`BikeSurface`), so uphill/sand can later raise FTMS resistance (optional, configurable, safely clamped).
+With an FTMS trainer as the propulsion source, the terrain you ride over changes how the trainer feels:
+
+```text
+server: gradient measured from real movement + surface under the bike   (synced entity data)
+   -> rider client: TrainerFeedback maps it with the bike type physics
+   -> FTMS Control Point: Request Control, Start, Set Indoor Bike Simulation Parameters
+   -> trainer resistance
+```
+
+- **Uphill** is harder and **downhill** is easier. The grade sent is the game slope scaled by the bike's slope
+  factor (the same scaling the physics uses, since Minecraft hills are far steeper than roads), then by the
+  *Intensity* setting.
+- **Surface** sets the rolling resistance: path and stone are light, grass and dirt heavier, sand heaviest. It
+  includes the tyre of the bike type (a road bike on sand is much heavier than a mountain bike).
+- **Safe limits:** grade is clamped to -10 % .. +15 %, rolling resistance to the FTMS maximum, intensity to
+  0-200 %, updates are smoothed and sent at most about once per 0.75 s, and only one command is in flight so a
+  slow trainer is never flooded.
+- **Optional:** *Resistance* on/off and *Intensity* are in the settings (`B`). The feature only runs while you
+  ride, the trainer is the propulsion source and is connected. Trainers that do not advertise the simulation
+  feature (Target Setting Features bit 13), or fail the commands, are left alone and riding is unaffected.
+- When you dismount, switch propulsion away or leave the game, the trainer is returned to a flat road
+  (best effort on exit).
+
+Checked against a scripted fake trainer (command order, byte encoding, clamping, lost-control retry); not yet
+tried on real trainer hardware, so expect to tune the intensity and compare against how your trainer reacts.
 
 ## Configuration
 
 Press `B` for the settings screen: trainer choice and auto-connect, OpenBikeControl device and transports, the
-input source of each control (propulsion, steering, brake, gears), keyboard virtual power (50-600 W) and keyboard
+input source of each control (propulsion, steering, brake, gears), trainer resistance on/off and intensity, keyboard virtual power (50-600 W) and keyboard
 steering sensitivity. Settings live in `config/voxelvelo-client.json`. Rider and bike
-mass, maximum speed, HUD and trainer-resistance options are planned.
+mass, maximum speed and HUD options are planned.
 
 ## Building
 
@@ -226,7 +249,7 @@ src/client  client only: keyboard/input composition, packet sender, GeckoLib ren
 3. FTMS (done)
 4. OpenBikeControl (done)
 5. Mixed input configuration (done)
-6. Trainer feedback
+6. Trainer feedback (done)
 7. HUD, config UI, better model and rider pose
 
 ## License
