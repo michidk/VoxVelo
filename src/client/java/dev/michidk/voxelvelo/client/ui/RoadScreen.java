@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Locale;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.CycleButton;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
@@ -86,6 +87,12 @@ public class RoadScreen extends Screen {
 		y += ROW + 6;
 		this.addRenderableWidget(new ValueSlider(right, y, COLUMN, 2.0, 16.0, 1.0, this.ctx.config.roadMaxHalfWidth,
 			v -> Component.translatable("voxelvelo.road.half_width", Math.round(v)), v -> this.ctx.config.roadMaxHalfWidth = (int) Math.round(v)));
+		y += ROW + 6;
+		this.addRenderableWidget(CycleButton.onOffBuilder(this.ctx.config.junctionPrompt)
+			.create(right, y, COLUMN, 20, Component.translatable("voxelvelo.road.junction"), (button, value) -> this.ctx.config.junctionPrompt = value));
+		y += ROW;
+		this.addRenderableWidget(new ValueSlider(right, y, COLUMN, 5.0, 120.0, 5.0, this.ctx.config.junctionCooldownSeconds,
+			v -> Component.translatable("voxelvelo.road.cooldown", Math.round(v)), v -> this.ctx.config.junctionCooldownSeconds = (int) Math.round(v)));
 
 		this.addRenderableWidget(Button.builder(Component.translatable("gui.done"), button -> this.onClose())
 			.bounds(left, this.height - 30, WIDTH, 20).build());

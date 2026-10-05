@@ -2,6 +2,7 @@ package dev.michidk.voxelvelo.client;
 
 import dev.michidk.voxelvelo.VoxelVelo;
 import dev.michidk.voxelvelo.client.hud.BikeHud;
+import dev.michidk.voxelvelo.client.hud.JunctionPrompt;
 import dev.michidk.voxelvelo.client.hud.StatsOverlay;
 import dev.michidk.voxelvelo.network.RiderStatsPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -31,6 +32,7 @@ public class VoxelVeloClient implements ClientModInitializer {
 		BikeControlSender sender = new BikeControlSender(ctx.inputManager);
 		HudElementRegistry.attachElementAfter(VanillaHudElements.HOTBAR, VoxelVelo.id("bike_hud"), new BikeHud(ctx, sender));
 		HudElementRegistry.attachElementAfter(VanillaHudElements.HOTBAR, VoxelVelo.id("stats_overlay"), new StatsOverlay(ctx));
+		HudElementRegistry.attachElementAfter(VanillaHudElements.HOTBAR, VoxelVelo.id("junction_prompt"), new JunctionPrompt(ctx));
 		ClientPlayNetworking.registerGlobalReceiver(RiderStatsPayload.TYPE, (payload, context) -> {
 			if (payload.isSupported()) {
 				ctx.riderStats.update(payload);

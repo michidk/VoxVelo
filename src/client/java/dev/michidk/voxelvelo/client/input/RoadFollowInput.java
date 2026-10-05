@@ -3,9 +3,11 @@ package dev.michidk.voxelvelo.client.input;
 import dev.michidk.voxelvelo.bike.BikeEntity;
 import dev.michidk.voxelvelo.client.config.VoxelVeloConfig;
 import dev.michidk.voxelvelo.client.road.ClientRoadWorld;
+import dev.michidk.voxelvelo.client.road.JunctionNavigator;
 import dev.michidk.voxelvelo.client.road.RoadBlocks;
 import dev.michidk.voxelvelo.client.road.RoadFollower;
 import java.util.OptionalDouble;
+import java.util.Random;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 
@@ -13,6 +15,9 @@ import net.minecraft.client.player.LocalPlayer;
  * Steering that keeps the bike on the centre of a road made of the player's chosen blocks. It only steers: for
  * hands-off riding pair it with trainer or keyboard propulsion. It is active while a road centre can be found
  * ahead; when there is none (off the road, a dead end, open ground) the controls fall back to the keyboard.
+ *
+ * <p>At a junction it asks the rider for left or right (steering on any other source answers) and takes the
+ * widest way on if there is no answer; see {@link JunctionNavigator}.
  */
 public final class RoadFollowInput implements BikeInputSource {
 	private static final double SLEW_PER_TICK = 0.3;
@@ -20,12 +25,16 @@ public final class RoadFollowInput implements BikeInputSource {
 	private static final double MIN_SPEED = 0.5;
 
 	private final VoxelVeloConfig config;
+	private final BikeInputManager manager;
 	private final RoadBlocks roadBlocks = new RoadBlocks();
+	private final JunctionNavigator navigator = new JunctionNavigator(new Random());
+	private JunctionNavigator.Guidance guidance = JunctionNavigator.Guidance.IDLE;
 	private boolean active;
 	private double steering;
 
-	public RoadFollowInput(VoxelVeloConfig config) {
+	public RoadFollowInput(VoxelVeloConfig config, BikeInputManager manager) {
 		this.config = config;
+		this.manager = manager;
 	}
 
 	@Override
@@ -48,6 +57,11 @@ public final class RoadFollowInput implements BikeInputSource {
 		return this.active;
 	}
 
+	/** The open left/right question for the HUD, or null. */
+	public JunctionNavigator.Prompt prompt() {
+		return this.guidance.prompt();
+	}
+
 	@Override
 	public void tick(Minecraft client) {
 		LocalPlayer player = client.player;
@@ -56,17 +70,60 @@ public final class RoadFollowInput implements BikeInputSource {
 			return;
 		}
 		this.roadBlocks.update(this.config.roadBlocks);
-		RoadFollower.Result result = RoadFollower.steer(
-			new ClientRoadWorld(client.level, this.roadBlocks),
-			bike.getX(), bike.getY(), bike.getZ(), bike.getYRot(), bike.getSpeed(),
-			bike.getBikeType().params(), this.config.roadMaxHalfWidth);
-		this.active = result.hasTarget();
-		double target = this.active && bike.getSpeed() >= MIN_SPEED ? result.steering() : 0.0;
+		ClientRoadWorld world = new ClientRoadWorld(client.level, this.roadBlocks);
+		var params = bike.getBikeType().params();
+		double speed = bike.getSpeed();
+		RoadFollower.Result result = RoadFollower.steer(world, bike.getX(), bike.getY(), bike.getZ(), bike.getYRot(), speed, params, this.config.roadMaxHalfWidth);
+
+		// Junctions only matter when this source is the one steering; otherwise the rider has the handlebars.
+		if (this.id().equals(this.config.sourceFor(ControlChannel.STEERING))) {
+			JunctionNavigator.Settings settings = new JunctionNavigator.Settings(this.config.junctionPrompt,
+				this.config.junctionCooldownSeconds * 20, this.config.roadMaxHalfWidth);
+			this.guidance = this.navigator.update(world, bike.getX(), bike.getY(), bike.getZ(), bike.getYRot(), speed, this.riderChoice(), settings, params);
+		} else {
+			this.navigator.reset();
+			this.guidance = JunctionNavigator.Guidance.IDLE;
+		}
+
+		double target = 0.0;
+		if (this.guidance.target()) {
+			this.active = true;
+			if (speed >= MIN_SPEED) {
+				target = RoadFollower.steerToward(bike.getX(), bike.getZ(), bike.getYRot(), speed, params, this.guidance.targetX(), this.guidance.targetZ());
+			}
+		} else if (this.guidance.phase() != JunctionNavigator.Phase.IDLE) {
+			// Approaching a junction the road ahead is no longer one clean run: carry on until the turn starts.
+			this.active = true;
+			if (result.hasTarget() && speed >= MIN_SPEED) {
+				target = result.steering();
+			}
+		} else {
+			this.active = result.hasTarget();
+			if (this.active && speed >= MIN_SPEED) {
+				target = result.steering();
+			}
+		}
 		this.steering += Math.max(-SLEW_PER_TICK, Math.min(SLEW_PER_TICK, target - this.steering));
+	}
+
+	/** What the rider is steering with the keyboard or another source: negative left, positive right. */
+	private double riderChoice() {
+		double strongest = 0.0;
+		for (BikeInputSource source : this.manager.sources()) {
+			if (source != this && source.supports(ControlChannel.STEERING) && source.isActive()) {
+				double value = source.steering().orElse(0.0);
+				if (Math.abs(value) > Math.abs(strongest)) {
+					strongest = value;
+				}
+			}
+		}
+		return strongest;
 	}
 
 	@Override
 	public void reset() {
+		this.navigator.reset();
+		this.guidance = JunctionNavigator.Guidance.IDLE;
 		this.active = false;
 		this.steering = 0.0;
 	}

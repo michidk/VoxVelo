@@ -17,7 +17,7 @@ public final class RoadFollower {
 	private static final double STEP = 0.5;
 	/** How far sideways from the bike to look for a road when it is not exactly on one. */
 	private static final double SEARCH_SIDEWAYS = 3.0;
-	private static final int NONE = Integer.MIN_VALUE;
+	static final int NONE = Integer.MIN_VALUE;
 	/** How much longer than its real width a road may measure across a bike heading at a slant. */
 	private static final double WIDTH_TOLERANCE = 1.5;
 
@@ -34,7 +34,7 @@ public final class RoadFollower {
 		}
 	}
 
-	private record Section(double low, double high, boolean tooWide) {
+	record Section(double low, double high, boolean tooWide) {
 		double centre() {
 			return (this.low + this.high) / 2.0;
 		}
@@ -74,8 +74,16 @@ public final class RoadFollower {
 		return Result.none(onRoad);
 	}
 
+	/** Steering that arcs the bike from its pose through the given world point, as -1..+1. */
+	public static double steerToward(double x, double z, double yawDegrees, double speed, BikePhysics.Params params, double targetX, double targetZ) {
+		double yaw = Math.toRadians(yawDegrees);
+		double fx = -Math.sin(yaw);
+		double fz = Math.cos(yaw);
+		return pursuit(targetX - x, targetZ - z, fx, fz, -fz, fx, speed, params);
+	}
+
 	/** Pure pursuit: the front wheel angle that would arc the bike through the aim point, as -1..+1. */
-	private static double pursuit(double vx, double vz, double fx, double fz, double rx, double rz, double speed, BikePhysics.Params p) {
+	static double pursuit(double vx, double vz, double fx, double fz, double rx, double rz, double speed, BikePhysics.Params p) {
 		double forward = vx * fx + vz * fz;
 		double right = vx * rx + vz * rz;
 		double distance = Math.hypot(forward, right);
@@ -88,7 +96,7 @@ public final class RoadFollower {
 	}
 
 	/** The road run across the line through (qx, qz) along (rx, rz), or null if there is no road near the line. */
-	private static Section section(RoadWorld world, double qx, double qz, double rx, double rz, int refY, int maxHalfWidth) {
+	static Section section(RoadWorld world, double qx, double qz, double rx, double rz, int refY, int maxHalfWidth) {
 		double start = Double.NaN;
 		int startY = NONE;
 		search:
@@ -172,7 +180,7 @@ public final class RoadFollower {
 	}
 
 	/** Follows the ground height along the heading so a climbing or falling road stays within one block per column. */
-	private static int groundAlong(RoadWorld world, double x, double z, double fx, double fz, int startY, double distance) {
+	static int groundAlong(RoadWorld world, double x, double z, double fx, double fz, int startY, double distance) {
 		int y = startY;
 		for (double t = STEP; t <= distance; t += STEP) {
 			int col = columnY(world, floor(x + fx * t), floor(z + fz * t), y);
@@ -184,7 +192,7 @@ public final class RoadFollower {
 	}
 
 	/** Height of the road block in this column near refY, with two blocks of passable space above it, or NONE. */
-	private static int columnY(RoadWorld world, int x, int z, int refY) {
+	static int columnY(RoadWorld world, int x, int z, int refY) {
 		for (int dy : new int[] { 0, 1, -1 }) {
 			int y = refY + dy;
 			if (world.isRoad(x, y, z) && world.isPassable(x, y + 1, z) && world.isPassable(x, y + 2, z)) {
@@ -194,11 +202,11 @@ public final class RoadFollower {
 		return NONE;
 	}
 
-	private static int floor(double value) {
+	static int floor(double value) {
 		return (int) Math.floor(value);
 	}
 
-	private static double clamp(double value, double min, double max) {
+	static double clamp(double value, double min, double max) {
 		return Math.max(min, Math.min(max, value));
 	}
 }

@@ -133,6 +133,27 @@ For trainer riding without OpenBikeControl or keyboard: set *Steering* to **Road
 - **Gives up quietly:** with no road under the bike, or on open ground, the source reports no steering, so the
   keyboard (or whatever else is idle-capable) takes over and you never lose control.
 
+### Junctions
+
+With *Steering* on **Road follow** the bike also copes with crossings, forks and turn-offs:
+
+- **Detection:** the road ahead is checked for a place where it suddenly widens, meets a cross street or forks.
+  Around its middle every road that really connects to it counts as a way on (parallel roads that do not connect
+  are ignored). A lone way on that is not straight ahead is just a corner: the bike takes it without asking.
+- **The question:** with two or more ways on, a big **LEFT / RIGHT** prompt appears about four seconds before the
+  turn (further out when you are fast). Answer by steering on the keyboard (`A` / `D` or the steer keys) or with
+  OpenBikeControl; the picked side turns green and you can change your mind until the turn starts. A bar shows how
+  long is left and the line under it says what happens if you do nothing.
+- **No answer, or still in cooldown:** the bike takes the widest way on, and picks at random among ways that are
+  about equally wide. Straight on counts as a way on. After a question there is a cooldown (30 s by default), so
+  a street of closely spaced crossings does not nag; junctions inside it are decided automatically.
+- **Settings:** *Junction Prompt* on/off and *Prompt Cooldown* (5-120 s) are on `B` > *Road & Terrain...*. With the
+  prompt off, every junction is decided by the widest-way rule.
+- **Limits:** the turn follows the bike's own turning circle, so a fast bike (about 30 km/h and up) cuts the
+  corner of a narrow road and may run onto the verge for a moment; slow down for tight junctions. The geometry was
+  checked in closed-loop simulation (crossroads, T, corner, fork, bends) and in game on a built crossroads, but
+  not on real trainers, curved city layouts or multiplayer.
+
 ### Slope window
 
 Trainers react slowly, so the resistance does not follow the block directly under the wheel. The grade is a
@@ -274,7 +295,7 @@ Press `B` for the settings hub, which links to one page per topic:
 - *OpenBikeControl...*: device and transports.
 - *Input Sources...*: the source of each control (propulsion, steering, brake, gears), keyboard virtual power
   (50-600 W) and keyboard steering sensitivity.
-- *Road & Terrain...*: the road block list and the widest road (max half-width) for road follow.
+- *Road & Terrain...*: the road block list, the widest road (max half-width) and the junction prompt with its cooldown.
 - *Rider & HUD...*: rider mass, speed limit, HUD options, the rider stats overlay and what you share.
 
 Settings live in `config/voxelvelo-client.json`.

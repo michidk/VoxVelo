@@ -54,6 +54,10 @@ public final class VoxelVeloConfig {
 	/** Widest road the follower will centre on, in blocks each side of the bike. Wider areas count as open ground. */
 	public int roadMaxHalfWidth = 8;
 
+	/** Ask left or right at junctions while road following, and the least time between two questions. */
+	public boolean junctionPrompt = true;
+	public int junctionCooldownSeconds = 30;
+
 	/** Blocks each way (behind and ahead) over which the slope for the trainer and HUD is measured. */
 	public int slopeWindowBlocks = 10;
 
@@ -130,6 +134,7 @@ public final class VoxelVeloConfig {
 		this.roadBlocks = sanitizeBlocks(this.roadBlocks);
 		this.roadMaxHalfWidth = Math.max(2, Math.min(16, this.roadMaxHalfWidth));
 		this.slopeWindowBlocks = Math.max(10, Math.min(40, this.slopeWindowBlocks));
+		this.junctionCooldownSeconds = Math.max(5, Math.min(120, this.junctionCooldownSeconds));
 		this.keyboardVirtualPower = clamp(this.keyboardVirtualPower, 50.0, 600.0, 200.0);
 		this.keyboardSteeringSensitivity = clamp(this.keyboardSteeringSensitivity, 0.3, 1.0, 1.0);
 	}

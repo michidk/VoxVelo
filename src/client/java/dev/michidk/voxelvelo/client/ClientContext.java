@@ -26,6 +26,7 @@ public final class ClientContext {
 	public final FtmsClient ftms;
 	public final ObcClient obc;
 	public final BikeInputManager inputManager;
+	public final RoadFollowInput roadFollow;
 	public final TrainerFeedback trainerFeedback;
 	public final RideTerrain rideTerrain;
 	public final RiderStatsStore riderStats = new RiderStatsStore();
@@ -40,7 +41,8 @@ public final class ClientContext {
 		this.inputManager = new BikeInputManager(this.config, new KeyboardBikeInput(this.config));
 		this.inputManager.register(new FtmsTrainerInput(this.ftms));
 		this.inputManager.register(new OpenBikeControlInput(this.obc));
-		this.inputManager.register(new RoadFollowInput(this.config));
+		this.roadFollow = new RoadFollowInput(this.config, this.inputManager);
+		this.inputManager.register(this.roadFollow);
 		this.rideTerrain = new RideTerrain(this.config);
 		this.vitalsSender = new VitalsSender(this);
 		this.trainerFeedback = new TrainerFeedback(this);
