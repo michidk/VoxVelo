@@ -3,10 +3,14 @@ package dev.michidk.voxelvelo.client.obc;
 import dev.michidk.voxelvelo.VoxelVelo;
 import java.net.Inet4Address;
 import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.jmdns.JmDNS;
@@ -25,17 +29,15 @@ public final class MdnsDiscovery {
 		return thread;
 	});
 	private final Map<String, ObcDevice> devices = new ConcurrentHashMap<>();
-	private volatile JmDNS jmdns;
+	/** One browser per usable network interface: mDNS only travels on the local link, so the default address may be the wrong one. */
+	private final List<JmDNS> browsers = new CopyOnWriteArrayList<>();
 	private volatile boolean wanted;
 	private volatile String error = "";
 
 	private final ServiceListener listener = new ServiceListener() {
 		@Override
 		public void serviceAdded(ServiceEvent event) {
-			JmDNS current = MdnsDiscovery.this.jmdns;
-			if (current != null) {
-				current.requestServiceInfo(event.getType(), event.getName(), true);
-			}
+			event.getDNS().requestServiceInfo(event.getType(), event.getName(), true);
 		}
 
 		@Override
@@ -56,13 +58,25 @@ public final class MdnsDiscovery {
 		}
 		this.wanted = true;
 		this.executor.execute(() -> {
-			if (!this.wanted || this.jmdns != null) {
+			if (!this.wanted || !this.browsers.isEmpty()) {
 				return;
 			}
 			try {
-				JmDNS created = JmDNS.create();
-				created.addServiceListener(Obc.MDNS_TYPE, this.listener);
-				this.jmdns = created;
+				for (InetAddress address : localAddresses()) {
+					try {
+						JmDNS created = JmDNS.create(address);
+						created.addServiceListener(Obc.MDNS_TYPE, this.listener);
+						this.browsers.add(created);
+						VoxelVelo.LOGGER.info("Browsing for OpenBikeControl devices on {}", address.getHostAddress());
+					} catch (Throwable t) {
+						VoxelVelo.LOGGER.warn("Could not browse on {}", address.getHostAddress(), t);
+					}
+				}
+				if (this.browsers.isEmpty()) {
+					JmDNS created = JmDNS.create();
+					created.addServiceListener(Obc.MDNS_TYPE, this.listener);
+					this.browsers.add(created);
+				}
 				this.error = "";
 			} catch (Throwable t) {
 				VoxelVelo.LOGGER.warn("Could not start network discovery", t);
@@ -78,21 +92,20 @@ public final class MdnsDiscovery {
 		}
 		this.wanted = false;
 		this.executor.execute(() -> {
-			JmDNS current = this.jmdns;
-			this.jmdns = null;
 			this.devices.clear();
-			if (current != null) {
+			for (JmDNS browser : this.browsers) {
 				try {
-					current.close();
+					browser.close();
 				} catch (Throwable t) {
 					VoxelVelo.LOGGER.debug("Error closing mDNS", t);
 				}
 			}
+			this.browsers.clear();
 		});
 	}
 
 	public boolean isRunning() {
-		return this.jmdns != null;
+		return !this.browsers.isEmpty();
 	}
 
 	/** Non-empty if discovery could not start. */
@@ -102,6 +115,31 @@ public final class MdnsDiscovery {
 
 	public List<ObcDevice> devices() {
 		return new ArrayList<>(this.devices.values());
+	}
+
+	/** IPv4 addresses of the interfaces that are up and can multicast, without loopback, link-local and VPN-style (100.64.0.0/10) ones. */
+	static List<InetAddress> localAddresses() {
+		List<InetAddress> found = new ArrayList<>();
+		try {
+			for (NetworkInterface network : Collections.list(NetworkInterface.getNetworkInterfaces())) {
+				if (!network.isUp() || network.isLoopback() || !network.supportsMulticast()) {
+					continue;
+				}
+				for (InetAddress address : Collections.list(network.getInetAddresses())) {
+					if (address instanceof Inet4Address && !address.isLoopbackAddress() && !address.isLinkLocalAddress() && !isSharedAddressSpace(address)) {
+						found.add(address);
+					}
+				}
+			}
+		} catch (SocketException e) {
+			VoxelVelo.LOGGER.debug("Could not list network interfaces", e);
+		}
+		return found;
+	}
+
+	private static boolean isSharedAddressSpace(InetAddress address) {
+		byte[] octets = address.getAddress();
+		return (octets[0] & 0xFF) == 100 && (octets[1] & 0xC0) == 64;
 	}
 
 	private void onResolved(String serviceName, ServiceInfo info) {
