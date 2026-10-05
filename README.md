@@ -3,8 +3,9 @@
 Rideable, fully multiplayer bicycles for Minecraft (Fabric). Ride with the keyboard, or bring a smart
 trainer (Bluetooth FTMS) and OpenBikeControl steering such as the BikeControl phone app.
 
-> **Status:** Milestone 1 (multiplayer bicycle with keyboard riding) is implemented. FTMS, OpenBikeControl,
-> mixed-input configuration, trainer feedback and the HUD/config UI are planned (see [Roadmap](#roadmap)).
+> **Status:** Milestones 1 and 2 (multiplayer bicycles, keyboard riding, three bike types, physics, terrain,
+> gradients and collisions) are implemented. FTMS, OpenBikeControl, mixed-input configuration, trainer feedback
+> and the HUD/config UI are planned (see [Roadmap](#roadmap)).
 
 ## What it does
 
@@ -39,12 +40,38 @@ protocol v1) at most once per tick on change and as a heartbeat every 5 ticks; e
 server, and if packets stop for 15 ticks (0.75 s) power and steering are dropped so a disconnected player
 cannot keep accelerating. Only the seated player can control a bike; one rider per bike.
 
+## Bike types
+
+Three bikes share one simulation and differ only in their parameters (`BikeType`):
+
+| | Road | Gravel | Mountain |
+|---|---|---|---|
+| Mass | light | medium | heavy |
+| Hard ground | fastest | good | slowest |
+| Loose ground (sand, dirt) | very slow, little grip | good | best, most grip |
+| Braking | weakest off-road | good | strongest |
+| Turning | quick at speed | balanced | tight lock, stable |
+| Ledges | slabs | slabs | full blocks (costs speed) |
+
+At 200 W on flat stone the three cruise at roughly 34, 32 and 28 km/h; on sand 12, 21 and 21 km/h.
+
 ## Getting a bicycle
 
-- **Craft:** leather in the top middle, iron ingots in the middle row and the two bottom corners
-  (`" L " / "III" / "I I"`).
-- **Creative:** Tools & Utilities tab, or `/give @s voxelvelo:bicycle`.
+- **Craft** (leather on top, iron ingots around the middle):
+  - Road bike: string in the centre
+  - Gravel bike: gravel in the centre
+  - Mountain bike: slime ball in the centre
+- **Creative:** Tools & Utilities tab, or `/give @s voxelvelo:road_bike` (also `gravel_bike`, `mountain_bike`).
 - Right-click a block to place it, right-click the bike to mount, `Shift` to dismount, punch it to pick it up.
+
+## Collisions
+
+- Blocks stop the bike; it keeps the speed component that slides along a wall. A hard head-on hit is audible and
+  hurts the rider.
+- Riding into a mob or player hurts and knocks them away in proportion to speed (and slows the bike). Slowly, you
+  just nudge them aside.
+- Other bikes, boats and minecarts are solid for a bike. Parked bikes are not solid for walking players.
+- The bike stays glued to slopes and stairs instead of launching off them.
 
 ## Keyboard riding
 

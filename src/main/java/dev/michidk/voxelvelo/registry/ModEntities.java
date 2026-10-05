@@ -16,8 +16,8 @@ public final class ModEntities {
 		BuiltInRegistries.ENTITY_TYPE,
 		BICYCLE_KEY,
 		EntityType.Builder.<BikeEntity>of(BikeEntity::new, MobCategory.MISC)
-			.sized(0.9F, 1.0F)
-			.eyeHeight(0.9F)
+			.sized(0.9F, 1.9F)
+			.eyeHeight(1.7F)
 			.noLootTable()
 			.clientTrackingRange(10)
 			.updateInterval(1)

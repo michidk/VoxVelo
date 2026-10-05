@@ -2,7 +2,10 @@ package dev.michidk.voxelvelo.bike;
 
 import dev.michidk.voxelvelo.registry.ModItems;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -10,6 +13,7 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.FluidTags;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -30,6 +34,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
@@ -57,6 +62,9 @@ public class BikeEntity extends VehicleEntity {
 	private static final double LEDGE_PENALTY_HEIGHT = 0.55;
 	private static final double CRASH_SOUND_IMPACT = 4.0;
 	private static final double CRASH_DAMAGE_IMPACT = 9.0;
+	/** Below this speed a bike only nudges entities out of the way; above it, it hurts them. */
+	private static final double HIT_DAMAGE_SPEED = 3.0;
+	private static final int HIT_COOLDOWN_TICKS = 10;
 
 	private static final EntityDataAccessor<Integer> DATA_TYPE = SynchedEntityData.defineId(BikeEntity.class, EntityDataSerializers.INT);
 	private static final EntityDataAccessor<Float> DATA_SPEED = SynchedEntityData.defineId(BikeEntity.class, EntityDataSerializers.FLOAT);
@@ -74,6 +82,7 @@ public class BikeEntity extends VehicleEntity {
 	private double steering;
 	private double gradient;
 	private int submergedTicks;
+	private final Map<UUID, Integer> recentHits = new HashMap<>();
 
 	// Client-only animation state, derived from synced data so every client animates identically.
 	private float wheelAngle;
@@ -189,6 +198,7 @@ public class BikeEntity extends VehicleEntity {
 		double yawRad = Math.toRadians(this.getYRot());
 		double forwardX = -Math.sin(yawRad);
 		double forwardZ = Math.cos(yawRad);
+		this.hitEntitiesAhead(forwardX, forwardZ);
 		double blocksPerTick = this.speed * DT;
 
 		double verticalSpeed = this.isInWater()
@@ -249,6 +259,42 @@ public class BikeEntity extends VehicleEntity {
 		}
 		if (impact > CRASH_DAMAGE_IMPACT && this.getRider() instanceof Player rider && this.level() instanceof ServerLevel serverLevel) {
 			rider.hurtServer(serverLevel, serverLevel.damageSources().flyIntoWall(), (float) ((impact - CRASH_DAMAGE_IMPACT) * 0.5));
+		}
+	}
+
+	/**
+	 * Riding into a living entity (mob or player) hurts it and knocks it forward, costing the bike speed.
+	 * Solid vehicles such as other bikes are handled by normal collision instead, see {@link #canBeCollidedWith}.
+	 */
+	private void hitEntitiesAhead(double forwardX, double forwardZ) {
+		if (this.speed < 0.5 || !(this.level() instanceof ServerLevel serverLevel)) {
+			return;
+		}
+		this.recentHits.values().removeIf(tick -> this.tickCount - tick > HIT_COOLDOWN_TICKS * 2);
+
+		AABB area = this.getBoundingBox().inflate(0.1, 0.0, 0.1).move(forwardX * 0.4, 0.0, forwardZ * 0.4);
+		for (Entity target : serverLevel.getEntities(this, area, e -> e instanceof LivingEntity && e.isAlive() && !e.isSpectator() && !this.isPassengerOfSameVehicle(e))) {
+			if ((target.getX() - this.getX()) * forwardX + (target.getZ() - this.getZ()) * forwardZ <= 0.0) {
+				continue;
+			}
+			LivingEntity living = (LivingEntity) target;
+			if (this.speed < HIT_DAMAGE_SPEED) {
+				living.push(forwardX * 0.08, 0.0, forwardZ * 0.08);
+				continue;
+			}
+			Integer last = this.recentHits.get(target.getUUID());
+			if (last != null && this.tickCount - last < HIT_COOLDOWN_TICKS) {
+				continue;
+			}
+			this.recentHits.put(target.getUUID(), this.tickCount);
+
+			Player rider = this.getRider();
+			DamageSource source = rider != null ? serverLevel.damageSources().playerAttack(rider) : serverLevel.damageSources().generic();
+			float damage = (float) ((this.speed - 2.5) * 0.6);
+			living.hurtServer(serverLevel, source, damage);
+			living.knockback(Math.min(1.5, 0.3 + this.speed * 0.07), -forwardX, -forwardZ, source, damage);
+			this.playSound(SoundEvents.PLAYER_ATTACK_KNOCKBACK, 0.8F, 1.0F);
+			this.speed *= 0.6;
 		}
 	}
 
@@ -326,6 +372,12 @@ public class BikeEntity extends VehicleEntity {
 	@Override
 	protected Entity.MovementEmission getMovementEmission() {
 		return Entity.MovementEmission.EVENTS;
+	}
+
+	/** Other vehicles (including bikes) collide with a bike; players and mobs walk through and are hit instead. */
+	@Override
+	public boolean canBeCollidedWith(@Nullable Entity other) {
+		return other instanceof VehicleEntity;
 	}
 
 	@Override
