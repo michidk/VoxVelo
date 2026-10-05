@@ -70,8 +70,19 @@ At 200 W on flat stone the three cruise at roughly 34, 32 and 28 km/h; on sand 1
 
 - Blocks stop the bike; it keeps the speed component that slides along a wall. A hard head-on hit is audible and
   hurts the rider.
-- Riding into a mob or player hurts and knocks them away in proportion to speed (and slows the bike). Slowly, you
-  just nudge them aside.
+- Riding into a mob or player shoves or hurts them depending on the **closing speed** (the bike's speed minus the
+  target's own speed along its heading, so running into an oncoming player counts double):
+  - **Under 3 m/s (about 11 km/h): a shove.** No damage. It is a perfectly inelastic push: both end at the common
+    speed, so a chicken is carried along while a cow or an iron golem barely moves and drags the bike down.
+  - **From 3 m/s: a hit.** It deals `(closing speed - 2.5) * 0.7` half hearts (about 3 at 7 m/s), knocks the target
+    away from the line of the bike (more for lighter targets) and plays a sound with crit particles. A target at
+    the edge of the bike is swept to the side.
+  - **The bike pays for it.** It loses speed in proportion to the target's mass, estimated from its size: a cow
+    takes most of 7 m/s, an iron golem stops the bike dead. A sudden loss of more than 9 m/s hurts the rider like
+    hitting a wall.
+  - Targets that cannot be hurt (PvP off, invulnerable, creative) are shoved instead. The hit area covers the
+    whole distance travelled in a tick, so a fast bike cannot skip over someone. Riders of other bikes are left
+    to the bike-on-bike collision below.
 - Other bikes, boats and minecarts are solid for a bike. Parked bikes are not solid for walking players.
 - The bike stays glued to slopes and stairs instead of launching off them.
 

@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -72,8 +73,6 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 	private static final double LEDGE_PENALTY_HEIGHT = 0.55;
 	private static final double CRASH_SOUND_IMPACT = 4.0;
 	private static final double CRASH_DAMAGE_IMPACT = 9.0;
-	/** Below this speed a bike only nudges entities out of the way; above it, it hurts them. */
-	private static final double HIT_DAMAGE_SPEED = 3.0;
 	private static final int HIT_COOLDOWN_TICKS = 10;
 
 	private static final EntityDataAccessor<Integer> DATA_TYPE = SynchedEntityData.defineId(BikeEntity.class, EntityDataSerializers.INT);
@@ -221,7 +220,7 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 		double yawRad = Math.toRadians(this.getYRot());
 		double forwardX = -Math.sin(yawRad);
 		double forwardZ = Math.cos(yawRad);
-		this.hitEntitiesAhead(forwardX, forwardZ);
+		this.hitEntitiesAhead(forwardX, forwardZ, params);
 		double blocksPerTick = this.speed * DT;
 
 		double verticalSpeed = this.isInWater()
@@ -287,38 +286,80 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 	}
 
 	/**
-	 * Riding into a living entity (mob or player) hurts it and knocks it forward, costing the bike speed.
-	 * Solid vehicles such as other bikes are handled by normal collision instead, see {@link #canBeCollidedWith}.
+	 * Riding into a living entity (mob or player) shoves or hurts it depending on how fast the two close in, and
+	 * costs the bike speed in proportion to what it hit, see {@link BikeImpact}. Riders of other bikes are left to
+	 * the solid bike-on-bike collision instead, see {@link #canBeCollidedWith}.
 	 */
-	private void hitEntitiesAhead(double forwardX, double forwardZ) {
-		if (this.speed < 0.5 || !(this.level() instanceof ServerLevel serverLevel)) {
+	private void hitEntitiesAhead(double forwardX, double forwardZ, BikePhysics.Params params) {
+		if (this.speed < BikeImpact.TOUCH_SPEED || !(this.level() instanceof ServerLevel serverLevel)) {
 			return;
 		}
 		this.recentHits.values().removeIf(tick -> this.tickCount - tick > HIT_COOLDOWN_TICKS * 2);
 
-		AABB area = this.getBoundingBox().inflate(0.1, 0.0, 0.1).move(forwardX * 0.4, 0.0, forwardZ * 0.4);
-		for (Entity target : serverLevel.getEntities(this, area, e -> e instanceof LivingEntity && e.isAlive() && !e.isSpectator() && !this.isPassengerOfSameVehicle(e))) {
-			if ((target.getX() - this.getX()) * forwardX + (target.getZ() - this.getZ()) * forwardZ <= 0.0) {
-				continue;
-			}
-			LivingEntity living = (LivingEntity) target;
-			if (this.speed < HIT_DAMAGE_SPEED) {
-				living.push(forwardX * 0.08, 0.0, forwardZ * 0.08);
+		// Sweep the whole distance covered this tick so a fast bike cannot skip over a creature.
+		double reach = this.speed * DT + 0.3;
+		AABB area = this.getBoundingBox().expandTowards(forwardX * reach, 0.0, forwardZ * reach).inflate(0.15, 0.0, 0.15);
+		double rightX = -forwardZ;
+		double rightZ = forwardX;
+		double lostInHits = 0.0;
+		for (Entity target : serverLevel.getEntities(this, area, e -> e instanceof LivingEntity && e.isAlive() && !e.isSpectator()
+			&& !this.isPassengerOfSameVehicle(e) && !(e.getVehicle() instanceof BikeEntity))) {
+			double offsetX = target.getX() - this.getX();
+			double offsetZ = target.getZ() - this.getZ();
+			if (offsetX * forwardX + offsetZ * forwardZ <= 0.0) {
 				continue;
 			}
 			Integer last = this.recentHits.get(target.getUUID());
 			if (last != null && this.tickCount - last < HIT_COOLDOWN_TICKS) {
 				continue;
 			}
-			this.recentHits.put(target.getUUID(), this.tickCount);
+			LivingEntity living = (LivingEntity) target;
+			Vec3 motion = living.getDeltaMovement();
+			double along = (motion.x * forwardX + motion.z * forwardZ) / DT;
+			BikeImpact.Outcome outcome = BikeImpact.resolve(this.speed, along, params.totalMass(), BikeImpact.massOf(target.getBbWidth(), target.getBbHeight()));
+			if (outcome.kind() == BikeImpact.Kind.NONE) {
+				continue;
+			}
 
-			Player rider = this.getRider();
-			DamageSource source = rider != null ? serverLevel.damageSources().playerAttack(rider) : serverLevel.damageSources().generic();
-			float damage = (float) ((this.speed - 2.5) * 0.6);
-			living.hurtServer(serverLevel, source, damage);
-			living.knockback(Math.min(1.5, 0.3 + this.speed * 0.07), -forwardX, -forwardZ, source, damage);
-			this.playSound(SoundEvents.PLAYER_ATTACK_KNOCKBACK, 0.8F, 1.0F);
-			this.speed *= 0.6;
+			// Send it ahead and a little away from the bike's line, so a creature at the edge is swept aside.
+			double side = Mth.clamp((offsetX * rightX + offsetZ * rightZ) * 0.8, -0.5, 0.5);
+			double dirX = forwardX + rightX * side;
+			double dirZ = forwardZ + rightZ * side;
+			double length = Math.hypot(dirX, dirZ);
+			dirX /= length;
+			dirZ /= length;
+
+			double closing = this.speed - along;
+			boolean hurt = false;
+			if (outcome.kind() == BikeImpact.Kind.HIT) {
+				this.recentHits.put(target.getUUID(), this.tickCount);
+				Player rider = this.getRider();
+				DamageSource source = rider != null ? serverLevel.damageSources().playerAttack(rider) : serverLevel.damageSources().generic();
+				hurt = living.hurtServer(serverLevel, source, outcome.damage());
+				if (hurt) {
+					living.knockback(outcome.knockback(), -dirX, -dirZ, source, outcome.damage());
+					serverLevel.sendParticles(ParticleTypes.CRIT, target.getX(), target.getY() + target.getBbHeight() * 0.6, target.getZ(),
+						6 + (int) outcome.damage(), 0.25, 0.2, 0.25, 0.2);
+					this.playSound(SoundEvents.PLAYER_ATTACK_STRONG, 1.0F, 0.9F);
+					this.playSound(SoundEvents.PLAYER_ATTACK_KNOCKBACK, (float) Math.min(1.0, closing / 10.0), 1.0F);
+				}
+			}
+			if (!hurt) {
+				// A shove, or a hit that could not hurt (peaceful rules, no PvP, invulnerable): still push it out of the way.
+				double strength = outcome.kind() == BikeImpact.Kind.SHOVE ? outcome.knockback() : 0.08 + 0.03 * closing;
+				living.push(dirX * strength, 0.02, dirZ * strength);
+				if (outcome.kind() == BikeImpact.Kind.HIT) {
+					this.playSound(SoundEvents.PLAYER_ATTACK_WEAK, 0.8F, 1.0F);
+				}
+			}
+			if (outcome.kind() == BikeImpact.Kind.HIT) {
+				lostInHits += outcome.speedLoss();
+			}
+			this.speed = Math.max(0.0, this.speed - outcome.speedLoss());
+		}
+		if (lostInHits > 0.0) {
+			// Running into something heavy stops the bike short, and that hurts the rider like hitting a wall.
+			this.handleImpact(lostInHits);
 		}
 	}
 
