@@ -1,0 +1,18 @@
+{
+	"type": "minecraft:crafting_shaped",
+	"category": "misc",
+	"key": {
+		"I": "minecraft:iron_ingot",
+		"L": "minecraft:leather",
+		"X": "minecraft:slime_ball"
+	},
+	"pattern": [
+		" L ",
+		"IXI",
+		"I I"
+	],
+	"result": {
+		"id": "voxelvelo:mountain_bike",
+		"count": 1
+	}
+}

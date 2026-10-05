@@ -1,0 +1,26 @@
+{
+	"schemaVersion": 1,
+	"id": "voxelvelo",
+	"version": "${version}",
+	"name": "VoxelVelo",
+	"description": "Rideable multiplayer bicycles for Minecraft. Ride with the keyboard, or bring a smart trainer and OpenBikeControl steering.",
+	"authors": [
+		"VoxelVelo contributors"
+	],
+	"license": "MIT",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"dev.michidk.voxelvelo.VoxelVelo"
+		],
+		"client": [
+			"dev.michidk.voxelvelo.client.VoxelVeloClient"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=0.19.5",
+		"minecraft": "~26.3",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}

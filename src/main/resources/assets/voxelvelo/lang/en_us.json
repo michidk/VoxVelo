@@ -1,0 +1,14 @@
+{
+	"item.voxelvelo.road_bike": "Road Bike",
+	"item.voxelvelo.gravel_bike": "Gravel Bike",
+	"item.voxelvelo.mountain_bike": "Mountain Bike",
+	"entity.voxelvelo.bicycle": "Bicycle",
+	"key.category.voxelvelo.bike": "VoxelVelo Bicycle",
+	"key.voxelvelo.pedal": "Pedal (alternative)",
+	"key.voxelvelo.brake": "Brake (alternative)",
+	"key.voxelvelo.hard_brake": "Hard Brake",
+	"key.voxelvelo.steer_left": "Steer Left (alternative)",
+	"key.voxelvelo.steer_right": "Steer Right (alternative)",
+	"key.voxelvelo.shift_up": "Shift Gear Up",
+	"key.voxelvelo.shift_down": "Shift Gear Down"
+}
