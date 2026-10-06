@@ -132,9 +132,10 @@ At 200 W on flat stone the three cruise at roughly 34, 32 and 28 km/h; on sand 1
 ### Speed Boost enchantment
 
 An assembled bike can receive **Speed Boost I–III** from an enchanting table or an enchanted book in an anvil.
-Each level raises that bike's top speed by 10%; a rider's personal speed limit still caps the final speed. The
-enchantment remains on the bike when it is placed, saved and picked up. Dismantling or destroying a bike drops
-its physical parts rather than the assembled bike, so the enchantment is lost with the assembly.
+Each level multiplies its actual movement speed by another 10%, after the normal riding physics; a rider's personal
+speed limit still caps the final result. The enchantment remains on the bike when it is placed, saved and picked up.
+Dismantling or destroying a bike drops its physical parts rather than the assembled bike, so the enchantment is
+lost with the assembly.
 
 ## Bike damage and the wrench
 

@@ -372,10 +372,10 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 		BikeControlState input = this.effectiveControl();
 		Player rider = this.getRider();
         if (!canRide()) { ejectPassengers(); input = new BikeControlState(0, 0, 1, input.gear()); }
-		BikePhysics.Params enchantedParams = BikeSpeedBoost.apply(this.params(), getSpeedBoostLevel());
+		RiderSettings.Settings riderSettings = rider == null ? RiderSettings.Settings.DEFAULT : RiderSettings.get(rider.getUUID());
 		BikePhysics.Params params = rider == null
-			? enchantedParams
-			: RiderSettings.apply(enchantedParams, RiderSettings.get(rider.getUUID()));
+			? this.params()
+			: RiderSettings.apply(this.params(), riderSettings);
 
 		if (this.isEyeInFluid(FluidTags.WATER)) {
 			if (++this.submergedTicks >= SUBMERGED_EJECT_TICKS) {
@@ -402,10 +402,13 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 
 		BlockState below = this.level().getBlockState(BlockPos.containing(this.getX(), this.getY() - 0.2, this.getZ()));
 		BikeSurface surface = BikeSurface.classify(below, this.isInWater());
-		this.speed = BikePhysics.stepSpeed(this.speed, DT, input.propulsion(), input.brake(), surface, this.gradient, params);
+		double simulationSpeed = BikeSpeedBoost.baseSpeed(this.speed, getSpeedBoostLevel());
+		this.speed = BikePhysics.stepSpeed(simulationSpeed, DT, input.propulsion(), input.brake(), surface, this.gradient, params);
         int burst = (hasPart(0) && tirePercent(0) == 0 ? 1 : 0) + (hasPart(1) && tirePercent(1) == 0 ? 1 : 0);
         if (burst > 0) this.speed = Math.min(3.0 / burst, this.speed * Math.pow(0.985, burst));
         if (!hasPart(0) || !hasPart(1)) this.speed = 0;
+		this.speed = BikeSpeedBoost.apply(this.speed, getSpeedBoostLevel());
+		if (rider != null) this.speed = RiderSettings.capSpeed(this.speed, riderSettings);
 
 		double yawRate = BikePhysics.yawRate(this.speed, this.steering, params);
 		this.setYRot(this.getYRot() + (float) Math.toDegrees(yawRate * DT));

@@ -54,4 +54,11 @@ public final class RiderSettings {
 		}
 		return params;
 	}
+
+	/** Applies the rider's optional absolute limit after other movement-speed modifiers. */
+	public static double capSpeed(double speed, Settings settings) {
+		return settings.speedLimitKmh() > 0.0
+			? Math.min(speed, settings.speedLimitKmh() / 3.6)
+			: speed;
+	}
 }
