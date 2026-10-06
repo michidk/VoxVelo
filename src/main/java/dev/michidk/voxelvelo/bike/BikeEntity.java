@@ -96,6 +96,7 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 	private final BikeWear wear = new BikeWear(this, this.parts);
 	private final BikeEntityHits hits = new BikeEntityHits(this);
 	private final BikeMotion motion = new BikeMotion(this);
+	private final BikeHitboxes hitboxes = new BikeHitboxes(this);
 	private final AnimatableInstanceCache geoCache = GeckoLibUtil.createInstanceCache(this);
 
 	// State of the side that simulates the bike.
@@ -272,6 +273,7 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 		} else {
 			this.serverTick();
 		}
+		this.hitboxes.tick();
 	}
 
 	/** One tick of the ride on the side in charge: the rider's client, or the server for a parked bike. */
@@ -523,7 +525,13 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 
 	@Override
 	public boolean isPickable() {
-		return !this.isRemoved();
+		return false;
+	}
+
+	@Override
+	public void remove(Entity.RemovalReason reason) {
+		super.remove(reason);
+		this.hitboxes.remove(reason);
 	}
 
 	/**

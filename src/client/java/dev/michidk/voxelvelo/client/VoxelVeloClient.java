@@ -21,6 +21,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.EntityRenderers;
+import net.minecraft.client.renderer.entity.NoopRenderer;
 
 /** Client-only entrypoint: keyboard riding, rendering, the riding HUD and configuration, plus any add-ons. */
 public class VoxelVeloClient implements ClientModInitializer {
@@ -28,6 +29,7 @@ public class VoxelVeloClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		VoxelVeloKeys.register();
 		EntityRenderers.register(ModEntities.BICYCLE, BikeGeoRenderer::new);
+		EntityRenderers.register(ModEntities.BICYCLE_PART, NoopRenderer::new);
 		BikeHelmetRenderer.register();
 
 		ClientContext ctx = ClientContext.init();

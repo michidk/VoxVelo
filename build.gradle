@@ -121,6 +121,13 @@ tasks.register('verifyBikeRiderState', JavaExec) {
 }
 tasks.named('check') { dependsOn 'verifyBikeRiderState' }
 
+tasks.register('verifyBikeHitboxes', JavaExec) {
+	dependsOn verificationClasses
+	classpath = sourceSets.verification.runtimeClasspath
+	mainClass = 'dev.michidk.voxelvelo.bike.BikeHitboxLayoutChecks'
+}
+tasks.named('check') { dependsOn 'verifyBikeHitboxes' }
+
 tasks.register('verifyBikeModels', JavaExec) {
 	dependsOn verificationClasses
 	classpath = sourceSets.verification.runtimeClasspath
