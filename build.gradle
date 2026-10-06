@@ -121,6 +121,16 @@ tasks.register('verifyBikeRiderState', JavaExec) {
 }
 tasks.named('check') { dependsOn 'verifyBikeRiderState' }
 
+tasks.register('verifyRides', JavaExec) {
+	dependsOn verificationClasses
+	classpath = sourceSets.verification.runtimeClasspath
+	mainClass = 'dev.michidk.voxelvelo.client.ride.RideChecks'
+	if (project.hasProperty('sampleFit')) {
+		args project.property('sampleFit')
+	}
+}
+tasks.named('check') { dependsOn 'verifyRides' }
+
 tasks.register('verifyRecipeBook', JavaExec) {
 	dependsOn verificationClasses
 	classpath = sourceSets.verification.runtimeClasspath

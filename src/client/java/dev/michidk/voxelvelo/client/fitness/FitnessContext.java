@@ -11,6 +11,7 @@ import dev.michidk.voxelvelo.client.input.OpenBikeControlInput;
 import dev.michidk.voxelvelo.client.input.RoadFollowInput;
 import dev.michidk.voxelvelo.client.obc.ObcClient;
 import dev.michidk.voxelvelo.client.powermeter.PowerMeterClient;
+import dev.michidk.voxelvelo.client.ride.RideRecorder;
 import dev.michidk.voxelvelo.client.stats.RiderStatsStore;
 import dev.michidk.voxelvelo.client.stats.VitalsSender;
 import dev.michidk.voxelvelo.client.terrain.RideTerrain;
@@ -32,6 +33,7 @@ public final class FitnessContext {
 	public final RideTerrain rideTerrain;
 	public final RiderStatsStore riderStats = new RiderStatsStore();
 	public final VitalsSender vitalsSender;
+	public final RideRecorder rideRecorder;
 
 	private FitnessContext(ClientContext core) {
 		this.core = core;
@@ -50,6 +52,7 @@ public final class FitnessContext {
 		this.rideTerrain = new RideTerrain(this.config);
 		this.vitalsSender = new VitalsSender(this);
 		this.trainerFeedback = new TrainerFeedback(this);
+		this.rideRecorder = new RideRecorder(this);
 	}
 
 	static FitnessContext init(ClientContext core) {

@@ -9,6 +9,8 @@ import net.minecraft.client.KeyMapping;
 public final class FitnessKeys {
 	public static final KeyMapping TOGGLE_STATS =
 		KeyMappingHelper.registerKeyMapping(new KeyMapping("key.voxelvelo.toggle_stats", InputConstants.KEY_H, VoxelVeloKeys.CATEGORY));
+	public static final KeyMapping TOGGLE_RECORDING =
+		KeyMappingHelper.registerKeyMapping(new KeyMapping("key.voxelvelo.toggle_recording", InputConstants.KEY_R, VoxelVeloKeys.CATEGORY));
 
 	private FitnessKeys() {
 	}

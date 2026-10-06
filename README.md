@@ -40,6 +40,7 @@ One source tree builds two jars with the same mod id, so worlds, servers and cli
 | OpenBikeControl (steering, brake, gears) | no | yes |
 | Road following and junction prompts | no | yes |
 | Rider stats overlay, heart rate, sharing | no | yes |
+| Ride recording, FIT export, ride maps | no | yes |
 | Bundled libraries (SimpleBLE, JmDNS) | none | yes |
 
 The **core** jar is the raw bike mod: it contains no trainer, Bluetooth, OpenBikeControl, road-following or stats
@@ -456,6 +457,45 @@ clients need the updated mod for these packets.
 `--`. Speed and cadence are shown for every current rider. Trainer cadence is clamped to 0?300 rpm and
 heart rate is validated at 30?250 bpm.
 
+## Ride recording, FIT export and ride maps
+
+Press `R` (rebindable, *Start / Stop Ride Recording*) or use `B` > *Ride Recording...* to start a session. While it
+runs, the riding HUD shows a red `● REC` line with the time and distance. Press `R` again to stop: the summary opens
+with distance, riding, elapsed and moving time, average and maximum speed, power, cadence and heart rate,
+normalized power, work (kJ, about the same number of kcal) and ascent and descent. The last ride stays on the
+*Ride Recording...* page until you start the next one.
+
+- **Sampling:** one sample per second while you ride a bike: position, distance, speed, the watts going into the
+  bike, cadence (the trainer's, otherwise estimated from the bike), heart rate from the trainer and the smoothed grade.
+  Distance is the path the bike actually travelled. Time off the bike, a paused game, teleports and dimension
+  changes are left out of riding time and distance, and the route gets a gap there. Moving time also leaves out
+  standing still. A session stops by itself after 24 hours of samples.
+- **Export .FIT** writes a FIT activity file (cycling, sub-sport *virtual activity*) to `.minecraft/voxelvelo/rides/`;
+  the chat shows a clickable link and *Open Rides Folder* opens the folder. Strava, Garmin Connect,
+  intervals.icu and TrainingPeaks import it. Leaving the world or closing the game ends a running session, and a
+  ride you never exported is saved there automatically, so it is not lost.
+- **GPS:** Minecraft has no latitude or longitude. With *GPS in FIT* on (the default) the ride is placed on the globe
+  so websites draw its route: the start sits at `rideFitOriginLat`/`rideFitOriginLon` in
+  `config/voxelvelo-fitness.json` (default 30 N, 40 W, open ocean in the mid Atlantic), one block is one metre, +X is
+  east and +Z is south. Altitude is the block height. Turn it off for a distance-only file like an indoor ride.
+- **Draw on Map** asks the server to draw the ride on a locked filled map, which lands in your inventory. The
+  map's name gives the distance and its tooltip gives the start time, riding time, average power and climb. The
+  route is a red line with a green start dot, and a black finish dot when the ride did not end where it started.
+  Rides up to about 1.8 km across use a vanilla map scale centred on the route, so the map lines up with the world
+  and shows your position. Longer rides are fitted to the map and do not track players. In survival this costs one
+  empty map from your inventory; creative players get it free. There is a 10-second cooldown.
+- **Map terrain** is drawn only from chunks that are loaded and lie within two chunks of where the server saw you
+  ride a bike during this connection. Everything else stays blank map paper, and Nether-style dimensions show only
+  the route. The route itself comes from your client, but the terrain comes from the server, so a map request
+  cannot reveal parts of the world you have not ridden through, and it never loads or generates chunks. After
+  reconnecting, a map of an earlier ride shows only the line.
+
+The ride map packet (`ride_map`, protocol v1, serverbound) carries at most 1024 route points; the client thins
+longer rides and keeps the ends of every stretch. `verifyRides` checks the summary numbers, decodes the FIT file
+again (CRCs, messages, scales, timer events), and checks the GPS mapping, route thinning and map layout. The sample
+FIT file it writes with `-PsampleFit=<path>` decodes without errors in Garmin's FIT SDK. Not yet tried: an
+upload to Strava or Garmin Connect, and drawing a map in a running game.
+
 ## Configuration
 
 Press `B` for the settings hub, which links to one page per topic. Both builds have:
@@ -470,6 +510,7 @@ The fitness build adds:
 - *Input Sources...*: the source of each control (propulsion, steering, brake, gears).
 - *Road & Terrain...*: the road block list, the widest road (max half-width) and the junction prompt with its cooldown.
 - *Rider Stats...*: the rider stats overlay, what you share, and the input-source lines of the HUD.
+- *Ride Recording...*: start and stop a ride, its stats, FIT export, ride maps and GPS in FIT.
 
 Settings live in `config/voxelvelo-client.json` (both builds). The fitness build keeps its own in
 `config/voxelvelo-fitness.json`, filled from the old shared file the first time it starts.
@@ -491,9 +532,9 @@ Dev clients start with the sound muted.
 The fitness build is the root project. The core build (`core/`) compiles the same source directories with the
 fitness packages left out and without the fitness libraries on its classpath, so core code that reaches for fitness
 code does not compile. Fitness code lives in these packages and files, listed in `core/build.gradle`:
-`client/{bluetooth,ftms,obc,stats,road,fitness}`, the trainer, OpenBikeControl and road-follow input sources,
-the stats and junction HUD, the trainer, OpenBikeControl, road and sources screens, and `fitness/` plus the vitals
-and stats packets on the common side. Core reaches them only through the `voxelvelo-extension` and
+`client/{bluetooth,ftms,obc,stats,road,ride,fitness}`, the trainer, OpenBikeControl and road-follow input sources,
+the stats and junction HUD, the trainer, OpenBikeControl, road and sources screens, and `fitness/` plus the vitals,
+stats and ride map packets on the common side. Core reaches them only through the `voxelvelo-extension` and
 `voxelvelo-client-extension` entrypoints that the fitness jar declares.
 
 ## Models

@@ -66,6 +66,14 @@ public final class FitnessConfig {
 	/** Blocks each way (behind and ahead) over which the slope for the trainer and HUD is measured. */
 	public int slopeWindowBlocks = 10;
 
+	/**
+	 * Whether exported FIT files carry GPS positions, and where on the globe a ride starts. The default origin is open
+	 * ocean in the mid Atlantic, so a ride is clearly virtual and never lands on somebody's real street.
+	 */
+	public boolean rideFitPosition = true;
+	public double rideFitOriginLat = 30.0;
+	public double rideFitOriginLon = -40.0;
+
 
 	public String sourceFor(ControlChannel channel) {
 		return switch (channel) {
@@ -149,6 +157,8 @@ public final class FitnessConfig {
 		this.roadMaxHalfWidth = Math.max(2, Math.min(16, this.roadMaxHalfWidth));
 		this.slopeWindowBlocks = Math.max(10, Math.min(40, this.slopeWindowBlocks));
 		this.junctionCooldownSeconds = Math.max(5, Math.min(120, this.junctionCooldownSeconds));
+		this.rideFitOriginLat = clamp(this.rideFitOriginLat, -80.0, 80.0, 30.0);
+		this.rideFitOriginLon = clamp(this.rideFitOriginLon, -180.0, 180.0, -40.0);
 	}
 
 	/** Trims, lower-cases, drops blanks and duplicates, and caps the list so a hand-edited file cannot get huge. */

@@ -3,6 +3,7 @@ package dev.michidk.voxelvelo.fitness;
 import dev.michidk.voxelvelo.bike.BikeControlState;
 import dev.michidk.voxelvelo.bike.BikeEntity;
 import dev.michidk.voxelvelo.bike.RiderVitals;
+import dev.michidk.voxelvelo.network.RideMapPayload;
 import dev.michidk.voxelvelo.network.RiderStatsPayload;
 import dev.michidk.voxelvelo.network.RiderVitalsPayload;
 import java.util.ArrayList;
@@ -14,7 +15,10 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
-/** Packets of the fitness integration: riders report heart rate and what they share, the server relays power and pulse. */
+/**
+ * Packets of the fitness integration: riders report heart rate and what they share, the server relays power and
+ * pulse, and riders can have a recorded ride drawn on a map.
+ */
 final class FitnessNetworking {
 	/** The rider list is sent twice a second; a rider's numbers change slowly enough for that. */
 	private static final int STATS_INTERVAL_TICKS = 10;
@@ -25,6 +29,7 @@ final class FitnessNetworking {
 	static void register() {
 		PayloadTypeRegistry.serverboundPlay().register(RiderVitalsPayload.TYPE, RiderVitalsPayload.CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(RiderStatsPayload.TYPE, RiderStatsPayload.CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(RideMapPayload.TYPE, RideMapPayload.CODEC);
 
 		ServerPlayNetworking.registerGlobalReceiver(RiderVitalsPayload.TYPE, (payload, context) -> {
 			if (payload.isSupported()) {
@@ -32,8 +37,17 @@ final class FitnessNetworking {
 					RiderVitals.sanitize(payload.flags(), payload.heartRate(), payload.cadence(), context.server().getTickCount()));
 			}
 		});
-		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> RiderVitals.forget(handler.getPlayer().getUUID()));
+		ServerPlayNetworking.registerGlobalReceiver(RideMapPayload.TYPE, (payload, context) -> {
+			if (payload.isSupported()) {
+				RideMaps.handle(payload, context.player(), context.server());
+			}
+		});
+		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
+			RiderVitals.forget(handler.getPlayer().getUUID());
+			RideMaps.forget(handler.getPlayer().getUUID());
+		});
 		ServerTickEvents.END_SERVER_TICK.register(server -> {
+			RideMaps.tick(server);
 			if (server.getTickCount() % STATS_INTERVAL_TICKS == 0) {
 				broadcastStats(server);
 			}

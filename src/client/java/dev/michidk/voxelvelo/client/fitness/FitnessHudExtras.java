@@ -4,12 +4,17 @@ import dev.michidk.voxelvelo.client.ftms.TrainerTelemetry;
 import dev.michidk.voxelvelo.client.hud.HudExtras;
 import dev.michidk.voxelvelo.client.input.BikeInputSource;
 import dev.michidk.voxelvelo.client.input.ControlChannel;
+import dev.michidk.voxelvelo.client.ride.RideRecorder;
+import dev.michidk.voxelvelo.client.ride.RideScreen;
 import java.util.List;
 import java.util.OptionalDouble;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 
-/** What the fitness integration adds to the riding HUD: trainer cadence and pulse, the smoothed slope, and the source dots. */
+/**
+ * What the fitness integration adds to the riding HUD: trainer cadence and pulse, the smoothed slope, a line while a ride
+ * is recorded, and the source dots.
+ */
 final class FitnessHudExtras implements HudExtras {
 	private final FitnessContext ctx;
 
@@ -30,6 +35,11 @@ final class FitnessHudExtras implements HudExtras {
 
 	@Override
 	public void addLines(List<Component> lines) {
+		RideRecorder recorder = this.ctx.rideRecorder;
+		if (recorder.isRecording()) {
+			lines.add(Component.translatable("voxelvelo.ride.hud", RideScreen.formatDuration(recorder.elapsedMillis() / 1000.0),
+				RideScreen.formatKm(recorder.distanceM())).withStyle(ChatFormatting.RED));
+		}
 		if (this.ctx.config.hudShowSources) {
 			for (ControlChannel channel : ControlChannel.values()) {
 				lines.add(this.sourceLine(channel));
