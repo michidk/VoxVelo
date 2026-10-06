@@ -21,7 +21,11 @@ import java.util.List;
 public final class FitWriter {
 	/** Seconds from the Unix epoch to the FIT epoch, 1989-12-31T00:00:00Z. */
 	public static final long FIT_EPOCH_OFFSET_SECONDS = 631_065_600L;
-	private static final double METRES_PER_DEGREE = 111_320.0;
+	/**
+	 * Metres per degree on the mean-radius sphere (6,371,008.8 m), the model haversine distances use, so a site that
+	 * measures the GPS track gets the same distance the ride recorded.
+	 */
+	private static final double METRES_PER_DEGREE = 6_371_008.8 * Math.PI / 180.0;
 
 	private static final int PROFILE_VERSION = 2132;
 	private static final int MANUFACTURER_DEVELOPMENT = 255;
@@ -118,8 +122,8 @@ public final class FitWriter {
 		List<RideSample> samples = ride.samples();
 		RideSummary summary = ride.summary();
 		long start = fitTime(samples.isEmpty() ? ride.startMillis() : samples.getFirst().timeMillis());
-		long end = samples.isEmpty() ? fitTime(ride.endMillis()) : fitTime(samples.getLast().timeMillis());
-		end = Math.max(start, end);
+		// Without samples the timer never ran, so the file ends where it starts.
+		long end = samples.isEmpty() ? start : Math.max(start, fitTime(samples.getLast().timeMillis()));
 		RideSample origin = samples.isEmpty() ? null : samples.getFirst();
 		boolean position = options.includePosition() && origin != null;
 

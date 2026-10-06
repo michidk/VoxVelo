@@ -42,8 +42,8 @@ public final class RideChecks {
 		FitWriter.Options options = new FitWriter.Options(true, 30.0, -40.0, 7200);
 		double[] east = FitWriter.toLatLon(1000, 0, options);
 		double[] south = FitWriter.toLatLon(0, 1000, options);
-		require(Math.abs(east[0] - 30.0) < 1e-9 && Math.abs(east[1] - (-40.0 + 1000 / (111_320.0 * Math.cos(Math.toRadians(30))))) < 1e-9, "+X is east");
-		require(Math.abs(south[0] - (30.0 - 1000 / 111_320.0)) < 1e-9 && Math.abs(south[1] + 40.0) < 1e-9, "+Z is south");
+		require(Math.abs(east[0] - 30.0) < 1e-9 && Math.abs(east[1] - (-40.0 + 1000 / ((6_371_008.8 * Math.PI / 180.0) * Math.cos(Math.toRadians(30))))) < 1e-9, "+X is east");
+		require(Math.abs(south[0] - (30.0 - 1000 / (6_371_008.8 * Math.PI / 180.0))) < 1e-9 && Math.abs(south[1] + 40.0) < 1e-9, "+Z is south");
 		require(FitWriter.semicircles(90.0) == 1 << 30 && FitWriter.semicircles(-45.0) == -(1 << 29), "semicircles");
 		require(FitWriter.fitTime(T0) == T0 / 1000 - 631_065_600L, "FIT epoch");
 
@@ -67,7 +67,9 @@ public final class RideChecks {
 		byte[] indoor = FitWriter.write(ride, new FitWriter.Options(false, 30.0, -40.0, 0));
 		require(!decode(indoor).get(20).getFirst().containsKey(0), "without GPS the records have no position");
 		byte[] empty = FitWriter.write(new RideRecording(T0, T0 + 5_000, List.of()), options);
-		require(decode(empty).get(18).size() == 1, "an empty ride is still a valid file");
+		Map<Integer, List<Map<Integer, Long>>> emptyMessages = decode(empty);
+		require(emptyMessages.get(18).size() == 1, "an empty ride is still a valid file");
+		require(emptyMessages.get(21).getFirst().get(253).equals(emptyMessages.get(21).getLast().get(253)), "an empty ride's timer never runs");
 
 		List<RideSample> lots = new ArrayList<>();
 		for (int i = 0; i < 5_000; i++) {
