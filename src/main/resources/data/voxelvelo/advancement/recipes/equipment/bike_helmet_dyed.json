@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_the_recipe": {
+      "conditions": {
+        "recipes": "voxelvelo:bike_helmet_dyed"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    },
+    "has_bike_helmet": {
+      "conditions": {
+        "items": [
+          {
+            "items": "voxelvelo:bike_helmet"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_bike_helmet"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "voxelvelo:bike_helmet_dyed"
+    ]
+  }
+}

@@ -23,7 +23,7 @@ public class VoxelVelo implements ModInitializer {
 		ModEntities.register();
 		ModItems.register();
         dev.michidk.voxelvelo.bike.BikeServerConfig.load();
-        dev.michidk.voxelvelo.recipe.BikeCraftingRecipe.register();
+        dev.michidk.voxelvelo.registry.ModRecipes.register();
 		BikeNetworking.register();
         dev.michidk.voxelvelo.track.TrackCommand.register();
 		// Add-ons such as the fitness integration plug in here; the raw bike mod has none.

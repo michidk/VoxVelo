@@ -137,10 +137,12 @@ At 200 W on flat stone the three cruise at roughly 34, 32 and 28 km/h; on sand 1
 
 ## Getting a bicycle
 
-- **Craft** (leather on top, iron ingots around the middle):
-  - Road bike: string in the centre
-  - Gravel bike: gravel in the centre
-  - Mountain bike: slime ball in the centre
+- **Craft** from parts: a frame (race, gravel or mountain), two bike wheels, handlebars, a saddle and a pedal set.
+  A wheel is a bare wheel plus a road, gravel or mountain tire. Every recipe is in the vanilla recipe book and is
+  unlocked by picking up one of its ingredients (iron, leather, slime, a frame, ...).
+  - **Recolor** a bike, a frame or the helmet with dyes, like leather armor: dyes mix with each other and with the
+    current color.
+  - **Re-tire** a wheel with any tire: a worn tire is replaced by a fresh one, or the wheel switches tread.
 - **Creative:** Tools & Utilities tab, or `/give @s voxelvelo:road_bike` (also `gravel_bike`, `mountain_bike`).
 - Right-click a block to place it, right-click the bike to mount, `Shift` to dismount, and sneak-use it with an empty hand to pick it up.
 

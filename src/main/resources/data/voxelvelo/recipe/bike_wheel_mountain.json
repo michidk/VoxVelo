@@ -1,6 +1,7 @@
 {
   "type": "minecraft:crafting_shapeless",
   "category": "equipment",
+  "group": "bike_wheel",
   "ingredients": [
     "voxelvelo:bare_wheel",
     "voxelvelo:mountain_tire"

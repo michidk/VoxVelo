@@ -74,7 +74,7 @@ java {
 
 sourceSets {
 	verification {
-		compileClasspath += sourceSets.main.output + sourceSets.client.output
+		compileClasspath += sourceSets.main.output + sourceSets.client.output + sourceSets.client.compileClasspath
 		runtimeClasspath += sourceSets.client.runtimeClasspath
 	}
 }
@@ -120,6 +120,14 @@ tasks.register('verifyBikeRiderState', JavaExec) {
 	mainClass = 'dev.michidk.voxelvelo.bike.BikeRiderStateChecks'
 }
 tasks.named('check') { dependsOn 'verifyBikeRiderState' }
+
+tasks.register('verifyRecipeBook', JavaExec) {
+	dependsOn verificationClasses
+	classpath = sourceSets.verification.runtimeClasspath
+	mainClass = 'dev.michidk.voxelvelo.recipe.RecipeBookChecks'
+	workingDir = layout.projectDirectory
+}
+tasks.named('check') { dependsOn 'verifyRecipeBook' }
 
 jar {
 	def projectName = project.name
