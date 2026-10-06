@@ -1,3 +1,9 @@
 {
-  "layers": {}
+  "layers": {
+    "humanoid": [
+      {
+        "texture": "voxelvelo:bike_helmet"
+      }
+    ]
+  }
 }
