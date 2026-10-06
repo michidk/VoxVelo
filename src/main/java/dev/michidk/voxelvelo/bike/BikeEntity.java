@@ -292,7 +292,7 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 		} else if (client) {
 			input = new BikeControlState(0.0, 0.0, 0.0, this.localInput.gear()); // Not taken over yet: coast.
 		} else {
-			input = new BikeControlState(0.0, 0.0, 1.0, this.localInput.gear()); // Parked: the brakes hold it.
+			input = new BikeControlState(0.0, 0.0, 0.0, this.localInput.gear()); // Unridden: coast to a stop.
 		}
 		input = this.drivable(input);
 		RiderSettings.Settings rider = client && driver != null ? driver.riderSettings() : RiderSettings.Settings.DEFAULT;
@@ -664,9 +664,20 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 
 	@Override
 	public Vec3 getDismountLocationForPassenger(LivingEntity passenger) {
-		Vec3 direction = getCollisionHorizontalEscapeVector(this.getBbWidth() * Mth.SQRT_OF_TWO, passenger.getBbWidth(), passenger.getYRot());
-		double targetX = this.getX() + direction.x;
-		double targetZ = this.getZ() + direction.z;
+		double distance = (this.getBbWidth() + passenger.getBbWidth()) * 0.5 + 0.2;
+		double yaw = Math.toRadians(this.getYRot());
+		double sideX = Math.cos(yaw) * distance;
+		double sideZ = Math.sin(yaw) * distance;
+		Vec3 target = this.findDismountLocation(passenger, this.getX() + sideX, this.getZ() + sideZ);
+		if (target != null) {
+			return target;
+		}
+		target = this.findDismountLocation(passenger, this.getX() - sideX, this.getZ() - sideZ);
+		return target != null ? target : super.getDismountLocationForPassenger(passenger);
+	}
+
+	/** Finds a safe standing position at one side of the bike, checking the bike's level and the block below it. */
+	private @Nullable Vec3 findDismountLocation(LivingEntity passenger, double targetX, double targetZ) {
 		BlockPos targetPos = BlockPos.containing(targetX, this.getBoundingBox().maxY, targetZ);
 		BlockPos belowPos = targetPos.below();
 		if (!this.level().isWaterAt(belowPos)) {
@@ -688,6 +699,6 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 				}
 			}
 		}
-		return super.getDismountLocationForPassenger(passenger);
+		return null;
 	}
 }

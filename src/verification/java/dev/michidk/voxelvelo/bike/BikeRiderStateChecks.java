@@ -26,6 +26,12 @@ public final class BikeRiderStateChecks {
 		require(BikeComponents.tirePercent(BikeComponents.packTires(100, 37), BikeComponents.REAR) == 37, "tire condition unpacks");
 		require(BikeSurface.byOrdinal(-1) == BikeSurface.PATH && BikeSurface.byOrdinal(BikeSurface.ICE.ordinal()) == BikeSurface.ICE,
 			"surface ordinals are looked up safely");
+
+		double startingSpeed = 8.0;
+		double coasted = BikePhysics.stepSpeed(startingSpeed, BikeMotion.DT, 0.0, 0.0, BikeSurface.PATH, 0.0, BikeType.GRAVEL.params());
+		double braked = BikePhysics.stepSpeed(startingSpeed, BikeMotion.DT, 0.0, 1.0, BikeSurface.PATH, 0.0, BikeType.GRAVEL.params());
+		require(coasted > 0.0 && coasted < startingSpeed, "an unattended bike keeps moving and slows under natural resistance");
+		require(braked < coasted, "coasting does not apply the full brake used by an active rider");
 		System.out.println("Bike rider state checks passed.");
 	}
 
