@@ -16,8 +16,9 @@ public final class ModEntities {
 		BuiltInRegistries.ENTITY_TYPE,
 		BICYCLE_KEY,
 		EntityType.Builder.<BikeEntity>of(BikeEntity::new, MobCategory.MISC)
-			.sized(0.9F, 1.9F)
-			.eyeHeight(1.7F)
+			// A square footprint is unavoidable; 1 block is a minecart-like compromise for a thin, 1.8-block-long bike.
+			.sized(1.0F, 1.0F)
+			.eyeHeight(0.95F)
 			.noLootTable()
 			.clientTrackingRange(10)
 			.updateInterval(1)

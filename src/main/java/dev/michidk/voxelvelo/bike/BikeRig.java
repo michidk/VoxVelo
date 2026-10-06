@@ -23,11 +23,10 @@ public record BikeRig(double saddleY, double saddleZ, double gripX, double gripY
 	double crankY, double crankZ, double pedalRadius, double pedalRestAngle, double steeringTilt, double headY, double headZ) {
 
 	/**
-	 * The models are drawn at this fraction of their authored size. At full size the bike is 2 blocks long and the
-	 * saddle 1.1 blocks up, which a player model (legs 0.75 blocks) can hardly pedal; at 0.8 it is 1.6 blocks long
-	 * with the saddle at 0.88.
+	 * The models are drawn at this fraction of their authored size. At 0.9 the bikes are about 1.8 blocks long, their
+	 * saddles are about 0.95-0.99 blocks high, and their wheels have a realistic radius of roughly 0.35 blocks.
 	 */
-	public static final float MODEL_SCALE = 0.8F;
+	public static final float MODEL_SCALE = 0.9F;
 
 	/** This frame with the handlebars of another bike: its grips keep their place relative to the head tube. */
 	public BikeRig withBarsOf(BikeRig bars) {

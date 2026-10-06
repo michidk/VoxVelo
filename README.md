@@ -520,10 +520,9 @@ tubes under it take the frame color (`BikeFrameTintLayer`); everything else keep
 
 `BikeRig` (one per bike type) carries the measurements from the metadata. The seat position, the rider's arm
 angles to the grips and the leg swing to the pedals are all derived from it, so a new bike model only needs new
-numbers there. The models are drawn at `BikeRig.MODEL_SCALE` (0.8) of their authored size: at full size the bike
-is 2 blocks long with the saddle 1.1 blocks up, which a player model (0.75-block legs) could hardly pedal; at 0.8
-it is 1.6 blocks long with the saddle at 0.88. The wheel radius for the wheel spin (6.3 model units) follows the
-same scale. The inventory icons of the parts are the 16x16 sprites from the same asset set.
+numbers there. The models are drawn at `BikeRig.MODEL_SCALE` (0.9) of their authored size, making the bikes about
+1.8 blocks long with 0.95-0.99-block saddle heights and roughly 0.35-block wheel radii. The inventory icons of the
+parts are the 16x16 sprites from the same asset set.
 
 ## Layout
 
