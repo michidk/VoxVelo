@@ -35,31 +35,25 @@ grid. Recoloring replaces the previous frame color without changing its parts.
 Use the bike item to place it. Sneak and use an empty hand to pick it up with
 all installed parts, their state, and its frame color.
 
-Use a Bike Wrench on an unoccupied bicycle to open maintenance. The first five
-slots, left to right, are front wheel, rear wheel, handlebars, saddle, and pedals.
-Each slot is labeled, and the screen shows tire/overall condition, repair
-instructions, and disassembly instructions. Remove/install parts normally, including shift-click
-and swapping with the part on the cursor. Each installed slot holds one
-component. Under the wheel and handlebar slots the screen shows the fitted tire
-(Road, Gravel, MTB) and handlebars (Drop, Flat).
+Placed bicycles have no inventory or maintenance screen. Their assembly is
+fixed until they are dismantled. Left-click an unoccupied bike with a Bike
+Wrench to repair all whole-bike damage; right-click it with the wrench to
+dismantle it. Dismantling drops the colored frame and every installed wheel,
+handlebar, saddle and pedal set into the world, preserving tire state. Both
+actions cost one wrench durability. The wrench has 256 uses.
 
-To replace a tire, hold any tire on the cursor and click either installed
-wheel. This consumes the tire and fits it to the wheel at full condition,
-without replacing its metal component: it repairs a worn tire, or changes the
-tread. The old tire is used up, so to keep a set of tires, keep whole wheels
-and swap those instead. Alternatively remove the wheel, craft it with a tire,
-and reinstall it. No separate damaged-wheel item is registered.
-
-Close maintenance, then sneak and use the wrench to disassemble. This returns
-the colored frame and exactly the parts that remain installed; missing parts
-are never recreated. Excess returned items drop at the player. Maintenance
-changes and disassembly cost one wrench durability; opening and inspecting do
-not. The wrench has 256 uses.
+To change parts or repair a tire, dismantle the bike, craft a wheel with the
+desired tire, and assemble the bicycle again. No separate damaged-wheel item
+is registered.
 
 Both wheels, handlebars, and the saddle are needed to mount.
 Without pedals the bike can coast but cannot propel. A burst tire slows riding
 to at most 3 blocks/second (1.5 with both burst); it never destroys the bicycle.
-Bicycles have no whole-bike durability and do not break when punched.
+Bicycles also have whole-bike durability: race bikes have 60, gravel bikes 80,
+and mountain bikes 100. Hard crashes and falls over three blocks damage them.
+At zero condition the bike is destroyed and drops its frame and every installed
+part. Sneak-use with an empty hand still picks up the complete bike, preserving
+its damage and parts.
 
 ## Mixing parts
 
@@ -100,6 +94,8 @@ changing it. In singleplayer these settings apply to the integrated server.
 
 ```json
 {
+  "enableVehicleDamage": true,
+  "vehicleDamageInCreativeMode": false,
   "enableTireDamage": true,
   "tireDamageRate": 0.0001,
   "roughTerrainTireDamageMultiplier": 1.75,
@@ -107,24 +103,23 @@ changing it. In singleplayer these settings apply to the integrated server.
 }
 ```
 
-The rate is tire condition lost per block ridden, with full condition = 1.
+`enableVehicleDamage` controls crash and fall damage to the whole bicycle.
+Creative riders are exempt by default; set `vehicleDamageInCreativeMode` to
+true to make their bikes take damage too. The tire rate is condition lost per
+block ridden, with full condition = 1.
 Smooth riding lasts approximately 10,000 blocks per front tire; the rear wears
 5% faster so failures usually occur separately. Loose terrain increases wear,
 drops over three blocks and high-speed impacts add damage. Setting
 `enableTireDamage` to false prevents new wear, but does not refill worn tires.
 Negative/non-finite settings are sanitized. Tire state persists independently
-on each wheel. The server owns inventories and wear; visible component presence,
-frame color, and tire condition use normal tracked entity data.
-
-Only one nearby player can maintain a bike at a time. Riding, pickup, and
-disassembly are blocked during maintenance. The menu closes when its mechanic
-loses the wrench, moves away, or the bicycle disappears. Closing/disconnecting
-releases the bike; installed components remain in the entity, not the menu.
+on each wheel. The server owns installed-part state, whole-bike damage and tire
+wear; visible component presence, frame color and tire condition use normal
+tracked entity data.
 
 ## Final asset drop-in contract
 
 The intentionally crude render placeholders are separate from the legacy art.
-Replace these files without changing registration, recipes, maintenance, or entities:
+Replace these files without changing registration, recipes, wrench interactions, or entities:
 
 ```text
 assets/voxelvelo/geckolib/models/entity/bikes/mountain_bike.geo.json
@@ -174,10 +169,9 @@ bike icons remain untinted because a flat PNG cannot isolate frame geometry.
 ## Manual multiplayer checks
 
 Craft all three types, including one from a dyed frame and a worn wheel. Place,
-pick up, save/reload, and disassemble; confirm color and wheel condition survive.
-Watch another player dye/place a bike and remove parts; check visible state.
-Try mounting without each required part, and coasting without pedals.
-Use two players to attempt simultaneous maintenance/pickup/disassembly and
-confirm that every component returns exactly once. Repair each wheel using both
-the cursor and crafting paths, including with a full inventory and a wrench's
-last use. Check enabled/disabled damage on a dedicated server.
+pick up, save/reload, and dismantle; confirm color, vehicle damage and wheel
+condition survive. Crash and drop each type, confirm race wears out first and
+mountain last, then repair by left-clicking with a wrench. Right-click with the
+wrench and confirm every component drops exactly once, including with two
+players acting together and with the wrench's last use. Check vehicle damage
+enabled/disabled and the creative-mode exemption on a dedicated server.

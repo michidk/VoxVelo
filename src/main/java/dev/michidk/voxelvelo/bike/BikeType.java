@@ -11,11 +11,11 @@ package dev.michidk.voxelvelo.bike;
  * </ul>
  */
 public enum BikeType {
-	ROAD("road", new BikeRig(17.556, 5.103, 2.688, 16.464, -6.51, 5.292, 1.68, 1.3148, 1.1071, 0.3084, 14.616, -4.788), 1.0F, 0.15F,
+	ROAD("road", new BikeRig(17.556, 5.103, 2.688, 16.464, -6.51, 5.292, 1.68, 1.3148, 1.1071, 0.3084, 14.616, -4.788), 1.0F, 0.15F, 60.0F,
 		new BikePhysics.Params(75.0, 8.5, 26.0, 0.30, 0.98, 2.0, 7.0, 0.4, 1.00, 30.0, 6.0, 8.0, 1.00, 2.30, 0.65)),
-	GRAVEL("gravel", new BikeRig(17.556, 5.103, 2.688, 16.464, -6.51, 5.712, 1.68, 1.3148, 1.1071, 0.3084, 14.616, -4.788), 1.0F, 0.45F,
+	GRAVEL("gravel", new BikeRig(17.556, 5.103, 2.688, 16.464, -6.51, 5.712, 1.68, 1.3148, 1.1071, 0.3084, 14.616, -4.788), 1.0F, 0.45F, 80.0F,
 		new BikePhysics.Params(75.0, 10.5, 22.0, 0.36, 0.97, 2.2, 8.0, 0.4, 1.05, 35.0, 7.0, 7.0, 1.20, 1.00, 0.95)),
-	MOUNTAIN("mountain", new BikeRig(16.716, 5.103, 3.654, 16.674, -5.796, 6.048, 1.68, 1.3148, 1.1071, 0.2954, 15.624, -4.788), 1.0F, 0.90F,
+	MOUNTAIN("mountain", new BikeRig(16.716, 5.103, 3.654, 16.674, -5.796, 6.048, 1.68, 1.3148, 1.1071, 0.2954, 15.624, -4.788), 1.0F, 0.90F, 100.0F,
 		new BikePhysics.Params(75.0, 14.0, 17.0, 0.46, 0.94, 2.5, 8.5, 0.4, 1.12, 40.0, 9.0, 6.0, 1.60, 0.85, 1.10));
 
 	public final String id;
@@ -28,13 +28,16 @@ public enum BikeType {
 	 * speed loss on bumps, and a springier, bouncier ride.
 	 */
 	public final float suspension;
+	/** Whole-bike durability. Mountain and gravel frames survive more crash and fall damage than race frames. */
+	public final float maxDurability;
 	private final BikePhysics.Params baseParams;
 
-	BikeType(String id, BikeRig rig, float stepHeight, float suspension, BikePhysics.Params baseParams) {
+	BikeType(String id, BikeRig rig, float stepHeight, float suspension, float maxDurability, BikePhysics.Params baseParams) {
 		this.id = id;
 		this.rig = rig;
 		this.stepHeight = stepHeight;
 		this.suspension = suspension;
+		this.maxDurability = maxDurability;
 		this.baseParams = baseParams;
 	}
 

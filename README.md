@@ -127,7 +127,16 @@ At 200 W on flat stone the three cruise at roughly 34, 32 and 28 km/h; on sand 1
   - Gravel bike: gravel in the centre
   - Mountain bike: slime ball in the centre
 - **Creative:** Tools & Utilities tab, or `/give @s voxelvelo:road_bike` (also `gravel_bike`, `mountain_bike`).
-- Right-click a block to place it, right-click the bike to mount, `Shift` to dismount, punch it to pick it up.
+- Right-click a block to place it, right-click the bike to mount, `Shift` to dismount, and sneak-use it with an empty hand to pick it up.
+
+## Bike damage and the wrench
+
+Hard crashes and falls over three blocks damage the bicycle. Race bikes have 60 durability, gravel bikes 80 and
+mountain bikes 100. At zero condition the bike is destroyed and drops its colored frame and every installed part.
+Left-click an unoccupied bicycle with a Bike Wrench to repair it fully; right-click with the wrench to dismantle it
+and drop those parts deliberately. Placed bikes have no inventory or maintenance screen, so changing a component
+means dismantling and reassembling the bike. Whole-bike damage is controlled by `enableVehicleDamage` in
+`config/voxelvelo-server.json`; creative riders are exempt unless `vehicleDamageInCreativeMode` is enabled.
 
 ## Collisions
 
@@ -140,7 +149,7 @@ At 200 W on flat stone the three cruise at roughly 34, 32 and 28 km/h; on sand 1
   - **From 3 m/s: a hit.** It deals `(closing speed - 2.5) * 0.7` half hearts (about 3 at 7 m/s), knocks the target
     away from the line of the bike (more for lighter targets) and plays a sound with crit particles. A target at
     the edge of the bike is swept to the side.
-  - **The bike pays for it.** It loses speed in proportion to the target's mass, estimated from its size: a cow
+  - **The bike pays for it.** It loses speed and durability in proportion to the target's mass, estimated from its size: a cow
     takes most of 7 m/s, an iron golem stops the bike dead. A sudden loss of more than 9 m/s hurts the rider like
     hitting a wall.
   - Targets that cannot be hurt (PvP off, invulnerable, creative) are shoved instead. The hit area covers the
@@ -160,7 +169,7 @@ At 200 W on flat stone the three cruise at roughly 34, 32 and 28 km/h; on sand 1
 - **Fall damage:** the bike takes the blow for you. The rider still takes a share of the fall damage, less the
   more suspension the bike has, plus a few blocks of fall that the suspension swallows. An 8-block drop costs
   5 health points (2.5 hearts) on foot, about 3 on the road bike, 2 on the gravel bike and 1 on the mountain
-  bike. The bike itself is not hurt.
+  bike. The landing damages the bike too when vehicle damage is enabled.
 - **Suspension** is a property of each bike type (`suspension`, 0 rigid to 1 long travel: road 0.15, gravel 0.45,
   mountain 0.90). More suspension means less fall damage, less speed lost on ledges, and a springier ride: the
   bike and rider sag and rebound when a slope starts or ends, on steps and on landings. A road bike settles at

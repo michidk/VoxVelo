@@ -93,6 +93,13 @@ tasks.register('verifyTracks', JavaExec) {
 }
 tasks.named('check') { dependsOn 'verifyTracks' }
 
+tasks.register('verifyBikeDurability', JavaExec) {
+	dependsOn verificationClasses
+	classpath = sourceSets.verification.runtimeClasspath
+	mainClass = 'dev.michidk.voxelvelo.bike.BikeDurabilityChecks'
+}
+tasks.named('check') { dependsOn 'verifyBikeDurability' }
+
 jar {
 	def projectName = project.name
 	inputs.property "projectName", projectName

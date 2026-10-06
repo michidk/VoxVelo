@@ -3,11 +3,11 @@ package dev.michidk.voxelvelo.bike;
 import dev.michidk.voxelvelo.registry.ModComponents;
 import dev.michidk.voxelvelo.registry.ModItems;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.world.Container;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.component.DyedItemColor;
+import java.util.List;
 
 /**
  * Shared item/entity state contract. Wheels retain their metal component at zero tire condition.
@@ -24,6 +24,7 @@ public final class BikeComponents {
     private static final double FLAT_BAR_DRAG = 0.06;
     /** Extra steering lock flat bars give (wider bars, more leverage), degrees at low and at high speed. */
     private static final double FLAT_BAR_STEER_LOW = 5.0, FLAT_BAR_STEER_HIGH = 1.5;
+    private static final String VEHICLE_DAMAGE = "voxelvelo_vehicle_damage";
 
     private BikeComponents() {}
 
@@ -66,6 +67,17 @@ public final class BikeComponents {
         stack.set(DataComponents.DYED_COLOR, new DyedItemColor(rgb & 0xFFFFFF));
     }
 
+    public static float vehicleDamage(ItemStack stack) {
+        float value = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag()
+                .getFloatOr(VEHICLE_DAMAGE, 0.0F);
+        return Float.isFinite(value) ? Math.max(0.0F, value) : 0.0F;
+    }
+
+    public static void vehicleDamage(ItemStack stack, float value) {
+        CustomData.update(DataComponents.CUSTOM_DATA, stack,
+                tag -> tag.putFloat(VEHICLE_DAMAGE, Math.max(0.0F, value)));
+    }
+
     public static double tire(ItemStack wheel) {
         if (wheel.isEmpty()) return 0;
         double value = wheel.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag()
@@ -99,8 +111,8 @@ public final class BikeComponents {
     // ---------------------------------------------------------------- setup: the installed parts that change handling
 
     /** Packs the handling-relevant parts into one synced int: front tread, rear tread, flat bars. */
-    public static int setup(BikeType type, Container parts) {
-        ItemStack front = parts.getItem(FRONT), rear = parts.getItem(REAR), bars = parts.getItem(BARS);
+    public static int setup(BikeType type, List<ItemStack> parts) {
+        ItemStack front = parts.get(FRONT), rear = parts.get(REAR), bars = parts.get(BARS);
         TireTread stockTread = TireTread.nativeFor(type);
         int f = (front.isEmpty() ? stockTread : tread(front)).ordinal();
         int r = (rear.isEmpty() ? stockTread : tread(rear)).ordinal();

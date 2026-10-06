@@ -1,6 +1,8 @@
 package dev.michidk.voxelvelo.item;
 
 import dev.michidk.voxelvelo.bike.BikeEntity;
+import dev.michidk.voxelvelo.bike.BikeComponents;
+import dev.michidk.voxelvelo.bike.BikeDurability;
 import dev.michidk.voxelvelo.bike.BikeType;
 import dev.michidk.voxelvelo.registry.ModEntities;
 import net.minecraft.server.level.ServerLevel;
@@ -38,6 +40,9 @@ public class BikeItem extends Item {
             net.minecraft.world.item.TooltipFlag flag) {
         super.appendHoverText(stack, context, display, lines, flag);
         lines.accept(net.minecraft.network.chat.Component.translatable("tooltip.voxelvelo.bike_use"));
+        float damage = BikeComponents.vehicleDamage(stack);
+        if (damage > 0.0F) lines.accept(net.minecraft.network.chat.Component.translatable(
+                "tooltip.voxelvelo.bike_condition", BikeDurability.conditionPercent(damage, bikeType)));
     }
 
 	@Override

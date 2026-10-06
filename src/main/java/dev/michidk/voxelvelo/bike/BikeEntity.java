@@ -11,9 +11,6 @@ import dev.michidk.voxelvelo.item.BikeHelmetItem;
 import dev.michidk.voxelvelo.registry.ModItems;
 import dev.michidk.voxelvelo.terrain.LevelGround;
 import dev.michidk.voxelvelo.terrain.TerrainSlope;
-import dev.michidk.voxelvelo.inventory.BikeMaintenanceMenu;
-import net.minecraft.world.SimpleContainer;
-import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
@@ -42,6 +39,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.InterpolationHandler;
 import net.minecraft.world.entity.LinearInterpolationHandler;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
@@ -104,13 +102,9 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
     private static final EntityDataAccessor<Integer> DATA_TIRES = SynchedEntityData.defineId(BikeEntity.class, EntityDataSerializers.INT);
     /** Installed treads and handlebar kind, see {@link BikeComponents#setup}; clients need it for handling and looks. */
     private static final EntityDataAccessor<Integer> DATA_SETUP = SynchedEntityData.defineId(BikeEntity.class, EntityDataSerializers.INT);
-    private final SimpleContainer components = new SimpleContainer(BikeComponents.COUNT) {
-        @Override public void setChanged() {
-            super.setChanged();
-            BikeEntity.this.syncComponents();
-        }
-    };
-    private UUID mechanic;
+    private static final EntityDataAccessor<Float> DATA_VEHICLE_DAMAGE = SynchedEntityData.defineId(BikeEntity.class, EntityDataSerializers.FLOAT);
+    /** Installed parts are private entity state, not an inventory. They change only when an item is placed or dismantled. */
+    private final NonNullList<ItemStack> components = NonNullList.withSize(BikeComponents.COUNT, ItemStack.EMPTY);
 
 	// Server-only simulation state.
 	private BikeControlState control = BikeControlState.NEUTRAL;
@@ -154,6 +148,7 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
         entityData.define(DATA_PARTS, 31);
         entityData.define(DATA_TIRES, 100 | (100 << 8));
         entityData.define(DATA_SETUP, BikeComponents.stockSetup(BikeType.GRAVEL));
+        entityData.define(DATA_VEHICLE_DAMAGE, 0.0F);
         entityData.define(DATA_TYPE, BikeType.GRAVEL.ordinal());
 		entityData.define(DATA_SPEED, 0.0F);
 		entityData.define(DATA_STEERING, 0.0F);
@@ -170,32 +165,34 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 
 	public void setBikeType(BikeType type) {
 		this.entityData.set(DATA_TYPE, type.ordinal());
+        this.entityData.set(DATA_VEHICLE_DAMAGE, 0.0F);
         initializeComponents();
 	}
 
-    public SimpleContainer components() { return components; }
     public int getFrameColor() { return entityData.get(DATA_COLOR); }
     public int getComponentMask() { return entityData.get(DATA_PARTS); }
     public boolean hasPart(int slot) { return (getComponentMask() & (1 << slot)) != 0; }
     public int tirePercent(int slot) { return (entityData.get(DATA_TIRES) >> (slot * 8)) & 255; }
     public int getSetup() { return entityData.get(DATA_SETUP); }
+    public float getVehicleDamage() { return entityData.get(DATA_VEHICLE_DAMAGE); }
+    public int getConditionPercent() { return BikeDurability.conditionPercent(getVehicleDamage(), getBikeType()); }
     /** Physics parameters of the frame with the installed tires and handlebars. */
     public BikePhysics.Params params() { return BikeComponents.params(getBikeType(), getSetup()); }
     public BikeRig rig() { return BikeComponents.rig(getBikeType(), getSetup()); }
-    public boolean canRide() { return (getComponentMask() & 15) == 15 && mechanic == null; }
+    public boolean canRide() { return (getComponentMask() & 15) == 15; }
 
     private void initializeComponents() {
-        for (int i = 0; i < BikeComponents.COUNT; i++) components.setItem(i, BikeComponents.stock(getBikeType(), i));
+        for (int i = 0; i < BikeComponents.COUNT; i++) components.set(i, BikeComponents.stock(getBikeType(), i));
         syncComponents();
     }
 
     public void syncComponents() {
         if (level().isClientSide()) return;
         int mask = 0;
-        for (int i = 0; i < BikeComponents.COUNT; i++) if (!components.getItem(i).isEmpty()) mask |= 1 << i;
+        for (int i = 0; i < BikeComponents.COUNT; i++) if (!components.get(i).isEmpty()) mask |= 1 << i;
         entityData.set(DATA_PARTS, mask);
-        entityData.set(DATA_TIRES, (int) Math.ceil(BikeComponents.tire(components.getItem(0)) * 100)
-                | ((int) Math.ceil(BikeComponents.tire(components.getItem(1)) * 100) << 8));
+        entityData.set(DATA_TIRES, (int) Math.ceil(BikeComponents.tire(components.get(0)) * 100)
+                | ((int) Math.ceil(BikeComponents.tire(components.get(1)) * 100) << 8));
         entityData.set(DATA_SETUP, BikeComponents.setup(getBikeType(), components));
         if ((mask & 15) != 15) ejectPassengers();
     }
@@ -210,49 +207,84 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
                 ItemStack part = BikeComponents.accepts(i, items.get(i)) ? items.get(i).copy() : ItemStack.EMPTY;
                 // Bikes from before treads existed ran on the tires of their own type.
                 BikeComponents.stampTread(part, TireTread.nativeFor(getBikeType()));
-                components.setItem(i, part);
+                components.set(i, part);
             }
         }
+        entityData.set(DATA_VEHICLE_DAMAGE, BikeDurability.clampDamage(BikeComponents.vehicleDamage(stack), getBikeType()));
         syncComponents();
     }
 
     public ItemStack toItem() {
         ItemStack stack = new ItemStack(ModItems.forType(getBikeType()));
         BikeComponents.color(stack, getFrameColor());
-        stack.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(components.getItems()));
+        stack.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(components));
+        BikeComponents.vehicleDamage(stack, getVehicleDamage());
         return stack;
     }
 
-    public boolean isMechanic(Player player) { return player.getUUID().equals(mechanic); }
-    public void releaseMechanic(Player player) { if (isMechanic(player)) mechanic = null; }
-    public boolean hasWrench(Player player) {
-        return player.getMainHandItem().is(ModItems.BIKE_WRENCH) || player.getOffhandItem().is(ModItems.BIKE_WRENCH);
-    }
-    public void useWrench(Player player) {
-        InteractionHand hand = player.getMainHandItem().is(ModItems.BIKE_WRENCH) ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
+    private void useWrench(Player player, InteractionHand hand) {
         player.getItemInHand(hand).hurtAndBreak(1, player, hand);
     }
 
-    public void disassemble(Player player) {
-        if (level().isClientSide() || isRemoved() || !hasWrench(player) || !getPassengers().isEmpty()
-                || mechanic != null || distanceToSqr(player) > 64) return;
+    private void destroyWithWrench(Player player, InteractionHand hand) {
+        if (level().isClientSide() || isRemoved() || !player.getItemInHand(hand).is(ModItems.BIKE_WRENCH)
+                || distanceToSqr(player) > 64) return;
+        if (!getPassengers().isEmpty()) {
+            player.sendOverlayMessage(Component.translatable("message.voxelvelo.dismantle_occupied"));
+            return;
+        }
+        useWrench(player, hand);
+        dropInstalledParts();
+    }
+
+    private void dropInstalledParts() {
+        if (!(level() instanceof ServerLevel serverLevel) || isRemoved()) return;
         ItemStack frame = new ItemStack(ModItems.frameFor(getBikeType()));
         BikeComponents.color(frame, getFrameColor());
         List<ItemStack> drops = new ArrayList<>();
         drops.add(frame);
-        for (int i = 0; i < BikeComponents.COUNT; i++) drops.add(components.getItem(i).copy());
-        discard(); // Remove before returning anything, so another interaction cannot duplicate components.
-        components.clearContent();
-        for (ItemStack drop : drops) if (!drop.isEmpty()) {
-            if (!player.getInventory().add(drop)) player.spawnAtLocation((ServerLevel) level(), drop);
+        for (int i = 0; i < BikeComponents.COUNT; i++) {
+            drops.add(components.get(i).copy());
+            components.set(i, ItemStack.EMPTY);
         }
-        useWrench(player);
+        double x = getX(), y = getY() + 0.25, z = getZ();
+        playSound(SoundEvents.ITEM_BREAK.value(), 1.0F, 0.8F);
+        discard(); // Remove and empty first, so another interaction cannot duplicate components.
+        for (ItemStack drop : drops) if (!drop.isEmpty()) {
+            serverLevel.addFreshEntity(new ItemEntity(serverLevel, x, y, z, drop));
+        }
+    }
+
+    private void repairWithWrench(Player player) {
+        if (!getPassengers().isEmpty()) {
+            player.sendOverlayMessage(Component.translatable("message.voxelvelo.repair_occupied"));
+            return;
+        }
+        if (getVehicleDamage() <= 0.0F) {
+            player.sendOverlayMessage(Component.translatable("message.voxelvelo.already_repaired"));
+            return;
+        }
+        entityData.set(DATA_VEHICLE_DAMAGE, 0.0F);
+        useWrench(player, InteractionHand.MAIN_HAND);
+        playSound(SoundEvents.ANVIL_USE, 0.7F, 1.4F);
+        player.sendOverlayMessage(Component.translatable("message.voxelvelo.repaired"));
+    }
+
+    private void damageVehicle(float amount) {
+        if (amount <= 0.0F || !BikeServerConfig.INSTANCE.enableVehicleDamage || isRemoved()) return;
+        Player rider = getRider();
+        if (rider != null && rider.isCreative() && !BikeServerConfig.INSTANCE.vehicleDamageInCreativeMode) return;
+        float damage = BikeDurability.clampDamage(getVehicleDamage() + amount, getBikeType());
+        entityData.set(DATA_VEHICLE_DAMAGE, damage);
+        setHurtTime(10);
+        setDamage(10.0F);
+        if (damage >= getBikeType().maxDurability) dropInstalledParts();
     }
 
     private void wearTires(double amount) {
         if (!BikeServerConfig.INSTANCE.enableTireDamage || amount <= 0) return;
         for (int slot = 0; slot < 2; slot++) {
-            ItemStack wheel = components.getItem(slot);
+            ItemStack wheel = components.get(slot);
             double before = BikeComponents.tire(wheel);
             if (wheel.isEmpty() || before <= 0) continue;
             double after = Math.max(0, before - amount * (slot == 0 ? 1.0 : 1.05));
@@ -437,6 +469,7 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 			float helmet = BikeHelmetItem.isWornBy(rider) ? BikeHelmetItem.CRASH_DAMAGE_FACTOR : 1.0F;
 			rider.hurtServer(serverLevel, serverLevel.damageSources().flyIntoWall(), (float) ((impact - CRASH_DAMAGE_IMPACT) * 0.5) * helmet);
 		}
+		damageVehicle(BikeDurability.crashDamage(impact));
 	}
 
 	/**
@@ -665,7 +698,7 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 
 	/**
 	 * A landing is passed on to the rider, softened by the bike: it always takes some of the blow, and the more
-	 * suspension the type has the more it takes. The bike itself is not hurt.
+	 * suspension the type has the more it takes. The landing also damages the bicycle itself.
 	 */
 	@Override
 	public boolean causeFallDamage(double fallDistance, float damageModifier, DamageSource damageSource) {
@@ -674,12 +707,17 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 		BikeType type = this.getBikeType();
 		double effective = Math.max(0.0, fallDistance - type.fallAbsorbBlocks());
 		this.propagateFallToPassengers(effective, damageModifier * type.fallDamageMultiplier(), damageSource);
+		damageVehicle(BikeDurability.fallDamage(fallDistance));
 		return false;
 	}
 
-    /** Bikes have no whole-vehicle durability; retrieve with sneak + empty hand. */
+    /** Left-clicking an unoccupied bicycle with the wrench repairs its whole-vehicle durability. */
     @Override
     public boolean hurtServer(ServerLevel level, DamageSource source, float amount) {
+        if (source.getEntity() instanceof Player player && player.getMainHandItem().is(ModItems.BIKE_WRENCH)) {
+            repairWithWrench(player);
+            return true;
+        }
         return false;
     }
 
@@ -697,7 +735,8 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 	protected void addAdditionalSaveData(ValueOutput output) {
 		output.putString("bike_type", this.getBikeType().id);
         output.putInt("frame_color", getFrameColor());
-        output.store("components", ItemContainerContents.CODEC, ItemContainerContents.fromItems(components.getItems()));
+        output.putFloat("vehicle_damage", getVehicleDamage());
+        output.store("components", ItemContainerContents.CODEC, ItemContainerContents.fromItems(components));
 	}
 
 	@Override
@@ -710,6 +749,8 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
             stack.set(DataComponents.CONTAINER, contents);
             loadFromItem(stack);
         });
+        entityData.set(DATA_VEHICLE_DAMAGE, BikeDurability.clampDamage(
+                input.getFloatOr("vehicle_damage", getVehicleDamage()), getBikeType()));
 	}
 
 	// ---------------------------------------------------------------- riding
@@ -717,19 +758,11 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 	@Override
 	public InteractionResult interact(Player player, InteractionHand hand, Vec3 location) {
         if (player.getItemInHand(hand).is(ModItems.BIKE_WRENCH)) {
-            if (!level().isClientSide() && getPassengers().isEmpty() && mechanic == null && !isRemoved()) {
-                if (player.isSecondaryUseActive()) disassemble(player);
-                else {
-                    mechanic = player.getUUID();
-                    if (player.openMenu(new SimpleMenuProvider((id, inventory, owner) ->
-                            new BikeMaintenanceMenu(id, inventory, this), Component.translatable(
-                            "item.voxelvelo." + (getBikeType() == BikeType.ROAD ? "road" : getBikeType().id) + "_bike"))).isEmpty()) mechanic = null;
-                }
-            }
+            if (!level().isClientSide()) destroyWithWrench(player, hand);
             return InteractionResult.SUCCESS;
         }
         if (player.isSecondaryUseActive() && player.getItemInHand(hand).isEmpty()) {
-            if (!level().isClientSide() && getPassengers().isEmpty() && mechanic == null && !isRemoved()) {
+            if (!level().isClientSide() && getPassengers().isEmpty() && !isRemoved()) {
                 ItemStack stack = toItem();
                 discard();
                 if (!player.getInventory().add(stack)) player.spawnAtLocation((ServerLevel) level(), stack);

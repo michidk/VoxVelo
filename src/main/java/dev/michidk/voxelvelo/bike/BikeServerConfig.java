@@ -10,6 +10,8 @@ import java.nio.file.Path;
 /** Server-owned settings, read once at startup. Roughly 10 km of smooth riding per tire. */
 public final class BikeServerConfig {
     public static BikeServerConfig INSTANCE = new BikeServerConfig();
+    public boolean enableVehicleDamage = true;
+    public boolean vehicleDamageInCreativeMode = false;
     public boolean enableTireDamage = true;
     public double tireDamageRate = 0.0001;
     public double roughTerrainTireDamageMultiplier = 1.75;

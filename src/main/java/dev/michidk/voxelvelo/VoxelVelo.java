@@ -22,7 +22,6 @@ public class VoxelVelo implements ModInitializer {
 		dev.michidk.voxelvelo.registry.ModComponents.register();
 		ModEntities.register();
 		ModItems.register();
-        dev.michidk.voxelvelo.registry.ModMenus.register();
         dev.michidk.voxelvelo.bike.BikeServerConfig.load();
         dev.michidk.voxelvelo.recipe.BikeCraftingRecipe.register();
 		BikeNetworking.register();
