@@ -88,6 +88,16 @@ final class TrackBuild {
         if (grading != null) grading.cancel(false);
     }
 
+    Component status() {
+        String stage = switch (phase) {
+            case SURVEY -> "surveying " + column + "/" + surveyCells.size() + " columns";
+            case GRADE -> "grading";
+            case PLACE -> "building " + column + "/" + plan.size() + " columns";
+        };
+        long blocks = changed + (tree == null ? 0 : tree.changed());
+        return Component.literal("Track: " + stage + " (" + Math.max(0, shownPercent) + "%). " + blocks + " blocks changed.");
+    }
+
     TrackBuild(CommandSourceStack source, TrackGeometry.Route route, BlockState material, double grade) {
         this.source = source;
         this.level = source.getLevel();

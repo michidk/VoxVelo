@@ -19,12 +19,10 @@ import net.minecraft.world.level.block.FallingBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.ArrayDeque;
-import java.util.Deque;
 
 /** Operator-only, incrementally applied world edits. One build per server. */
 public final class TrackCommand {
-    private static final Map<MinecraftServer, Deque<TrackBuild>> JOBS = new HashMap<>();
+    private static final Map<MinecraftServer, TrackBuild> JOBS = new HashMap<>();
     private TrackCommand() {}
 
     public static void register() {
@@ -40,29 +38,33 @@ public final class TrackCommand {
             tail = Commands.argument("length_km", DoubleArgumentType.doubleArg(0.25, 20)).executes(c -> start(c, 1)).then(tail);
             dispatcher.register(Commands.literal("voxelvelo").then(Commands.literal("track")
                 .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
-                .executes(c -> start(c, 0)).then(tail)));
+                .executes(c -> start(c, 0))
+                .then(Commands.literal("status").executes(c -> status(c.getSource())))
+                .then(Commands.literal("cancel").executes(c -> cancel(c.getSource())))
+                .then(tail)));
         });
         ServerTickEvents.END_SERVER_TICK.register(server -> {
-            Deque<TrackBuild> queue = JOBS.get(server);
-            if (queue == null) return;
-            TrackBuild job = queue.getFirst();
+            TrackBuild job = JOBS.get(server);
+            if (job == null) return;
             try {
-                if (job.tick()) queue.removeFirst();
+                if (job.tick()) JOBS.remove(server);
             } catch (RuntimeException e) {
-                queue.removeFirst();
+                JOBS.remove(server);
                 job.fail(e.getMessage());
                 dev.michidk.voxelvelo.VoxelVelo.LOGGER.error("Track build stopped", e);
             }
-            if (queue.isEmpty()) JOBS.remove(server);
         });
         ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
-            Deque<TrackBuild> queue = JOBS.remove(server);
-            if (queue != null) queue.forEach(TrackBuild::cancel);
+            TrackBuild job = JOBS.remove(server);
+            if (job != null) job.cancel();
         });
     }
 
     private static int start(CommandContext<CommandSourceStack> c, int arguments) {
         CommandSourceStack source = c.getSource();
+        if (JOBS.containsKey(source.getServer())) {
+            return error(source, "A track is already being generated on this server. Use /voxelvelo track status or /voxelvelo track cancel.");
+        }
         double km = arguments >= 1 ? DoubleArgumentType.getDouble(c, "length_km") : 10;
         BlockState material = arguments >= 2 ? BlockStateArgument.getBlock(c, "material").getState() : Blocks.SMOOTH_STONE.defaultBlockState();
         int checkpoints = arguments >= 3 ? IntegerArgumentType.getInteger(c, "checkpoints") : 12;
@@ -83,9 +85,24 @@ public final class TrackCommand {
         TrackBuild job;
         try { job = new TrackBuild(source, route, material, grade); }
         catch (IllegalArgumentException e) { return error(source, e.getMessage()); }
-        JOBS.computeIfAbsent(source.getServer(), ignored -> new ArrayDeque<>()).addLast(job);
+        JOBS.put(source.getServer(), job);
         source.sendSuccess(() -> Component.literal("Planning " + km + " km track starting at " + origin.getX() + ", " + origin.getZ()
             + ". Construction will finish automatically."), true);
+        return 1;
+    }
+
+    private static int status(CommandSourceStack source) {
+        TrackBuild job = JOBS.get(source.getServer());
+        source.sendSuccess(() -> job == null ? Component.literal("No track generation is running.") : job.status(), false);
+        return 1;
+    }
+
+    private static int cancel(CommandSourceStack source) {
+        TrackBuild job = JOBS.get(source.getServer());
+        if (job == null) return error(source, "No track generation is running.");
+        job.cancel();
+        JOBS.remove(source.getServer());
+        source.sendSuccess(() -> Component.literal("Track generation cancelled. Already placed blocks are kept; there is no undo."), true);
         return 1;
     }
 

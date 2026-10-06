@@ -6,8 +6,7 @@ The mod comes in two builds, see [Two builds](#two-builds).
 
 > **Status:** Milestones 1 to 7 are implemented: multiplayer bicycles, keyboard riding, three bike types with their
 > own physics and models, terrain and collisions, FTMS trainer power with resistance feedback, OpenBikeControl steering,
-> free source mixing, HUD, settings pages and rider pose. Hardware paths (trainer, OpenBikeControl devices) are
-> checked against mock devices, not real ones (see the sections below).
+> free source mixing, HUD, settings pages and rider pose.
 
 ## What it does
 
@@ -128,8 +127,10 @@ Creation runs automatically to completion in batches, shows its progress in a pu
 and reports when finished. Build time depends on terrain, existing chunks and server hardware. Survey and placement
 visit columns in chunk batches, with up to 32 chunks requested ahead through Minecraft's loading system.
 World edits stay on the server thread; grading runs in the background. If you are still within a few blocks of the start
-when it completes you are moved onto the road there. Additional requests queue;
-there are no status or cancel commands. Liquids, deep foundations and steep terrain do not reject a route,
+when it completes you are moved onto the road there. Only one generation can run per server, across all dimensions;
+additional requests are rejected. Operators can use `/voxelvelo track status` to inspect progress and
+`/voxelvelo track cancel` to stop the current generation. Cancellation releases the build's chunk tickets and
+keeps blocks already placed; it does not undo world edits. Liquids, deep foundations and steep terrain do not reject a route,
 and the former 32-block earthwork limit is removed. Empty/void columns use the command's height as a fallback.
 This is a terrain editor: blocks in the road corridor may be replaced. New chunk generation can still cause
 pauses. Invalid materials/arguments and routes outside the world border are still rejected, and Minecraft's
@@ -343,9 +344,6 @@ interface so it can be replaced. **SimpleBLE is licensed under BUSL-1.1: free fo
 commercial licence is needed otherwise** (see its `LICENSE.md`). Bluetooth being off or missing never affects
 normal riding; the settings screen just says so.
 
-Not verified on real hardware yet: the GATT code was written against the FTMS and Cycling Power specifications
-and the parsers were checked with hand-built payloads, but no trainer or power meter has been connected.
-
 ## OpenBikeControl and BikeControl phone steering
 
 [OpenBikeControl](https://github.com/OpenBikeControl/openbikecontrol-protocol) (OBC) is the open protocol that
@@ -377,10 +375,7 @@ back to centre.
 For the BikeControl phone setup, mount the phone on the handlebars, let BikeControl turn its orientation into
 steering, and select it here: Minecraft only ever sees standard OBC actions, never the phone sensors.
 
-Verified against the spec with a throwaway mock device (mDNS discovery, TCP, every decoded action, in game up to
-the server-side steering value). Not yet verified with the real BikeControl app or a hardware controller, so the
-exact transport BikeControl offers on your phone is unconfirmed; that is what the manual `host:port` and the
-two transports are for. The TCP stream has no length prefix in the spec; like the reference app, each received
+The TCP stream has no length prefix in the spec; like the reference app, each received
 chunk is treated as one message.
 
 ## Trainer resistance feedback
@@ -543,6 +538,9 @@ Requires JDK 25.
 ./gradlew :core:runClient      # dev client, core build
 ./gradlew runServer            # dev server (accept the Minecraft EULA in run/eula.txt first)
 ```
+
+GitHub Actions builds both jars and runs the verification checks on pushes to `main` and pull requests.
+The built core and fitness jars are available in the workflow's `voxelvelo-jars` artifact.
 
 Dev clients start with the sound muted.
 
