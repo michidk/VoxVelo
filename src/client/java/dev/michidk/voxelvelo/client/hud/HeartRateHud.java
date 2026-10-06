@@ -48,7 +48,8 @@ public final class HeartRateHud implements HudElement {
 			this.addSample(bpm);
 			this.lastSecond = second;
 		}
-		if (!this.ctx.config.heartRateHudEnabled) {
+		if (!this.ctx.config.heartRateHudEnabled || !this.ctx.ftms.isConnected()
+			|| telemetry == null || telemetry.heartRate() == null) {
 			return;
 		}
 
