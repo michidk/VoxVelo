@@ -92,6 +92,31 @@ public final class TrackGeometry {
         return result;
     }
 
+    /**
+     * The road follows the terrain: the balanced, grade-limited surface of {@link #terrace}, so it cuts and fills as little
+     * as the grade allows. Over liquid it never drops below the liquid surface (a road must not dig a trench into a lake),
+     * so those cells set a grade-limited lower bound. The road at {@code start}, where the track was ordered, is exactly
+     * the terrain there, so whoever ordered it stands on the track; the grade limit shapes the road around that point.
+     */
+    public static Map<Cell, Integer> follow(Map<Cell, Integer> surfaces, Set<Cell> liquid, double grade, Cell start) {
+        Map<Cell, Integer> result = terrace(surfaces, grade);
+        // Clamping a grade-limited surface between two grade-limited cones pins it at the start and keeps it grade-limited.
+        Integer anchor = surfaces.get(start);
+        if (anchor != null) {
+            result.replaceAll((cell, y) -> {
+                int reach = (int) Math.floor(grade * Math.hypot(cell.x - start.x, cell.z - start.z));
+                return Math.clamp(y, anchor - reach, anchor + reach);
+            });
+        }
+        if (!liquid.isEmpty()) {
+            Map<Cell, Integer> wet = new LinkedHashMap<>();
+            for (Cell cell : liquid) wet.put(cell, surfaces.get(cell));
+            // The maximum of two grade-limited surfaces is grade-limited. Liquid wins over the start: no trench in a lake.
+            embankment(wet, grade).forEach((cell, y) -> result.merge(cell, y, Math::max));
+        }
+        return result;
+    }
+
     /** Smallest grade-limited embankment above every land/liquid surface. */
     public static Map<Cell, Integer> embankment(Map<Cell, Integer> surfaces, double grade) {
         Map<Cell, Double> upper = envelope(surfaces, grade, -1);

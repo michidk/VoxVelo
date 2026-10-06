@@ -72,6 +72,25 @@ public final class TrackChecks {
             }
         }
         System.out.println("Liquid surface and embankment checks passed.");
+        // The road follows the terrain, starts exactly on it, never sinks into liquid and stays rideable.
+        var hills = new LinkedHashMap<TrackGeometry.Cell, Integer>();
+        var wet = new HashSet<TrackGeometry.Cell>();
+        for (int x = -80; x <= 80; x++) for (int z = -3; z <= 3; z++) {
+            var cell = new TrackGeometry.Cell(x, z);
+            hills.put(cell, 70 + (int) Math.round(14 * Math.sin(x / 12.0)));
+            if (x > 30) { hills.put(cell, 62); wet.add(cell); }
+        }
+        var start = new TrackGeometry.Cell(0, 0);
+        var followed = TrackGeometry.follow(hills, wet, 0.08, start);
+        require(followed.get(start).equals(hills.get(start)), "road starts exactly on the terrain");
+        for (var cell : hills.keySet()) {
+            if (wet.contains(cell)) require(followed.get(cell) >= hills.get(cell), "road stays above liquid");
+            for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) {
+                var next = new TrackGeometry.Cell(cell.x() + dx, cell.z() + dz);
+                if (followed.containsKey(next)) require(Math.abs(followed.get(cell) - followed.get(next)) <= 1, "followed road is rideable");
+            }
+        }
+        System.out.println("Terrain-following checks passed.");
     }
     private static void require(boolean condition, String message) {
         if (!condition) throw new AssertionError(message);

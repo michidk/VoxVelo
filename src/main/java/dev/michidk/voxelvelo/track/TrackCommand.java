@@ -39,7 +39,7 @@ public final class TrackCommand {
             tail = Commands.argument("length_km", DoubleArgumentType.doubleArg(0.25, 20)).executes(c -> start(c, 1)).then(tail);
             dispatcher.register(Commands.literal("voxelvelo").then(Commands.literal("track")
                 .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
-                .then(Commands.literal("create").executes(c -> start(c, 0)).then(tail))));
+                .executes(c -> start(c, 0)).then(tail)));
         });
         ServerTickEvents.END_SERVER_TICK.register(server -> {
             Deque<TrackBuild> queue = JOBS.get(server);

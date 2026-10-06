@@ -73,8 +73,8 @@ allows (within vanilla's limits) or hide its crashes. That is the same trade-off
 Operators can build a closed checkpoint circuit starting at their current X/Z position:
 
 ```text
-/voxelvelo track create
-/voxelvelo track create 10 minecraft:smooth_stone 12 0.85 6 8 0
+/voxelvelo track
+/voxelvelo track 10 minecraft:smooth_stone 12 0.85 6 8 0
 ```
 
 Arguments are positional and optional from the right:
@@ -94,8 +94,11 @@ layout; final heights also depend on the terrain at build time. One block repres
 target measures the horizontal spline, so the actual ride is slightly longer when it climbs and descends.
 
 The command samples ground beneath trees and plants. Water and lava count as surfaces too: a level crossing
-places road blocks in the top liquid layer, with solid foundations extending to the seabed. Low sections rise
-into gentle embankments to meet hills and shorelines; approaches may sit above liquid level to preserve grade.
+places road blocks in the top liquid layer, with solid foundations extending to the seabed.
+
+The road follows the terrain: it takes the ground height, with only as much cutting and filling as the maximum grade
+requires, and where the track was ordered it is exactly the ground, so you stand on it. Over water and lava it never
+sinks below the surface, so approaches may rise slightly above liquid level to preserve grade.
 Grade limiting covers the full road width, overlaps and the loop seam. The surface uses full-block terraces:
 adjacent road columns differ by at most one block, which all VoxelVelo bikes can climb. The grade percentage
 describes the height profile before rounding; individual one-block steps are not literal 8% ramps. Five full
@@ -103,7 +106,9 @@ air blocks are cleared above every road block, including vegetation. Neighboring
 so water/lava beside the road does not flow into its clearance. In ceiling dimensions such as the Nether,
 the survey starts at the command's height instead of the roof.
 
-Creation runs automatically to completion in batches and reports when finished. Additional requests queue;
+Creation runs automatically to completion in batches, shows its progress in a purple boss bar to whoever ordered it,
+and reports when finished. A 10 km track takes about half a minute. If you are still within a few blocks of the start
+when it completes you are moved onto the road there. Additional requests queue;
 there are no status or cancel commands. Liquids, deep foundations and steep terrain do not reject a route,
 and the former 32-block earthwork limit is removed. Empty/void columns use the command's height as a fallback.
 This is a terrain editor: blocks in the road corridor may be replaced. New chunk generation can still cause

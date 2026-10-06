@@ -5,7 +5,10 @@ import java.util.concurrent.CompletableFuture;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.BossEvent;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -21,6 +24,7 @@ final class TrackBuild {
     private final BlockState material;
     private final double grade;
     private final Map<TrackGeometry.Cell, Integer> surfaces = new LinkedHashMap<>();
+    private final Set<TrackGeometry.Cell> liquid = new HashSet<>();
     private final List<TrackGeometry.Cell> surveyCells;
     private Map<TrackGeometry.Cell, Integer> heights;
     private CompletableFuture<Map<TrackGeometry.Cell, Integer>> grading;
@@ -28,6 +32,45 @@ final class TrackBuild {
     private int column;
     private int cursorY = Integer.MIN_VALUE;
     private long changed;
+    private long phaseAt = System.nanoTime();
+    private final ServerBossEvent bar = new ServerBossEvent(UUID.randomUUID(), Component.literal("Track"),
+        BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.PROGRESS);
+    private int shownPercent = -1;
+
+    private void lap(String what) {
+        long now = System.nanoTime();
+        dev.michidk.voxelvelo.VoxelVelo.LOGGER.info("Track {} took {} ms ({} road columns)", what, (now - phaseAt) / 1_000_000, route.road().size());
+        phaseAt = now;
+    }
+
+    /** Shows survey, grading and placement as one bar: surveying is most of the work, then grading, then placing. */
+    private void progress(String label, double done) {
+        double total = switch (phase) {
+            case SURVEY -> 0.7 * done;
+            case GRADE -> 0.7 + 0.05 * done;
+            case PLACE -> 0.75 + 0.25 * done;
+        };
+        int percent = (int) Math.round(total * 100);
+        if (percent == shownPercent) return;
+        shownPercent = percent;
+        bar.setName(Component.literal("Track: " + label + " " + percent + "%"));
+        bar.setProgress((float) total);
+    }
+
+    /** How far the road ends up from the terrain: the tallest fill and deepest cut over the road columns. */
+    private void logDeviation() {
+        int fill = 0, cut = 0;
+        for (TrackGeometry.Cell cell : route.road()) {
+            int d = heights.get(cell) - surfaces.get(cell);
+            fill = Math.max(fill, d);
+            cut = Math.max(cut, -d);
+        }
+        dev.michidk.voxelvelo.VoxelVelo.LOGGER.info("Track follows the terrain within {} blocks of fill and {} of cut", fill, cut);
+    }
+
+    private void finish() {
+        bar.removeAllPlayers();
+    }
 
     TrackBuild(CommandSourceStack source, TrackGeometry.Route route, BlockState material, double grade) {
         this.source = source;
@@ -44,36 +87,55 @@ final class TrackBuild {
                 survey.add(new TrackGeometry.Cell(cell.x() + dx, cell.z() + dz));
         }
         surveyCells = List.copyOf(survey);
+        if (source.getEntity() instanceof ServerPlayer player) bar.addPlayer(player);
     }
 
     void fail(String reason) {
+        finish();
         source.sendFailure(Component.literal("Track construction interrupted: " + reason
             + ". Already placed blocks are kept (" + changed + ")."));
     }
 
     boolean tick() {
-        long deadline = System.nanoTime() + 5_000_000;
-        int budget = phase == Phase.SURVEY ? 16 : 1024;
+        // The work is bounded by time, not by a count: chunks that still have to load make a column cost far more.
+        long deadline = System.nanoTime() + 20_000_000;
+        int budget = Integer.MAX_VALUE;
         while (budget-- > 0 && System.nanoTime() < deadline) {
             if (phase == Phase.SURVEY) {
-                if (column < surveyCells.size()) { survey(surveyCells.get(column++)); continue; }
+                if (column < surveyCells.size()) {
+                    survey(surveyCells.get(column++));
+                    if ((column & 63) == 0) progress("surveying", column / (double) surveyCells.size());
+                    continue;
+                }
                 Map<TrackGeometry.Cell, Integer> snapshot = new LinkedHashMap<>(surfaces);
-                grading = CompletableFuture.supplyAsync(() -> TrackGeometry.embankment(snapshot, grade));
+                lap("survey");
+                Set<TrackGeometry.Cell> wet = Set.copyOf(liquid);
+                TrackGeometry.Point first = route.centerline().getFirst();
+                TrackGeometry.Cell startCell = new TrackGeometry.Cell((int) Math.round(first.x()), (int) Math.round(first.z()));
+                grading = CompletableFuture.supplyAsync(() -> TrackGeometry.follow(snapshot, wet, grade, startCell));
                 phase = Phase.GRADE;
+                progress("grading", 0);
                 column = 0;
                 return false;
             }
             if (phase == Phase.GRADE) {
                 if (!grading.isDone()) return false;
+                lap("grading");
                 heights = grading.join();
+                logDeviation();
                 phase = Phase.PLACE;
             }
+            if (phase == Phase.PLACE && (column & 15) == 0) progress("building", column / (double) route.road().size());
             if (column == route.road().size()) {
+                lap("placement");
+                finish();
                 TrackGeometry.Point start = route.centerline().getFirst();
                 TrackGeometry.Cell cell = new TrackGeometry.Cell((int) Math.round(start.x()), (int) Math.round(start.z()));
+                int startY = heights.get(cell) + 1;
                 source.sendSuccess(() -> Component.literal(String.format(Locale.ROOT,
                     "Track complete: %.3f km. Start: %d %d %d.", route.length() / 1000,
-                    cell.x(), heights.get(cell) + 1, cell.z())), true);
+                    cell.x(), startY, cell.z())), true);
+                putPlayerOnTrack(cell, startY);
                 return true;
             }
             TrackGeometry.Cell cell = route.road().get(column);
@@ -102,6 +164,14 @@ final class TrackBuild {
         return false;
     }
 
+    /** The track starts where it was ordered, so a player still around there ends up standing on it, not beside or inside the road bed. */
+    private void putPlayerOnTrack(TrackGeometry.Cell start, int y) {
+        if (!(source.getEntity() instanceof ServerPlayer player) || player.level() != level) return;
+        double away = Math.hypot(player.getX() - (start.x() + 0.5), player.getZ() - (start.z() + 0.5));
+        if (away > 24 || player.isPassenger()) return;
+        player.teleportTo(start.x() + 0.5, y, start.z() + 0.5);
+    }
+
     private void survey(TrackGeometry.Cell cell) {
         int top = level.getChunk(cell.x() >> 4, cell.z() >> 4)
             .getHeight(Heightmap.Types.WORLD_SURFACE, cell.x() & 15, cell.z() & 15);
@@ -114,6 +184,7 @@ final class TrackBuild {
             if (state.is(BlockTags.LOGS) || state.is(BlockTags.LEAVES)) continue;
             if (!state.getFluidState().isEmpty() || state.isCollisionShapeFullBlock(level, pos) || state.hasBlockEntity()) {
                 surface = y;
+                if (!state.getFluidState().isEmpty()) liquid.add(cell);
                 // Lay road above containers and unbreakable supports.
                 if (state.hasBlockEntity() || state.getDestroySpeed(level, pos) < 0) surface++;
                 break;
