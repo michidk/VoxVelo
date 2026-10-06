@@ -5,6 +5,16 @@ import java.util.*;
 /** Standalone checks: deterministic curves, connected raster, flat terrain preservation and rideable terraces. */
 public final class TrackChecks {
     public static void main(String[] args) {
+        var boundaryCells = List.of(new TrackGeometry.Cell(-17, 16), new TrackGeometry.Cell(0, 0),
+            new TrackGeometry.Cell(-16, -1), new TrackGeometry.Cell(15, 15),
+            new TrackGeometry.Cell(-32, 31), new TrackGeometry.Cell(16, -16));
+        var batches = TrackGeometry.byChunk(boundaryCells);
+        require(batches.size() == 4, "one batch per chunk across positive and negative boundaries");
+        require(batches.getFirst().x() == -2 && batches.getFirst().z() == 1,
+            "chunk batches follow first visit order");
+        require(batches.getFirst().cells().equals(List.of(boundaryCells.get(0), boundaryCells.get(4))),
+            "nonconsecutive columns in the same chunk are visited together");
+        require(TrackGeometry.byChunk(List.of()).isEmpty(), "empty chunk plan");
         for (int width = 3; width <= 11; width++) {
             Set<TrackGeometry.Cell> footprint = new HashSet<>();
             TrackGeometry.addRoadDisk(footprint, 0, 0, width);
@@ -20,6 +30,16 @@ public final class TrackChecks {
             require(Math.abs(route.length() - 10_000) < 0.0001, "length scaling");
             require(route.centerline().getFirst().equals(new TrackGeometry.Point(124, -320)), "start at command origin");
             require(route.equals(TrackGeometry.generate(seed, 124, -320, 10_000, 12, 0.85, 6)), "seed reproducibility");
+            Set<TrackGeometry.Cell> batched = new HashSet<>();
+            Set<TrackGeometry.Cell> chunkPositions = new HashSet<>();
+            for (var batch : TrackGeometry.byChunk(route.road())) {
+                require(chunkPositions.add(new TrackGeometry.Cell(batch.x(), batch.z())), "each chunk visited once");
+                for (var cell : batch.cells()) {
+                    require(cell.x() >> 4 == batch.x() && cell.z() >> 4 == batch.z(), "column belongs to its loaded chunk");
+                    require(batched.add(cell), "each road column visited once");
+                }
+            }
+            require(batched.equals(new HashSet<>(route.road())), "batching preserves the full road footprint");
             Set<TrackGeometry.Cell> unseen = new HashSet<>(route.road());
             Deque<TrackGeometry.Cell> pending = new ArrayDeque<>();
             pending.add(route.road().getFirst());
@@ -82,6 +102,11 @@ public final class TrackChecks {
         }
         var start = new TrackGeometry.Cell(0, 0);
         var followed = TrackGeometry.follow(hills, wet, 0.08, start);
+        var reordered = new LinkedHashMap<TrackGeometry.Cell, Integer>();
+        for (var batch : TrackGeometry.byChunk(hills.keySet()))
+            for (var cell : batch.cells()) reordered.put(cell, hills.get(cell));
+        require(TrackGeometry.follow(reordered, wet, 0.08, start).equals(followed),
+            "chunk survey order preserves planned road heights");
         require(followed.get(start).equals(hills.get(start)), "road starts exactly on the terrain");
         for (var cell : hills.keySet()) {
             if (wet.contains(cell)) require(followed.get(cell) >= hills.get(cell), "road stays above liquid");

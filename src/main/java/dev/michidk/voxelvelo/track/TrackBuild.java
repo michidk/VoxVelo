@@ -14,6 +14,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.chunk.LevelChunk;
 
 /** Automatic survey and construction. World access stays on server ticks. */
 final class TrackBuild {
@@ -26,13 +27,16 @@ final class TrackBuild {
     private final Map<TrackGeometry.Cell, Integer> surfaces = new LinkedHashMap<>();
     private final Set<TrackGeometry.Cell> liquid = new HashSet<>();
     private final List<TrackGeometry.Cell> surveyCells;
+    private TrackChunkLoader chunks;
+    private int batchColumn;
+    private LevelChunk chunk;
     private Map<TrackGeometry.Cell, Integer> heights;
     private CompletableFuture<Map<TrackGeometry.Cell, Integer>> grading;
     private Phase phase = Phase.SURVEY;
     private int column;
     private int cursorY = Integer.MIN_VALUE;
     private long changed;
-    private long phaseAt = System.nanoTime();
+    private long phaseAt;
     private final ServerBossEvent bar = new ServerBossEvent(UUID.randomUUID(), Component.literal("Track"),
         BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.PROGRESS);
     private int shownPercent = -1;
@@ -69,7 +73,14 @@ final class TrackBuild {
     }
 
     private void finish() {
+        chunks.close();
+        chunk = null;
         bar.removeAllPlayers();
+    }
+
+    void cancel() {
+        finish();
+        if (grading != null) grading.cancel(false);
     }
 
     TrackBuild(CommandSourceStack source, TrackGeometry.Route route, BlockState material, double grade) {
@@ -87,6 +98,7 @@ final class TrackBuild {
                 survey.add(new TrackGeometry.Cell(cell.x() + dx, cell.z() + dz));
         }
         surveyCells = List.copyOf(survey);
+        chunks = new TrackChunkLoader(level, TrackGeometry.byChunk(surveyCells));
         if (source.getEntity() instanceof ServerPlayer player) bar.addPlayer(player);
     }
 
@@ -97,13 +109,18 @@ final class TrackBuild {
     }
 
     boolean tick() {
+        if (phaseAt == 0) phaseAt = System.nanoTime();
         // The work is bounded by time, not by a count: chunks that still have to load make a column cost far more.
         long deadline = System.nanoTime() + 20_000_000;
         int budget = Integer.MAX_VALUE;
         while (budget-- > 0 && System.nanoTime() < deadline) {
             if (phase == Phase.SURVEY) {
                 if (column < surveyCells.size()) {
-                    survey(surveyCells.get(column++));
+                    if (chunk == null) chunk = chunks.readyChunk(deadline);
+                    if (chunk == null) return false;
+                    survey(chunks.cells().get(batchColumn++));
+                    column++;
+                    if (batchColumn == chunks.cells().size()) nextChunk();
                     if ((column & 63) == 0) progress("surveying", column / (double) surveyCells.size());
                     continue;
                 }
@@ -123,6 +140,8 @@ final class TrackBuild {
                 lap("grading");
                 heights = grading.join();
                 logDeviation();
+                chunks.close();
+                chunks = new TrackChunkLoader(level, TrackGeometry.byChunk(route.road()));
                 phase = Phase.PLACE;
             }
             if (phase == Phase.PLACE && (column & 15) == 0) progress("building", column / (double) route.road().size());
@@ -138,14 +157,16 @@ final class TrackBuild {
                 putPlayerOnTrack(cell, startY);
                 return true;
             }
-            TrackGeometry.Cell cell = route.road().get(column);
+            if (chunk == null) chunk = chunks.readyChunk(deadline);
+            if (chunk == null) return false;
+            TrackGeometry.Cell cell = chunks.cells().get(batchColumn);
             int roadY = heights.get(cell);
             if (cursorY == Integer.MIN_VALUE) {
                 // Extend foundations through liquids and caves to solid ground, without a depth rejection.
                 int bottom = Math.min(surfaces.get(cell), roadY);
                 while (bottom > level.getMinY() + 1) {
                     BlockPos below = new BlockPos(cell.x(), bottom - 1, cell.z());
-                    BlockState support = level.getBlockState(below);
+                    BlockState support = chunk.getBlockState(below);
                     if (support.getFluidState().isEmpty() && support.isCollisionShapeFullBlock(level, below)) break;
                     bottom--;
                 }
@@ -153,15 +174,25 @@ final class TrackBuild {
             }
             BlockPos pos = new BlockPos(cell.x(), cursorY, cell.z());
             BlockState target = cursorY <= roadY ? material : Blocks.AIR.defaultBlockState();
-            BlockState existing = level.getBlockState(pos);
+            BlockState existing = chunk.getBlockState(pos);
             if (!existing.equals(target)) {
                 if (!level.setBlock(pos, target, Block.UPDATE_ALL))
                     throw new IllegalStateException("World refused placement at " + pos.toShortString());
                 changed++;
             }
-            if (++cursorY > roadY + 5) { cursorY = Integer.MIN_VALUE; column++; }
+            if (++cursorY > roadY + 5) {
+                cursorY = Integer.MIN_VALUE;
+                column++;
+                if (++batchColumn == chunks.cells().size()) nextChunk();
+            }
         }
         return false;
+    }
+
+    private void nextChunk() {
+        chunks.advance();
+        batchColumn = 0;
+        chunk = null;
     }
 
     /** The track starts where it was ordered, so a player still around there ends up standing on it, not beside or inside the road bed. */
@@ -173,14 +204,13 @@ final class TrackBuild {
     }
 
     private void survey(TrackGeometry.Cell cell) {
-        int top = level.getChunk(cell.x() >> 4, cell.z() >> 4)
-            .getHeight(Heightmap.Types.WORLD_SURFACE, cell.x() & 15, cell.z() & 15);
+        int top = chunk.getHeight(Heightmap.Types.WORLD_SURFACE, cell.x() & 15, cell.z() & 15);
         // In the Nether, project downward from the invocation height rather than onto its roof.
         if (level.dimensionType().hasCeiling()) top = Math.min(top, (int) Math.floor(source.getPosition().y));
         int surface = Math.clamp((int) Math.floor(source.getPosition().y) - 1, level.getMinY() + 1, level.getMaxY() - 5);
         for (int y = Math.min(top, level.getMaxY()); y > level.getMinY(); y--) {
             BlockPos pos = new BlockPos(cell.x(), y, cell.z());
-            BlockState state = level.getBlockState(pos);
+            BlockState state = chunk.getBlockState(pos);
             if (state.is(BlockTags.LOGS) || state.is(BlockTags.LEAVES)) continue;
             if (!state.getFluidState().isEmpty() || state.isCollisionShapeFullBlock(level, pos) || state.hasBlockEntity()) {
                 surface = y;

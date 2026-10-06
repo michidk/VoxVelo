@@ -28,6 +28,7 @@ public final class TrackCommand {
     private TrackCommand() {}
 
     public static void register() {
+        TrackChunkLoader.register();
         CommandRegistrationCallback.EVENT.register((dispatcher, registry, environment) -> {
             ArgumentBuilder<CommandSourceStack, ?> tail = Commands.argument("variant", IntegerArgumentType.integer(0))
                 .executes(c -> start(c, 7));
@@ -54,7 +55,10 @@ public final class TrackCommand {
             }
             if (queue.isEmpty()) JOBS.remove(server);
         });
-        ServerLifecycleEvents.SERVER_STOPPED.register(JOBS::remove);
+        ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
+            Deque<TrackBuild> queue = JOBS.remove(server);
+            if (queue != null) queue.forEach(TrackBuild::cancel);
+        });
     }
 
     private static int start(CommandContext<CommandSourceStack> c, int arguments) {

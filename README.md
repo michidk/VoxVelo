@@ -107,7 +107,9 @@ so water/lava beside the road does not flow into its clearance. In ceiling dimen
 the survey starts at the command's height instead of the roof.
 
 Creation runs automatically to completion in batches, shows its progress in a purple boss bar to whoever ordered it,
-and reports when finished. A 10 km track takes about half a minute. If you are still within a few blocks of the start
+and reports when finished. Build time depends on terrain, existing chunks and server hardware. Survey and placement
+visit columns in chunk batches, with up to 32 chunks requested ahead through Minecraft's loading system.
+World edits stay on the server thread; grading runs in the background. If you are still within a few blocks of the start
 when it completes you are moved onto the road there. Additional requests queue;
 there are no status or cancel commands. Liquids, deep foundations and steep terrain do not reject a route,
 and the former 32-block earthwork limit is removed. Empty/void columns use the command's height as a fallback.
@@ -116,8 +118,9 @@ pauses. Invalid materials/arguments and routes outside the world border are stil
 build-height limit still applies. Stopping the server or a world-write failure keeps blocks already placed;
 jobs do not resume after restart and there is no undo.
 
-`verifyTracks` checks seed reproducibility, perimeter scaling, road connectivity, terrain grading and loop
-closure. The command ships in both core and fitness builds.
+`verifyTracks` checks seed reproducibility, perimeter scaling, road connectivity, chunk batching, terrain grading and loop
+closure. The command ships in both core and fitness builds. See [track performance measurements](docs/track-generation-performance.md)
+for benchmark results and reproduction steps.
 
 ## Bike types
 

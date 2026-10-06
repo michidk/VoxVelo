@@ -8,7 +8,20 @@ public final class TrackGeometry {
     public record Point(double x, double z) {}
     public record Cell(int x, int z) {}
     public record Route(List<Point> centerline, List<Cell> road, double length) {}
+    record ChunkColumns(int x, int z, List<Cell> cells) {}
     private record Visit(Cell cell, double height) {}
+
+    /** Visit each chunk once, retaining first-visit order along the circuit, including negative coordinates. */
+    static List<ChunkColumns> byChunk(Collection<Cell> cells) {
+        Map<Cell, List<Cell>> chunks = new LinkedHashMap<>();
+        for (Cell cell : cells) {
+            Cell chunk = new Cell(cell.x >> 4, cell.z >> 4);
+            chunks.computeIfAbsent(chunk, ignored -> new ArrayList<>()).add(cell);
+        }
+        return chunks.entrySet().stream()
+            .map(entry -> new ChunkColumns(entry.getKey().x, entry.getKey().z, List.copyOf(entry.getValue())))
+            .toList();
+    }
 
     public static Route generate(long seed, int originX, int originZ, double meters,
                                  int checkpoints, double bends, int width) {
