@@ -1,37 +1,39 @@
 package dev.michidk.voxelvelo.client.network;
 
 import dev.michidk.voxelvelo.bike.BikeControlState;
+import dev.michidk.voxelvelo.bike.BikeDriver;
 import dev.michidk.voxelvelo.bike.BikeEntity;
+import dev.michidk.voxelvelo.bike.BikeRiderState;
+import dev.michidk.voxelvelo.bike.RiderSettings;
+import dev.michidk.voxelvelo.client.config.VoxelVeloConfig;
 import dev.michidk.voxelvelo.client.input.BikeInputManager;
-import dev.michidk.voxelvelo.network.BikeControlPayload;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import dev.michidk.voxelvelo.network.BikeStatePayload;
 import java.util.List;
 import java.util.function.Consumer;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.util.Mth;
+import org.jspecify.annotations.Nullable;
 
 /**
- * Samples the composed controls once per client tick while riding and sends them to the server when
- * they change, plus a periodic heartbeat so the server's input timeout never trips during steady riding.
- * Also turns the rider's camera along with the bike, since the rider is not the vehicle's controller.
+ * Drives the bike the local player rides. Once per client tick it composes the controls from every input source;
+ * the bike simulates its next tick with them (the rider controls it like a horse) and reports back what it did,
+ * which is passed on to the server. Also turns the rider's camera along with the bike.
  */
-public final class BikeControlSender {
-	private static final int HEARTBEAT_TICKS = 5;
-
+public final class BikeControlSender implements BikeDriver {
 	private final BikeInputManager inputManager;
+	private final VoxelVeloConfig config;
 	/** Called when the local player gets on a bike, e.g. for hints from add-ons. */
 	private final List<Consumer<LocalPlayer>> mountListeners;
 
-	private BikeEntity currentBike;
-	private BikeControlState lastSent;
+	private @Nullable BikeEntity currentBike;
 	private BikeControlState lastComposed = BikeControlState.NEUTRAL;
-	private int ticksSinceSend;
-	private int sequence;
 	private float lastBikeYaw;
 
-	public BikeControlSender(BikeInputManager inputManager, List<Consumer<LocalPlayer>> mountListeners) {
+	public BikeControlSender(BikeInputManager inputManager, VoxelVeloConfig config, List<Consumer<LocalPlayer>> mountListeners) {
 		this.inputManager = inputManager;
+		this.config = config;
 		this.mountListeners = mountListeners;
 	}
 
@@ -40,26 +42,36 @@ public final class BikeControlSender {
 		return this.lastComposed;
 	}
 
+	@Override
+	public @Nullable BikeControlState input(BikeEntity bike) {
+		return bike == this.currentBike ? this.lastComposed : null;
+	}
+
+	@Override
+	public RiderSettings.Settings riderSettings() {
+		return RiderSettings.sanitize(this.config.riderMassKg, this.config.speedLimitKmh);
+	}
+
+	@Override
+	public void report(BikeEntity bike, BikeRiderState state) {
+		if (bike == this.currentBike && ClientPlayNetworking.canSend(BikeStatePayload.TYPE)) {
+			ClientPlayNetworking.send(BikeStatePayload.of(state));
+		}
+	}
+
 	public void tick(Minecraft client) {
 		LocalPlayer player = client.player;
 		BikeEntity bike = player != null && player.getVehicle() instanceof BikeEntity vehicle && vehicle.getRider() == player ? vehicle : null;
 
 		if (bike == null) {
-			if (this.currentBike != null) {
-				this.currentBike = null;
-				this.lastSent = null;
-				this.sequence = 0;
-				this.inputManager.reset();
-			} else {
-				this.inputManager.reset();
-			}
+			this.currentBike = null;
+			this.lastComposed = BikeControlState.NEUTRAL;
+			this.inputManager.reset();
 			return;
 		}
 
 		if (bike != this.currentBike) {
 			this.currentBike = bike;
-			this.lastSent = null;
-			this.ticksSinceSend = HEARTBEAT_TICKS;
 			this.lastBikeYaw = bike.getYRot();
 			this.inputManager.onMount(bike.getGear());
 			for (Consumer<LocalPlayer> listener : this.mountListeners) {
@@ -68,17 +80,7 @@ public final class BikeControlSender {
 		}
 
 		this.followBikeYaw(player, bike);
-
-		BikeControlState state = this.inputManager.compose(client);
-		this.lastComposed = state;
-		this.ticksSinceSend++;
-		if (!state.equals(this.lastSent) || this.ticksSinceSend >= HEARTBEAT_TICKS) {
-			if (ClientPlayNetworking.canSend(BikeControlPayload.TYPE)) {
-				ClientPlayNetworking.send(BikeControlPayload.of(this.sequence++, state));
-			}
-			this.lastSent = state;
-			this.ticksSinceSend = 0;
-		}
+		this.lastComposed = this.inputManager.compose(client);
 	}
 
 	private void followBikeYaw(LocalPlayer player, BikeEntity bike) {

@@ -49,8 +49,8 @@ public final class BikePartSwapLayer extends CustomBoneTextureGeoLayer<BikeEntit
 
     /** Whether this slot holds a part from another bike, so the frame's own bone must not be drawn. */
     public static boolean swapped(GeoRenderState state, int slot) {
-        int parts = state.getOrDefaultGeckolibData(BikeDataTickets.COMPONENTS, 31);
-        return (parts & (1 << slot)) != 0
+        int parts = state.getOrDefaultGeckolibData(BikeDataTickets.COMPONENTS, BikeComponents.ALL_PARTS_MASK);
+        return (parts & BikeComponents.bit(slot)) != 0
                 && donor(state, slot) != state.getOrDefaultGeckolibData(BikeDataTickets.BIKE_TYPE, BikeType.GRAVEL);
     }
 

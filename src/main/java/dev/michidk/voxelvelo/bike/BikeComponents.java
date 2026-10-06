@@ -18,6 +18,10 @@ import java.util.List;
  */
 public final class BikeComponents {
     public static final int FRONT = 0, REAR = 1, BARS = 2, SADDLE = 3, PEDALS = 4, COUNT = 5;
+    /** Bit mask with one bit per installed slot, see {@link #bit}. */
+    public static final int ALL_PARTS_MASK = (1 << COUNT) - 1;
+    /** The parts a bike cannot be ridden without: both wheels, handlebars and saddle. Pedals only add drive. */
+    public static final int RIDEABLE_MASK = bit(FRONT) | bit(REAR) | bit(BARS) | bit(SADDLE);
     public static final int DEFAULT_COLOR = 0xFFFFFF;
 
     /** Extra frontal area of the upright position on flat bars compared with drops, CdA in m^2. */
@@ -27,6 +31,20 @@ public final class BikeComponents {
     private static final String VEHICLE_DAMAGE = "voxelvelo_vehicle_damage";
 
     private BikeComponents() {}
+
+    /** The mask bit of a slot. */
+    public static int bit(int slot) {
+        return 1 << slot;
+    }
+
+    /** Packs the condition of both tires, in whole percent, into one synced int: front in the low byte. */
+    public static int packTires(int frontPercent, int rearPercent) {
+        return (frontPercent & 0xFF) | (rearPercent & 0xFF) << 8;
+    }
+
+    public static int tirePercent(int packed, int slot) {
+        return (packed >> (slot * 8)) & 0xFF;
+    }
 
     /** The part a new bike of this type comes with. */
     public static Item expected(BikeType type, int slot) {

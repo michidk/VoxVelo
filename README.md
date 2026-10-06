@@ -11,7 +11,7 @@ The mod comes in two builds, see [Two builds](#two-builds).
 
 ## What it does
 
-- A real `BikeEntity` that is simulated **on the server**. Clients only send control intentions.
+- A real `BikeEntity` that rides like a horse or a boat: the rider's own client simulates it, so steering is instant.
 - Everyone sees the bike, the rider, steering, wheel and crank rotation.
 - Power-based physics: rider power becomes drive force, with rolling resistance (per surface), air drag,
   slope gravity, braking, collisions and a top speed. Keyboard "pedaling" is a virtual power value fed into
@@ -55,11 +55,18 @@ optional, so a fitness client on a core server (or the other way round) simply h
 
 ## Multiplayer
 
-Works on the integrated server, LAN and dedicated Fabric servers. The server owns position, velocity,
-collisions, terrain and the mounted rider. The client sends a small versioned packet (`bike_control`,
-protocol v1) at most once per tick on change and as a heartbeat every 5 ticks; every field is clamped on the
-server, and if packets stop for 15 ticks (0.75 s) power and steering are dropped so a disconnected player
-cannot keep accelerating. Only the seated player can control a bike; one rider per bike.
+Works on the integrated server, LAN and dedicated Fabric servers. Bikes ride like vanilla horses and boats: the
+rider is the controlling passenger, their client simulates the physics (speed, steering, slope, collisions) and
+vanilla vehicle movement carries the position to the server and the other players, with vanilla's movement checks.
+Every tick the rider's client also sends a small versioned packet (`bike_state`, protocol v1) with speed, steering,
+brake, gear, pedaling, power, surface, gradient and any wall crash. The server clamps every field (speed to the
+bike's top speed), shows it to everyone else, and stays in charge of the consequences: crash and fall damage,
+hurting what the bike runs into, tire wear and parts. If the packets stop for 20 ticks (1 s) the rider's power
+counts as zero. A bike nobody rides is simulated by the server. Only the seated player can ride a bike; one rider
+per bike.
+
+Since the rider's client is trusted with the movement, a modified client could ride faster than the physics
+allows (within vanilla's limits) or hide its crashes. That is the same trade-off vanilla makes for horses and boats.
 
 ## Generate a race track
 

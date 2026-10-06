@@ -5,6 +5,7 @@ import com.geckolib.renderer.base.BoneSnapshots;
 import com.geckolib.renderer.base.RenderPassInfo;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import dev.michidk.voxelvelo.bike.BikeComponents;
 import dev.michidk.voxelvelo.bike.BikeEntity;
 import dev.michidk.voxelvelo.bike.BikeRig;
 import dev.michidk.voxelvelo.bike.BikePhysics;
@@ -62,16 +63,16 @@ public class BikeGeoRenderer extends GeoEntityRenderer<BikeEntity, EntityRenderS
 
 	@Override
 	public void adjustModelBonesForRender(RenderPassInfo<EntityRenderState> info, BoneSnapshots snapshots) {
-		int parts = info.getOrDefaultGeckolibData(BikeDataTickets.COMPONENTS, 31);
+		int parts = info.getOrDefaultGeckolibData(BikeDataTickets.COMPONENTS, BikeComponents.ALL_PARTS_MASK);
         String[] names = {"front_wheel", "rear_wheel", "handlebar", "saddle", "crank"};
         for (int i = 0; i < names.length; i++) {
-            boolean missing = (parts & (1 << i)) == 0;
+            boolean missing = (parts & BikeComponents.bit(i)) == 0;
             // A part from another bike is drawn by BikePartSwapLayer instead of this model's own bone.
             boolean hidden = missing || i < BikePartSwapLayer.BONES.length && BikePartSwapLayer.swapped(info.renderState(), i);
             snapshots.ifPresent(names[i], bone -> { bone.skipRender(hidden); bone.skipChildrenRender(missing); });
         }
-        snapshots.ifPresent("left_pedal", bone -> bone.skipRender((parts & 16) == 0));
-        snapshots.ifPresent("right_pedal", bone -> bone.skipRender((parts & 16) == 0));
+        snapshots.ifPresent("left_pedal", bone -> bone.skipRender((parts & BikeComponents.bit(BikeComponents.PEDALS)) == 0));
+        snapshots.ifPresent("right_pedal", bone -> bone.skipRender((parts & BikeComponents.bit(BikeComponents.PEDALS)) == 0));
         float wheel = info.getOrDefaultGeckolibData(BikeDataTickets.WHEEL_ANGLE, 0.0F);
 		float steer = info.getOrDefaultGeckolibData(BikeDataTickets.STEER_ANGLE, 0.0F);
 		snapshots.ifPresent("rear_wheel", bone -> bone.setRotX(-wheel));

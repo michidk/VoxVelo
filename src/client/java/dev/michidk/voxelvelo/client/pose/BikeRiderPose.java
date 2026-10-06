@@ -48,7 +48,7 @@ public final class BikeRiderPose {
 			return null;
 		}
 		AnimatableManager<BikeEntity> manager = bike.getAnimatableInstanceCache().<BikeEntity>getManagerForId(bike.getId());
-		AnimationController<BikeEntity> drive = manager.getAnimationControllers().get("drive");
+		AnimationController<BikeEntity> drive = manager.getAnimationControllers().get(BikeEntity.DRIVE_CONTROLLER);
 		double time = drive == null ? 0.0 : drive.getCurrentAnimationTime();
 		return new BikeRiderPose(bike.rig(), (float) (time - Math.floor(time)));
 	}

@@ -1,5 +1,6 @@
 package dev.michidk.voxelvelo.fitness;
 
+import dev.michidk.voxelvelo.bike.BikeControlState;
 import dev.michidk.voxelvelo.bike.BikeEntity;
 import dev.michidk.voxelvelo.bike.RiderVitals;
 import dev.michidk.voxelvelo.network.RiderStatsPayload;
@@ -56,7 +57,7 @@ final class FitnessNetworking {
 			boolean shareWatts = vitals == null || vitals.shareWatts();
 			int watts = RiderStatsPayload.NO_WATTS;
 			if (shareWatts) {
-				watts = (int) Math.round(Math.min(2000.0, Math.max(0.0, bike.getAppliedPower())));
+				watts = (int) Math.round(Math.min(BikeControlState.MAX_POWER_WATTS, Math.max(0.0, bike.getAppliedPower())));
 			}
 			int heartRate = vitals != null && vitals.shareHeartRate() ? vitals.heartRate() : RiderStatsPayload.NO_HEART_RATE;
 			int cadence = vitals != null && vitals.cadence() >= 0 ? vitals.cadence()

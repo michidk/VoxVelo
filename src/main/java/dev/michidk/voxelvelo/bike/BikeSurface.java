@@ -32,6 +32,12 @@ public enum BikeSurface {
 		this.looseness = looseness;
 	}
 
+	/** The surface with this ordinal, or {@link #PATH} for anything out of range (synced or reported values). */
+	public static BikeSurface byOrdinal(int ordinal) {
+		BikeSurface[] all = values();
+		return ordinal >= 0 && ordinal < all.length ? all[ordinal] : PATH;
+	}
+
 	public static BikeSurface classify(BlockState state, boolean inWater) {
 		if (inWater) {
 			return WATER;

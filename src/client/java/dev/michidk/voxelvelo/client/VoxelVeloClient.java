@@ -1,6 +1,7 @@
 package dev.michidk.voxelvelo.client;
 
 import dev.michidk.voxelvelo.VoxelVelo;
+import dev.michidk.voxelvelo.bike.BikeEntity;
 import dev.michidk.voxelvelo.client.ext.VoxelVeloClientExtension;
 import dev.michidk.voxelvelo.client.hud.BikeHud;
 import dev.michidk.voxelvelo.client.input.VoxelVeloKeys;
@@ -30,7 +31,9 @@ public class VoxelVeloClient implements ClientModInitializer {
 		BikeHelmetRenderer.register();
 
 		ClientContext ctx = ClientContext.init();
-		BikeControlSender sender = new BikeControlSender(ctx.inputManager, ctx.mountListeners());
+		BikeControlSender sender = new BikeControlSender(ctx.inputManager, ctx.config, ctx.mountListeners());
+		// The rider's own client simulates the bike it rides, like a horse; the sender gives it the controls.
+		BikeEntity.setDriver(sender);
 		HudElementRegistry.attachElementAfter(VanillaHudElements.HOTBAR, VoxelVelo.id("bike_hud"), new BikeHud(ctx, sender));
 
 		// Add-ons such as the fitness integration plug in here; the raw bike mod has none.

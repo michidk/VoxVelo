@@ -12,17 +12,17 @@ public final class BikeNetworking {
 	}
 
 	public static void register() {
-		PayloadTypeRegistry.serverboundPlay().register(BikeControlPayload.TYPE, BikeControlPayload.CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(BikeStatePayload.TYPE, BikeStatePayload.CODEC);
 		PayloadTypeRegistry.serverboundPlay().register(RiderSettingsPayload.TYPE, RiderSettingsPayload.CODEC);
 
-		ServerPlayNetworking.registerGlobalReceiver(BikeControlPayload.TYPE, (payload, context) -> {
+		ServerPlayNetworking.registerGlobalReceiver(BikeStatePayload.TYPE, (payload, context) -> {
 			if (!payload.isSupported()) {
 				return;
 			}
 			ServerPlayer player = context.player();
-			// Only the player currently seated on a bike can steer it; anything else is silently dropped.
+			// Only the player currently riding a bike reports for it; anything else is silently dropped.
 			if (player.getVehicle() instanceof BikeEntity bike && bike.getRider() == player) {
-				bike.applyRiderControl(payload.sequence(), payload.control());
+				bike.applyRiderState(payload.state());
 			}
 		});
 		ServerPlayNetworking.registerGlobalReceiver(RiderSettingsPayload.TYPE, (payload, context) -> {
