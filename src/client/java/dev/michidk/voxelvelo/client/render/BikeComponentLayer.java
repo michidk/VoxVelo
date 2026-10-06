@@ -6,6 +6,7 @@ import com.geckolib.cache.model.cuboid.CuboidGeoBone;
 import com.geckolib.renderer.base.GeoRenderState;
 import com.geckolib.renderer.base.RenderPassInfo;
 import com.geckolib.renderer.layer.builtin.CustomBoneTextureGeoLayer;
+import com.geckolib.util.RenderUtil;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.michidk.voxelvelo.bike.BikeComponents;
@@ -15,19 +16,19 @@ import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 
 /**
- * Draws a part that came from another bike: a gravel wheel on a race frame, flat bars on a gravel frame. The frame's
- * own bone is hidden and the same bone of the other bike's model is drawn in its place, with that model's texture.
+ * Composes a wheel or handlebar model onto a frame attachment bone. The frame models intentionally contain empty
+ * {@link #BONES} nodes; the selected standalone component supplies the geometry and texture for each installed part.
  *
- * <p>The other model's bone is moved so its pivot sits on this model's pivot: wheels share their axle, handlebars the
- * top of the head tube. The bone's pose (wheel spin, steering) is this model's, so the part moves like the original.
+ * <p>The component pivot is moved onto the frame's attachment pivot: wheels share their axle, handlebars the top of
+ * the head tube. The attachment pose owns wheel spin and steering, so every component follows the host frame cleanly.
  */
-public final class BikePartSwapLayer extends CustomBoneTextureGeoLayer<BikeEntity, Void, EntityRenderState> {
+public final class BikeComponentLayer extends CustomBoneTextureGeoLayer<BikeEntity, Void, EntityRenderState> {
     /** Bones that can come from another bike, indexed by component slot (front wheel, rear wheel, handlebars). */
     public static final String[] BONES = {"front_wheel", "rear_wheel", "handlebar"};
 
     private final int slot;
 
-    public BikePartSwapLayer(BikeGeoRenderer renderer, int slot) {
+    public BikeComponentLayer(BikeGeoRenderer renderer, int slot) {
         super(renderer, BONES[slot], BikeGeoModel.texture(BikeType.GRAVEL));
         this.slot = slot;
     }
@@ -47,27 +48,27 @@ public final class BikePartSwapLayer extends CustomBoneTextureGeoLayer<BikeEntit
         };
     }
 
-    /** Whether this slot holds a part from another bike, so the frame's own bone must not be drawn. */
-    public static boolean swapped(GeoRenderState state, int slot) {
+    /** Whether this slot has a component to draw. */
+    public static boolean present(GeoRenderState state, int slot) {
         int parts = state.getOrDefaultGeckolibData(BikeDataTickets.COMPONENTS, BikeComponents.ALL_PARTS_MASK);
-        return (parts & BikeComponents.bit(slot)) != 0
-                && donor(state, slot) != state.getOrDefaultGeckolibData(BikeDataTickets.BIKE_TYPE, BikeType.GRAVEL);
+        return (parts & BikeComponents.bit(slot)) != 0;
     }
 
     @Override public boolean shouldRenderBone(EntityRenderState state) {
-        return swapped(state, slot);
+        return present(state, slot);
     }
 
     @Override protected void renderBone(RenderPassInfo<EntityRenderState> info, GeoBone bone, SubmitNodeCollector collector) {
         BikeType donor = donor(info.renderState(), slot);
-        GeoBone part = GeckoLibResources.getBakedModels().getModel(BikeGeoModel.model(donor)).getBone(boneName).orElse(null);
+        GeoBone part = GeckoLibResources.getBakedModels().getModel(BikeGeoModel.component(donor, boneName))
+                .getBone("component").orElse(null);
         var renderType = getRenderType(info.renderState(), BikeGeoModel.texture(donor));
         if (part == null || renderType == null) return;
         int light = info.packedLight(), overlay = info.packedOverlay(), color = info.renderColor();
         collector.submitCustomGeometry(info.poseStack(), renderType, (pose, vertices) -> {
             PoseStack stack = new PoseStack();
             stack.last().set(pose);
-            // The pose is at this model's pivot; moving away from the other model's pivot lines the two up.
+            // The pose is at the frame attachment; component geometry is authored around its own equivalent pivot.
             part.translateAwayFromPivotPoint(stack);
             render(part, stack, vertices, light, overlay, color);
         });
@@ -82,7 +83,10 @@ public final class BikePartSwapLayer extends CustomBoneTextureGeoLayer<BikeEntit
             }
         }
         for (GeoBone child : bone.children()) {
+            stack.pushPose();
+            RenderUtil.prepMatrixForBone(stack, child);
             render(child, stack, vertices, light, overlay, color);
+            stack.popPose();
         }
     }
 }

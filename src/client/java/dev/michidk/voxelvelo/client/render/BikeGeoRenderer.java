@@ -23,7 +23,7 @@ public class BikeGeoRenderer extends GeoEntityRenderer<BikeEntity, EntityRenderS
 		super(context, new BikeGeoModel());
 		this.shadowRadius = 0.5F;
         withRenderLayer(new BikeFrameTintLayer(this));
-        for (int slot = 0; slot < BikePartSwapLayer.BONES.length; slot++) withRenderLayer(new BikePartSwapLayer(this, slot));
+        for (int slot = 0; slot < BikeComponentLayer.BONES.length; slot++) withRenderLayer(new BikeComponentLayer(this, slot));
 		this.withScale(BikeRig.MODEL_SCALE);
 	}
 
@@ -64,13 +64,11 @@ public class BikeGeoRenderer extends GeoEntityRenderer<BikeEntity, EntityRenderS
 	@Override
 	public void adjustModelBonesForRender(RenderPassInfo<EntityRenderState> info, BoneSnapshots snapshots) {
 		int parts = info.getOrDefaultGeckolibData(BikeDataTickets.COMPONENTS, BikeComponents.ALL_PARTS_MASK);
-        String[] names = {"front_wheel", "rear_wheel", "handlebar", "saddle", "crank"};
-        for (int i = 0; i < names.length; i++) {
-            boolean missing = (parts & BikeComponents.bit(i)) == 0;
-            // A part from another bike is drawn by BikePartSwapLayer instead of this model's own bone.
-            boolean hidden = missing || i < BikePartSwapLayer.BONES.length && BikePartSwapLayer.swapped(info.renderState(), i);
-            snapshots.ifPresent(names[i], bone -> { bone.skipRender(hidden); bone.skipChildrenRender(missing); });
-        }
+		String[] names = {"front_wheel", "rear_wheel", "handlebar", "saddle", "crank"};
+		for (int i = 0; i < names.length; i++) {
+			boolean missing = (parts & BikeComponents.bit(i)) == 0;
+			snapshots.ifPresent(names[i], bone -> { bone.skipRender(missing); bone.skipChildrenRender(missing); });
+		}
         snapshots.ifPresent("left_pedal", bone -> bone.skipRender((parts & BikeComponents.bit(BikeComponents.PEDALS)) == 0));
         snapshots.ifPresent("right_pedal", bone -> bone.skipRender((parts & BikeComponents.bit(BikeComponents.PEDALS)) == 0));
         float wheel = info.getOrDefaultGeckolibData(BikeDataTickets.WHEEL_ANGLE, 0.0F);

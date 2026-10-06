@@ -74,10 +74,12 @@ gravel tires on a race frame or drop bars on a mountain frame work as expected:
 - **Handlebars:** flats are upright (+0.06 m² drag area) and give more steering
   lock (+5° at walking pace, +1.5° at speed) than drops.
 
-A stock bike rides exactly as its type always has. Swapped parts are drawn with
-the other bike's wheel or handlebar model, and the rider's hands move to the
-fitted handlebars. Wheels from before tires had a tread count as gravel wheels;
-wheels already installed on a bike keep the tire of that bike's type.
+A stock bike rides exactly as its type always has. Frames, wheels and handlebars
+are composed at stable axle/head-tube attachment bones, so a swapped part uses
+its own standalone model without inheriting another frame's transforms. The
+rider's hands move to the fitted handlebars. Wheels from before tires had a
+tread count as gravel wheels; wheels already installed on a bike keep the tire
+of that bike's type.
 
 ## Bike helmet
 
@@ -137,6 +139,11 @@ assets/voxelvelo/textures/entity/bikes/gravel_bike.png
 assets/voxelvelo/textures/entity/bikes/race_bike.png
 ```
 
+After replacing a full bike model, run `node scripts/split-bike-models.mjs`.
+It generates the runtime `bike_frames/` models with empty component attachment
+bones and the standalone `bike_parts/` wheel and handlebar models. Commit the
+generated files together with the full source model.
+
 Use GeckoLib/Bedrock geometry and the existing `BikeRig.MODEL_SCALE` coordinate
 convention. Keep the rider attachment positions compatible with `BikeType.rig`;
 that centralized visual rig can be adjusted if supplied models have different
@@ -156,10 +163,10 @@ seat, hand, or crank positions. UV dimensions come from the supplied model.
 Put the frame geometry directly in `frame_colored`, and give other colored
 components their own bones. Frame children keep their normal texture color.
 Put wheel pivots at their axles and the steering parent's pivot at the head tube.
-The `front_wheel`, `rear_wheel` and `handlebar` bones are also drawn on the other
-frames when those parts are swapped: each is moved so its pivot lands on the
-same bone's pivot of the other model, so keep wheel pivots at the axle and the
-handlebar pivot at the top of the head tube (`BikeRig.headY`/`headZ`).
+The `front_wheel`, `rear_wheel` and `handlebar` bones become attachment nodes in
+the generated frame models. Their standalone component geometry is drawn at the
+matching node, so keep wheel pivots at the axle and the handlebar pivot at the
+top of the head tube (`BikeRig.headY`/`headZ`).
 The shared animation is
 `assets/voxelvelo/geckolib/animations/entity/bicycle.animation.json`.
 Legacy `pedal_left`/`pedal_right` animation names also remain supported.

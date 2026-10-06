@@ -121,6 +121,14 @@ tasks.register('verifyBikeRiderState', JavaExec) {
 }
 tasks.named('check') { dependsOn 'verifyBikeRiderState' }
 
+tasks.register('verifyBikeModels', JavaExec) {
+	dependsOn verificationClasses
+	classpath = sourceSets.verification.runtimeClasspath
+	mainClass = 'dev.michidk.voxelvelo.client.render.BikeModelCompositionChecks'
+	workingDir = layout.projectDirectory
+}
+tasks.named('check') { dependsOn 'verifyBikeModels' }
+
 tasks.register('verifyRides', JavaExec) {
 	dependsOn verificationClasses
 	classpath = sourceSets.verification.runtimeClasspath

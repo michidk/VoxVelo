@@ -23,7 +23,11 @@ public class BikeGeoModel extends GeoModel<BikeEntity> {
 	}
 
 	public static Identifier model(BikeType type) {
-		return VoxelVelo.id("entity/bikes/" + fileName(type));
+		return VoxelVelo.id("entity/bike_frames/" + fileName(type));
+	}
+
+	public static Identifier component(BikeType type, String boneName) {
+		return VoxelVelo.id("entity/bike_parts/" + fileName(type) + "_" + boneName);
 	}
 
 	public static Identifier texture(BikeType type) {
