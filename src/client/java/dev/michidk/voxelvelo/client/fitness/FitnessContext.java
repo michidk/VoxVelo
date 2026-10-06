@@ -10,6 +10,7 @@ import dev.michidk.voxelvelo.client.input.FtmsTrainerInput;
 import dev.michidk.voxelvelo.client.input.OpenBikeControlInput;
 import dev.michidk.voxelvelo.client.input.RoadFollowInput;
 import dev.michidk.voxelvelo.client.obc.ObcClient;
+import dev.michidk.voxelvelo.client.powermeter.PowerMeterClient;
 import dev.michidk.voxelvelo.client.stats.RiderStatsStore;
 import dev.michidk.voxelvelo.client.stats.VitalsSender;
 import dev.michidk.voxelvelo.client.terrain.RideTerrain;
@@ -23,6 +24,7 @@ public final class FitnessContext {
 	public final FitnessConfig config;
 	public final BluetoothManager bluetooth;
 	public final FtmsClient ftms;
+	public final PowerMeterClient powerMeter;
 	public final ObcClient obc;
 	public final BikeInputManager inputManager;
 	public final RoadFollowInput roadFollow;
@@ -37,9 +39,10 @@ public final class FitnessContext {
 		// The Bluetooth backend does nothing (and loads no native code) until first used.
 		this.bluetooth = new BluetoothManager(new SimpleBleBackend());
 		this.ftms = new FtmsClient(this.bluetooth);
+		this.powerMeter = new PowerMeterClient(this.bluetooth);
 		this.obc = new ObcClient(this.bluetooth);
 		this.inputManager = core.inputManager;
-		this.inputManager.register(new FtmsTrainerInput(this.ftms));
+		this.inputManager.register(new FtmsTrainerInput(this.ftms, this.powerMeter));
 		this.inputManager.register(new OpenBikeControlInput(this.obc));
 		this.roadFollow = new RoadFollowInput(this.config, this.inputManager);
 		this.inputManager.register(this.roadFollow);

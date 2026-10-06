@@ -9,6 +9,7 @@ import dev.michidk.voxelvelo.client.hud.StatsOverlay;
 import dev.michidk.voxelvelo.client.input.ControlChannel;
 import dev.michidk.voxelvelo.client.input.VoxelVeloKeys;
 import dev.michidk.voxelvelo.client.ui.ObcScreen;
+import dev.michidk.voxelvelo.client.ui.PowerMeterScreen;
 import dev.michidk.voxelvelo.client.ui.RoadScreen;
 import dev.michidk.voxelvelo.client.ui.SourcesScreen;
 import dev.michidk.voxelvelo.client.ui.TrainerScreen;
@@ -20,8 +21,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 
 /**
- * Plugs the fitness integration into the client: FTMS trainers over Bluetooth with resistance feedback,
- * OpenBikeControl devices, hands-free road following, and sharing of watts and heart rate with other riders.
+ * Plugs the fitness integration into the client: FTMS trainers and power meters over Bluetooth, resistance
+ * feedback, OpenBikeControl devices, hands-free road following, and sharing of watts and heart rate.
  */
 public final class FitnessClientExtension implements VoxelVeloClientExtension {
 	private FitnessContext ctx;
@@ -34,6 +35,7 @@ public final class FitnessClientExtension implements VoxelVeloClientExtension {
 
 		core.hudExtras().add(new FitnessHudExtras(ctx));
 		core.statusLines().add(() -> FitnessStatus.trainerStatus(ctx));
+		core.statusLines().add(() -> FitnessStatus.powerMeterStatus(ctx));
 		core.statusLines().add(() -> FitnessStatus.telemetryLine(ctx));
 		core.statusLines().add(() -> FitnessStatus.obcStatus(ctx));
 		// Riding off without a connected trainer means coasting; say so, and where the settings are.
@@ -43,6 +45,7 @@ public final class FitnessClientExtension implements VoxelVeloClientExtension {
 			}
 		});
 		core.settingsPages().add(new ClientContext.SettingsPage("voxelvelo.config.trainer_page", TrainerScreen::new));
+		core.settingsPages().add(new ClientContext.SettingsPage("voxelvelo.config.power_meter_page", PowerMeterScreen::new));
 		core.settingsPages().add(new ClientContext.SettingsPage("voxelvelo.config.obc", ObcScreen::new));
 		core.settingsPages().add(new ClientContext.SettingsPage("voxelvelo.config.sources", SourcesScreen::new));
 		core.settingsPages().add(new ClientContext.SettingsPage("voxelvelo.config.road", RoadScreen::new));
@@ -64,6 +67,7 @@ public final class FitnessClientExtension implements VoxelVeloClientExtension {
 		ctx.bluetooth.tick();
 		if (client.level != null) {
 			ctx.ftms.tick(ctx.config);
+			ctx.powerMeter.tick(ctx.config);
 			ctx.vitalsSender.tick();
 			ctx.obc.tick(ctx.config);
 		}

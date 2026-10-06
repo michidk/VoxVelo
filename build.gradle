@@ -107,6 +107,13 @@ tasks.register('verifyBikeSpeedBoost', JavaExec) {
 }
 tasks.named('check') { dependsOn 'verifyBikeSpeedBoost' }
 
+tasks.register('verifyPowerMeter', JavaExec) {
+	dependsOn verificationClasses
+	classpath = sourceSets.verification.runtimeClasspath
+	mainClass = 'dev.michidk.voxelvelo.client.powermeter.PowerMeterChecks'
+}
+tasks.named('check') { dependsOn 'verifyPowerMeter' }
+
 jar {
 	def projectName = project.name
 	inputs.property "projectName", projectName

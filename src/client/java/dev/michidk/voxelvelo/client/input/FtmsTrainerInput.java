@@ -2,6 +2,9 @@ package dev.michidk.voxelvelo.client.input;
 
 import dev.michidk.voxelvelo.client.ftms.FtmsClient;
 import dev.michidk.voxelvelo.client.ftms.TrainerTelemetry;
+import dev.michidk.voxelvelo.client.fitness.PowerPreference;
+import dev.michidk.voxelvelo.client.powermeter.PowerMeterClient;
+import dev.michidk.voxelvelo.client.powermeter.PowerMeterReading;
 import java.util.OptionalDouble;
 import net.minecraft.client.Minecraft;
 
@@ -11,9 +14,11 @@ import net.minecraft.client.Minecraft;
  */
 public final class FtmsTrainerInput implements BikeInputSource {
 	private final FtmsClient ftms;
+	private final PowerMeterClient powerMeter;
 
-	public FtmsTrainerInput(FtmsClient ftms) {
+	public FtmsTrainerInput(FtmsClient ftms, PowerMeterClient powerMeter) {
 		this.ftms = ftms;
+		this.powerMeter = powerMeter;
 	}
 
 	@Override
@@ -28,12 +33,12 @@ public final class FtmsTrainerInput implements BikeInputSource {
 
 	@Override
 	public String displayName() {
-		return "FTMS trainer";
+		return "Trainer / power meter";
 	}
 
 	@Override
 	public boolean isActive() {
-		return this.ftms.isConnected();
+		return this.ftms.isConnected() || this.powerMeter.isConnected();
 	}
 
 	@Override
@@ -46,8 +51,10 @@ public final class FtmsTrainerInput implements BikeInputSource {
 
 	@Override
 	public OptionalDouble propulsion() {
+		PowerMeterReading meter = this.powerMeter.freshReading();
 		TrainerTelemetry telemetry = this.ftms.freshTelemetry();
-		return OptionalDouble.of(telemetry == null ? 0.0 : telemetry.powerWatts());
+		Integer watts = PowerPreference.watts(meter, telemetry);
+		return OptionalDouble.of(watts == null ? 0.0 : watts);
 	}
 
 	@Override

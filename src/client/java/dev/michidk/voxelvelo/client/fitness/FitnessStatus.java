@@ -2,9 +2,10 @@ package dev.michidk.voxelvelo.client.fitness;
 
 import dev.michidk.voxelvelo.client.ftms.TrainerState;
 import dev.michidk.voxelvelo.client.ftms.TrainerTelemetry;
+import dev.michidk.voxelvelo.client.powermeter.PowerMeterReading;
 import net.minecraft.network.chat.Component;
 
-/** One-line status texts for the trainer and the OpenBikeControl device, shared by the settings pages. */
+/** One-line status texts for the trainer, power meter and OpenBikeControl device, shared by the settings pages. */
 public final class FitnessStatus {
 	private FitnessStatus() {
 	}
@@ -37,14 +38,26 @@ public final class FitnessStatus {
 		return state != TrainerState.CONNECTED && !message.isEmpty() ? line.copy().append(" - " + message) : line;
 	}
 
+	public static Component powerMeterStatus(FitnessContext ctx) {
+		String name = ctx.powerMeter.deviceName();
+		if (name.isEmpty()) name = ctx.config.preferredPowerMeterName;
+		if (name.isEmpty()) return Component.translatable("voxelvelo.config.power_meter.none");
+		TrainerState state = ctx.powerMeter.state();
+		Component line = Component.translatable("voxelvelo.config.power_meter", name, Component.translatable(stateKey(state)));
+		String message = ctx.powerMeter.message();
+		return state != TrainerState.CONNECTED && !message.isEmpty() ? line.copy().append(" - " + message) : line;
+	}
+
 	public static Component telemetryLine(FitnessContext ctx) {
 		TrainerTelemetry telemetry = ctx.ftms.freshTelemetry();
-		if (telemetry == null) {
+		PowerMeterReading meter = ctx.powerMeter.freshReading();
+		Integer power = PowerPreference.watts(meter, telemetry);
+		if (telemetry == null && power == null) {
 			return Component.translatable("voxelvelo.config.telemetry", "--", "--", "--");
 		}
-		String cadence = telemetry.cadenceRpm() == null ? "--" : String.valueOf(Math.round(telemetry.cadenceRpm()));
-		String heart = telemetry.heartRate() == null ? "--" : String.valueOf(telemetry.heartRate());
-		return Component.translatable("voxelvelo.config.telemetry", telemetry.powerWatts(), cadence, heart);
+		String cadence = telemetry == null || telemetry.cadenceRpm() == null ? "--" : String.valueOf(Math.round(telemetry.cadenceRpm()));
+		String heart = telemetry == null || telemetry.heartRate() == null ? "--" : String.valueOf(telemetry.heartRate());
+		return Component.translatable("voxelvelo.config.telemetry", power == null ? "--" : power, cadence, heart);
 	}
 
 	private static String stateKey(TrainerState state) {

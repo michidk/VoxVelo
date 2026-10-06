@@ -74,7 +74,7 @@ public final class BluetoothManager {
 		}
 	}
 
-	/** Devices from the latest scans, advertised FTMS trainers first, then strongest signal. */
+	/** Devices from the latest scans, devices advertising the requested service first, then strongest signal. */
 	public List<BluetoothDevice> devices(String preferredServiceUuid) {
 		List<BluetoothDevice> list = new ArrayList<>(this.devices.values());
 		list.sort(Comparator

@@ -36,7 +36,7 @@ One source tree builds two jars with the same mod id, so worlds, servers and cli
 |---|---|---|
 | Bikes, parts, physics, collisions, slopes, suspension | yes | yes |
 | Keyboard and mouse riding, rider mass, riding HUD | yes | yes |
-| FTMS trainer, Bluetooth, resistance feedback | no | yes |
+| FTMS trainer, secondary power meter, Bluetooth, resistance feedback | no | yes |
 | OpenBikeControl (steering, brake, gears) | no | yes |
 | Road following and junction prompts | no | yes |
 | Rider stats overlay, heart rate, sharing | no | yes |
@@ -278,7 +278,7 @@ only shown as telemetry and never moves the bike.
 1. Press `B` (rebindable, *Open Bike Settings*) to open the settings.
 2. *Choose Trainer...* > *Scan*, then click your trainer (devices advertising a fitness machine are marked
    with a star and sorted first).
-3. Set *Propulsion* to *FTMS trainer*. Steering and braking stay on the keyboard.
+3. Set *Propulsion* to *Trainer / power meter*. Steering and braking stay on the keyboard.
 
 What is read: instantaneous power, cadence, speed, resistance level and heart rate (when the trainer relays
 one). With *Auto-connect Trainer* on, the mod reconnects to the chosen trainer when you are in a world and
@@ -288,14 +288,25 @@ If the trainer disconnects or stops sending for 3 s, its power becomes zero and 
 riding by switching propulsion back to the keyboard. Mounting a bike while FTMS is selected but not connected
 shows a hint.
 
+### Secondary power meter
+
+A separate crank, pedal or hub power meter can connect alongside the trainer when it exposes the standard
+Bluetooth **Cycling Power Service**. Open `B` > *Power Meter...*, scan and select it; devices advertising Cycling
+Power are marked with a star. The selection is remembered and can reconnect automatically.
+
+While *Trainer / power meter* is the propulsion source, a fresh external meter reading always overrides the
+trainer's power estimate. Trainer cadence, speed, heart rate and resistance control continue to work normally.
+If the meter disconnects or sends nothing for 3 seconds, power falls back to fresh trainer watts; if both sources
+are unavailable, the bike coasts. Explicitly choosing keyboard propulsion still uses keyboard power.
+
 Bluetooth uses [SimpleBLE](https://github.com/simpleble/simpleble) (WinRT on Windows, BlueZ on Linux,
 CoreBluetooth on macOS), bundled in the mod jar and loaded only on the client, behind a `BluetoothBackend`
 interface so it can be replaced. **SimpleBLE is licensed under BUSL-1.1: free for non-commercial use, a
 commercial licence is needed otherwise** (see its `LICENSE.md`). Bluetooth being off or missing never affects
 normal riding; the settings screen just says so.
 
-Not verified on real hardware yet: the GATT code was written against the FTMS specification and the parser was
-checked with hand-built payloads, but no trainer has been connected.
+Not verified on real hardware yet: the GATT code was written against the FTMS and Cycling Power specifications
+and the parsers were checked with hand-built payloads, but no trainer or power meter has been connected.
 
 ## OpenBikeControl and BikeControl phone steering
 

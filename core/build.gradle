@@ -18,6 +18,7 @@ ext.fitnessClient = [
 	'dev/michidk/voxelvelo/client/fitness/**',
 	'dev/michidk/voxelvelo/client/bluetooth/**',
 	'dev/michidk/voxelvelo/client/ftms/**',
+	'dev/michidk/voxelvelo/client/powermeter/**',
 	'dev/michidk/voxelvelo/client/obc/**',
 	'dev/michidk/voxelvelo/client/stats/**',
 	'dev/michidk/voxelvelo/client/road/**',
@@ -29,6 +30,7 @@ ext.fitnessClient = [
 	'dev/michidk/voxelvelo/client/hud/JunctionPrompt.java',
 	'dev/michidk/voxelvelo/client/hud/StatsOverlay.java',
 	'dev/michidk/voxelvelo/client/ui/TrainerScreen.java',
+	'dev/michidk/voxelvelo/client/ui/PowerMeterScreen.java',
 	'dev/michidk/voxelvelo/client/ui/ObcScreen.java',
 	'dev/michidk/voxelvelo/client/ui/RoadScreen.java',
 	'dev/michidk/voxelvelo/client/ui/SourcesScreen.java'
@@ -97,7 +99,7 @@ dependencies {
 }
 
 // Language keys of the fitness integration. The shared language file lists them, the core jar does not ship them.
-def fitnessLangKey = ~/^\s*"(key\.voxelvelo\.toggle_stats|voxelvelo\.(hint\.trainer_not_connected|config\.(trainer|telemetry|choose_trainer|auto_connect|resistance|intensity|virtual_shifting|physical_ratio|wheel_circumference|obc|sources|road|slope_window|stats)|sources\.|road\.|junction\.|stats\.|rider\.(stats|share_watts|share_hr|hud_sources|heart_graph|junction_hud)|hud\.heart|obc\.|trainer\.))[a-z_.]*":.*/
+def fitnessLangKey = ~/^\s*"(key\.voxelvelo\.toggle_stats|voxelvelo\.(hint\.trainer_not_connected|config\.(trainer|telemetry|choose_trainer|auto_connect|resistance|intensity|virtual_shifting|physical_ratio|wheel_circumference|power_meter|obc|sources|road|slope_window|stats)|sources\.|road\.|junction\.|stats\.|rider\.(stats|share_watts|share_hr|hud_sources|heart_graph|junction_hud)|hud\.heart|obc\.|trainer\.|power_meter\.))[a-z_.]*":.*/
 
 processResources {
 	def modVersion = project.version

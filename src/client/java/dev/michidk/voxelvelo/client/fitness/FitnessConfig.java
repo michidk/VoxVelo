@@ -26,6 +26,10 @@ public final class FitnessConfig {
 	public String preferredTrainerId = "";
 	public String preferredTrainerName = "";
 	public boolean autoConnectTrainer = true;
+	/** A separate Cycling Power Service sensor whose watts take precedence over trainer-reported watts. */
+	public String preferredPowerMeterId = "";
+	public String preferredPowerMeterName = "";
+	public boolean autoConnectPowerMeter = true;
 
 	/** Which OpenBikeControl transports are used: off, network, bluetooth or both. */
 	public String obcMode = "both";
@@ -93,6 +97,10 @@ public final class FitnessConfig {
 		return !this.preferredTrainerId.isEmpty();
 	}
 
+	public boolean hasPreferredPowerMeter() {
+		return !this.preferredPowerMeterId.isEmpty();
+	}
+
 	private static Path file() {
 		return FabricLoader.getInstance().getConfigDir().resolve("voxelvelo-fitness.json");
 	}
@@ -126,6 +134,8 @@ public final class FitnessConfig {
 		this.gearSource = orDefault(this.gearSource);
 		this.preferredTrainerId = this.preferredTrainerId == null ? "" : this.preferredTrainerId;
 		this.preferredTrainerName = this.preferredTrainerName == null ? "" : this.preferredTrainerName;
+		this.preferredPowerMeterId = this.preferredPowerMeterId == null ? "" : this.preferredPowerMeterId;
+		this.preferredPowerMeterName = this.preferredPowerMeterName == null ? "" : this.preferredPowerMeterName;
 		this.obcMode = switch (this.obcMode == null ? "" : this.obcMode) {
 			case "off", "network", "bluetooth" -> this.obcMode;
 			default -> "both";

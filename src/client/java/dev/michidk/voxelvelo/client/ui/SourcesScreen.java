@@ -54,7 +54,8 @@ public class SourcesScreen extends Screen {
 		int cx = this.width / 2;
 		graphics.centeredText(this.font, this.title, cx, 20, 0xFFFFFFFF);
 		graphics.centeredText(this.font, FitnessStatus.trainerStatus(this.ctx), cx, 36, 0xFFC0C0C0);
-		graphics.centeredText(this.font, FitnessStatus.obcStatus(this.ctx), cx, 48, 0xFFC0C0C0);
+		graphics.centeredText(this.font, FitnessStatus.powerMeterStatus(this.ctx), cx, 48, 0xFFC0C0C0);
+		graphics.centeredText(this.font, FitnessStatus.obcStatus(this.ctx), cx, 60, 0xFFC0C0C0);
 	}
 
 	@Override

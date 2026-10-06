@@ -40,7 +40,7 @@ public class TrainerScreen extends Screen {
 			.bounds(left + 210, y, 100, 20).build());
 		y += 28;
 
-		List<BluetoothDevice> devices = this.ctx.bluetooth.devices(Ftms.SERVICE);
+		List<BluetoothDevice> devices = this.devices();
 		int visibleRows = Math.max(0, Math.min(MAX_ROWS, (this.height - 126 - y) / 24));
 		for (int i = 0; i < Math.min(visibleRows, devices.size()); i++) {
 			BluetoothDevice device = devices.get(i);
@@ -82,6 +82,12 @@ public class TrainerScreen extends Screen {
 		return Component.translatable(this.ctx.bluetooth.isScanning() ? "voxelvelo.trainer.scanning" : "voxelvelo.trainer.scan");
 	}
 
+	private List<BluetoothDevice> devices() {
+		return this.ctx.bluetooth.devices(Ftms.SERVICE).stream()
+			.filter(device -> !device.id().equals(this.ctx.config.preferredPowerMeterId))
+			.toList();
+	}
+
 	private Component rowLabel(BluetoothDevice device) {
 		boolean ftms = device.advertises(Ftms.SERVICE);
 		String text = (ftms ? "★ " : "") + device.displayName() + "  (" + device.rssi() + " dBm)";
@@ -113,7 +119,7 @@ public class TrainerScreen extends Screen {
 
 	private String currentSignature() {
 		StringBuilder sb = new StringBuilder(this.ctx.bluetooth.isScanning() ? "S" : "-");
-		List<BluetoothDevice> devices = this.ctx.bluetooth.devices(Ftms.SERVICE);
+		List<BluetoothDevice> devices = this.devices();
 		for (int i = 0; i < Math.min(MAX_ROWS, devices.size()); i++) {
 			BluetoothDevice device = devices.get(i);
 			sb.append('|').append(device.id()).append(device.name()).append(device.rssi() / 5);
