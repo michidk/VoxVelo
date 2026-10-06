@@ -74,7 +74,7 @@ java {
 
 sourceSets {
 	verification {
-		compileClasspath += sourceSets.client.output
+		compileClasspath += sourceSets.main.output + sourceSets.client.output
 		runtimeClasspath += sourceSets.client.runtimeClasspath
 	}
 }
@@ -85,6 +85,13 @@ tasks.register('verifyVirtualShifting', JavaExec) {
 	mainClass = 'dev.michidk.voxelvelo.client.ftms.VirtualShiftingChecks'
 }
 tasks.named('check') { dependsOn 'verifyVirtualShifting' }
+
+tasks.register('verifyTracks', JavaExec) {
+	dependsOn verificationClasses
+	classpath = sourceSets.verification.runtimeClasspath
+	mainClass = 'dev.michidk.voxelvelo.track.TrackChecks'
+}
+tasks.named('check') { dependsOn 'verifyTracks' }
 
 jar {
 	def projectName = project.name

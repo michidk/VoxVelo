@@ -26,6 +26,7 @@ public class VoxelVelo implements ModInitializer {
         dev.michidk.voxelvelo.bike.BikeServerConfig.load();
         dev.michidk.voxelvelo.recipe.BikeCraftingRecipe.register();
 		BikeNetworking.register();
+        dev.michidk.voxelvelo.track.TrackCommand.register();
 		// Add-ons such as the fitness integration plug in here; the raw bike mod has none.
 		for (VoxelVeloExtension extension : FabricLoader.getInstance().getEntrypoints(VoxelVeloExtension.ENTRYPOINT, VoxelVeloExtension.class)) {
 			extension.onInitialize();

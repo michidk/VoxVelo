@@ -61,6 +61,49 @@ protocol v1) at most once per tick on change and as a heartbeat every 5 ticks; e
 server, and if packets stop for 15 ticks (0.75 s) power and steering are dropped so a disconnected player
 cannot keep accelerating. Only the seated player can control a bike; one rider per bike.
 
+## Generate a race track
+
+Operators can build a closed checkpoint circuit starting at their current X/Z position:
+
+```text
+/voxelvelo track create
+/voxelvelo track create 10 minecraft:smooth_stone 12 0.85 5 8 0
+/voxelvelo track status
+/voxelvelo track cancel
+```
+
+Arguments are positional and optional from the right:
+
+| Argument | Default | Range / meaning |
+|---|---|---|
+| `length_km` | 10 | 0.25–20; horizontal centerline kilometres |
+| `material` | `minecraft:smooth_stone` | Stable full solid block; no fluids, falling blocks or block entities |
+| `checkpoints` | 12 | 8–24 spline checkpoints |
+| `bends` | 0.85 | 0–1; higher values add deeper inward/outward bends |
+| `width` | 5 | Odd number of blocks, 3–11 |
+| `grade_percent` | 8 | 1–15; maximum grade of the smooth height profile |
+| `variant` | 0 | Non-negative variation index mixed with the Minecraft seed |
+
+Randomness comes from the world seed, start X/Z and variant. Identical inputs reproduce the same horizontal
+layout; final heights also depend on the terrain at build time. One block represents one metre. The kilometre
+target measures the horizontal spline, so the actual ride is slightly longer when it climbs and descends.
+
+The command samples natural ground beneath trees and plants, then cuts and fills a supported road surface.
+Grade limiting covers the full road width, overlaps and the loop seam. The surface uses full-block terraces:
+adjacent road columns differ by at most one block, which all VoxelVelo bikes can climb. The grade percentage
+describes the height profile before rounding; individual one-block steps are not literal 8% ramps. Five full
+air blocks are cleared above every road block, including vegetation and terrain in cuts.
+
+The complete route is checked before placement. Routes crossing liquids, block entities, unbreakable blocks,
+the world border, insufficient build height or more than 32 blocks of cut/fill are rejected. Liquids and falling
+terrain bordering the clearance are also rejected. Choose flatter, open land or another variant if planning
+fails. This is a terrain editor: ordinary blocks in the road corridor may be replaced. Work runs in batches;
+new chunk generation can still cause pauses. One job runs per server. Cancelling, stopping the server or a
+placement failure keeps any blocks already placed; jobs do not resume after restart and there is no undo.
+
+`verifyTracks` checks seed reproducibility, perimeter scaling, road connectivity, terrain grading and loop
+closure. The command ships in both core and fitness builds.
+
 ## Bike types
 
 Three bikes share one simulation and differ only in their parameters (`BikeType`):

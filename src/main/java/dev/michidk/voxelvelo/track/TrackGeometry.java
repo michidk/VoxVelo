@@ -1,0 +1,105 @@
+package dev.michidk.voxelvelo.track;
+
+import java.util.*;
+
+/** World-independent checkpoint circuit and terrace planner. Units are blocks/metres. */
+public final class TrackGeometry {
+    private TrackGeometry() {}
+    public record Point(double x, double z) {}
+    public record Cell(int x, int z) {}
+    public record Route(List<Point> centerline, List<Cell> road, double length) {}
+    private record Visit(Cell cell, double height) {}
+
+    public static Route generate(long seed, int originX, int originZ, double meters,
+                                 int checkpoints, double bends, int width) {
+        Random random = new Random(seed);
+        double phase = random.nextDouble() * Math.PI * 2;
+        List<Point> anchors = new ArrayList<>();
+        for (int i = 0; i < checkpoints; i++) {
+            double angle = 2 * Math.PI * i / checkpoints;
+            double radius = 1 + bends * (0.27 * Math.sin(3 * angle + phase)
+                + 0.12 * Math.sin(5 * angle - phase) + 0.06 * (random.nextDouble() - 0.5));
+            anchors.add(new Point(1.16 * radius * Math.cos(angle), 0.84 * radius * Math.sin(angle)));
+        }
+        List<Point> curve = new ArrayList<>();
+        for (int i = 0; i < checkpoints; i++) {
+            Point a = anchors.get((i + checkpoints - 1) % checkpoints);
+            Point b = anchors.get(i), c = anchors.get((i + 1) % checkpoints);
+            Point d = anchors.get((i + 2) % checkpoints);
+            for (int j = 0; j < 64; j++) {
+                double t = j / 64.0;
+                curve.add(new Point(spline(a.x, b.x, c.x, d.x, t), spline(a.z, b.z, c.z, d.z, t)));
+            }
+        }
+        double factor = meters / length(curve);
+        Point start = curve.getFirst();
+        List<Point> scaled = curve.stream().map(p -> new Point(originX + (p.x - start.x) * factor,
+            originZ + (p.z - start.z) * factor)).toList();
+        // Half-block sampling and overlapping disks produce a connected, full-width road at the seam too.
+        Set<Cell> road = new LinkedHashSet<>();
+        int radius = width / 2;
+        for (int i = 0; i < scaled.size(); i++) {
+            Point a = scaled.get(i), b = scaled.get((i + 1) % scaled.size());
+            int steps = Math.max(1, (int) Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) * 2));
+            for (int j = 0; j < steps; j++) {
+                int x = (int) Math.round(a.x + (b.x - a.x) * j / steps);
+                int z = (int) Math.round(a.z + (b.z - a.z) * j / steps);
+                for (int dx = -radius; dx <= radius; dx++) {
+                    for (int dz = -radius; dz <= radius; dz++) {
+                        if (dx * dx + dz * dz <= radius * radius) road.add(new Cell(x + dx, z + dz));
+                    }
+                }
+            }
+        }
+        return new Route(scaled, List.copyOf(road), length(scaled));
+    }
+
+    private static double spline(double a, double b, double c, double d, double t) {
+        return 0.5 * (2 * b + (-a + c) * t + (2 * a - 5 * b + 4 * c - d) * t * t
+            + (-a + 3 * b - 3 * c + d) * t * t * t);
+    }
+
+    public static double length(List<Point> points) {
+        double length = 0;
+        for (int i = 0; i < points.size(); i++) {
+            Point a = points.get(i), b = points.get((i + 1) % points.size());
+            length += Math.hypot(a.x - b.x, a.z - b.z);
+        }
+        return length;
+    }
+
+    /** Lipschitz envelopes bound grade across every road neighbor, including overlapping sections and the seam.
+     * Averaging upper/lower envelopes balances cutting and filling. Integer terraces differ by at most one block.
+     */
+    public static Map<Cell, Integer> terrace(Map<Cell, Integer> terrain, double grade) {
+        Map<Cell, Double> lower = envelope(terrain, grade, 1);
+        Map<Cell, Double> negativeUpper = envelope(terrain, grade, -1);
+        Map<Cell, Integer> result = new LinkedHashMap<>();
+        terrain.forEach((cell, y) -> result.put(cell, (int) Math.round((lower.get(cell) - negativeUpper.get(cell)) / 2)));
+        return result;
+    }
+
+    private static Map<Cell, Double> envelope(Map<Cell, Integer> terrain, double grade, int sign) {
+        Map<Cell, Double> heights = new HashMap<>();
+        PriorityQueue<Visit> queue = new PriorityQueue<>(Comparator.comparingDouble(Visit::height)
+            .thenComparingInt(v -> v.cell.x).thenComparingInt(v -> v.cell.z));
+        terrain.forEach((cell, y) -> { heights.put(cell, (double) sign * y); queue.add(new Visit(cell, sign * y)); });
+        while (!queue.isEmpty()) {
+            Visit current = queue.remove();
+            if (current.height > heights.get(current.cell)) continue;
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    if (dx == 0 && dz == 0) continue;
+                    Cell next = new Cell(current.cell.x + dx, current.cell.z + dz);
+                    Double previous = heights.get(next);
+                    double candidate = current.height + grade * Math.hypot(dx, dz);
+                    if (previous != null && candidate < previous) {
+                        heights.put(next, candidate);
+                        queue.add(new Visit(next, candidate));
+                    }
+                }
+            }
+        }
+        return heights;
+    }
+}
