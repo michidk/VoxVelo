@@ -8,6 +8,7 @@ import com.geckolib.animation.RawAnimation;
 import com.geckolib.animation.object.PlayState;
 import com.geckolib.util.GeckoLibUtil;
 import dev.michidk.voxelvelo.item.BikeHelmetItem;
+import dev.michidk.voxelvelo.registry.ModEnchantments;
 import dev.michidk.voxelvelo.registry.ModItems;
 import dev.michidk.voxelvelo.terrain.LevelGround;
 import dev.michidk.voxelvelo.terrain.TerrainSlope;
@@ -22,6 +23,7 @@ import java.util.Map;
 import java.util.OptionalDouble;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -103,6 +105,7 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
     /** Installed treads and handlebar kind, see {@link BikeComponents#setup}; clients need it for handling and looks. */
     private static final EntityDataAccessor<Integer> DATA_SETUP = SynchedEntityData.defineId(BikeEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Float> DATA_VEHICLE_DAMAGE = SynchedEntityData.defineId(BikeEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Integer> DATA_SPEED_BOOST = SynchedEntityData.defineId(BikeEntity.class, EntityDataSerializers.INT);
     /** Installed parts are private entity state, not an inventory. They change only when an item is placed or dismantled. */
     private final NonNullList<ItemStack> components = NonNullList.withSize(BikeComponents.COUNT, ItemStack.EMPTY);
 
@@ -149,6 +152,7 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
         entityData.define(DATA_TIRES, 100 | (100 << 8));
         entityData.define(DATA_SETUP, BikeComponents.stockSetup(BikeType.GRAVEL));
         entityData.define(DATA_VEHICLE_DAMAGE, 0.0F);
+        entityData.define(DATA_SPEED_BOOST, 0);
         entityData.define(DATA_TYPE, BikeType.GRAVEL.ordinal());
 		entityData.define(DATA_SPEED, 0.0F);
 		entityData.define(DATA_STEERING, 0.0F);
@@ -175,6 +179,7 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
     public int tirePercent(int slot) { return (entityData.get(DATA_TIRES) >> (slot * 8)) & 255; }
     public int getSetup() { return entityData.get(DATA_SETUP); }
     public float getVehicleDamage() { return entityData.get(DATA_VEHICLE_DAMAGE); }
+    public int getSpeedBoostLevel() { return entityData.get(DATA_SPEED_BOOST); }
     public int getConditionPercent() { return BikeDurability.conditionPercent(getVehicleDamage(), getBikeType()); }
     /** Physics parameters of the frame with the installed tires and handlebars. */
     public BikePhysics.Params params() { return BikeComponents.params(getBikeType(), getSetup()); }
@@ -211,6 +216,9 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
             }
         }
         entityData.set(DATA_VEHICLE_DAMAGE, BikeDurability.clampDamage(BikeComponents.vehicleDamage(stack), getBikeType()));
+        var speedBoost = level().registryAccess().lookupOrThrow(Registries.ENCHANTMENT)
+                .getOrThrow(ModEnchantments.SPEED_BOOST);
+        entityData.set(DATA_SPEED_BOOST, BikeSpeedBoost.clampLevel(stack.getEnchantments().getLevel(speedBoost)));
         syncComponents();
     }
 
@@ -219,6 +227,11 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
         BikeComponents.color(stack, getFrameColor());
         stack.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(components));
         BikeComponents.vehicleDamage(stack, getVehicleDamage());
+        if (getSpeedBoostLevel() > 0) {
+            var speedBoost = level().registryAccess().lookupOrThrow(Registries.ENCHANTMENT)
+                    .getOrThrow(ModEnchantments.SPEED_BOOST);
+            stack.enchant(speedBoost, getSpeedBoostLevel());
+        }
         return stack;
     }
 
@@ -359,9 +372,10 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 		BikeControlState input = this.effectiveControl();
 		Player rider = this.getRider();
         if (!canRide()) { ejectPassengers(); input = new BikeControlState(0, 0, 1, input.gear()); }
+		BikePhysics.Params enchantedParams = BikeSpeedBoost.apply(this.params(), getSpeedBoostLevel());
 		BikePhysics.Params params = rider == null
-			? this.params()
-			: RiderSettings.apply(this.params(), RiderSettings.get(rider.getUUID()));
+			? enchantedParams
+			: RiderSettings.apply(enchantedParams, RiderSettings.get(rider.getUUID()));
 
 		if (this.isEyeInFluid(FluidTags.WATER)) {
 			if (++this.submergedTicks >= SUBMERGED_EJECT_TICKS) {
@@ -736,6 +750,7 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 		output.putString("bike_type", this.getBikeType().id);
         output.putInt("frame_color", getFrameColor());
         output.putFloat("vehicle_damage", getVehicleDamage());
+        output.putInt("speed_boost", getSpeedBoostLevel());
         output.store("components", ItemContainerContents.CODEC, ItemContainerContents.fromItems(components));
 	}
 
@@ -751,6 +766,7 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
         });
         entityData.set(DATA_VEHICLE_DAMAGE, BikeDurability.clampDamage(
                 input.getFloatOr("vehicle_damage", getVehicleDamage()), getBikeType()));
+        entityData.set(DATA_SPEED_BOOST, BikeSpeedBoost.clampLevel(input.getIntOr("speed_boost", 0)));
 	}
 
 	// ---------------------------------------------------------------- riding

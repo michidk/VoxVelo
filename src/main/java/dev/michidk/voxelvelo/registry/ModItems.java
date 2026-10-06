@@ -48,7 +48,8 @@ public final class ModItems {
 
 	private static Item registerBike(BikeType type, String name) {
 		ResourceKey<Item> key = ResourceKey.create(Registries.ITEM, VoxelVelo.id(name));
-		Item item = Registry.register(BuiltInRegistries.ITEM, key, new BikeItem(type, new Item.Properties().stacksTo(1).setId(key)));
+		Item item = Registry.register(BuiltInRegistries.ITEM, key,
+			new BikeItem(type, new Item.Properties().stacksTo(1).enchantable(15).setId(key)));
 		BIKES.put(type, item);
 		return item;
 	}

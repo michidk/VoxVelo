@@ -55,6 +55,12 @@ At zero condition the bike is destroyed and drops its frame and every installed
 part. Sneak-use with an empty hand still picks up the complete bike, preserving
 its damage and parts.
 
+An assembled bike can be enchanted with Speed Boost I–III at an enchanting
+table or by applying an enchanted book in an anvil. Each level adds 10% to its
+top speed, before the rider's personal speed limit is applied. The enchantment
+survives placement, world saves and pickup. It is lost when a bike is
+dismantled or destroyed because those actions drop the separate physical parts.
+
 ## Mixing parts
 
 The frame decides the bike's mass, top speed, drivetrain, wheelbase, ledge

@@ -202,5 +202,7 @@
   "tooltip.voxelvelo.bars_drop": "Aero: less drag, less steering lock",
   "tooltip.voxelvelo.bars_flat": "Upright: more steering lock, more drag",
   "tag.item.voxelvelo.handlebars": "Handlebars",
-  "itemGroup.voxelvelo.bikes": "Bikes"
+  "itemGroup.voxelvelo.bikes": "Bikes",
+  "tag.item.voxelvelo.bikes": "Bikes",
+  "enchantment.voxelvelo.speed_boost": "Speed Boost"
 }

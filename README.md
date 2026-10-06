@@ -129,6 +129,13 @@ At 200 W on flat stone the three cruise at roughly 34, 32 and 28 km/h; on sand 1
 - **Creative:** Tools & Utilities tab, or `/give @s voxelvelo:road_bike` (also `gravel_bike`, `mountain_bike`).
 - Right-click a block to place it, right-click the bike to mount, `Shift` to dismount, and sneak-use it with an empty hand to pick it up.
 
+### Speed Boost enchantment
+
+An assembled bike can receive **Speed Boost I–III** from an enchanting table or an enchanted book in an anvil.
+Each level raises that bike's top speed by 10%; a rider's personal speed limit still caps the final speed. The
+enchantment remains on the bike when it is placed, saved and picked up. Dismantling or destroying a bike drops
+its physical parts rather than the assembled bike, so the enchantment is lost with the assembly.
+
 ## Bike damage and the wrench
 
 Hard crashes and falls over three blocks damage the bicycle. Race bikes have 60 durability, gravel bikes 80 and
