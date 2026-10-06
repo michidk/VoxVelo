@@ -71,10 +71,9 @@ public final class TrackCommand {
         BlockState material = arguments >= 2 ? BlockStateArgument.getBlock(c, "material").getState() : Blocks.SMOOTH_STONE.defaultBlockState();
         int checkpoints = arguments >= 3 ? IntegerArgumentType.getInteger(c, "checkpoints") : 12;
         double bends = arguments >= 4 ? DoubleArgumentType.getDouble(c, "bends") : 0.85;
-        int width = arguments >= 5 ? IntegerArgumentType.getInteger(c, "width") : 5;
+        int width = arguments >= 5 ? IntegerArgumentType.getInteger(c, "width") : 6;
         double grade = arguments >= 6 ? DoubleArgumentType.getDouble(c, "grade_percent") / 100 : 0.08;
         int variant = arguments >= 7 ? IntegerArgumentType.getInteger(c, "variant") : 0;
-        if (width % 2 == 0) return error(source, "Road width must be odd: 3, 5, 7, 9 or 11.");
         BlockPos origin = BlockPos.containing(source.getPosition());
         if (!material.isCollisionShapeFullBlock(source.getLevel(), origin) || !material.getFluidState().isEmpty()
             || material.getDestroySpeed(source.getLevel(), origin) < 0

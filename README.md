@@ -67,7 +67,7 @@ Operators can build a closed checkpoint circuit starting at their current X/Z po
 
 ```text
 /voxelvelo track create
-/voxelvelo track create 10 minecraft:smooth_stone 12 0.85 5 8 0
+/voxelvelo track create 10 minecraft:smooth_stone 12 0.85 6 8 0
 /voxelvelo track status
 /voxelvelo track cancel
 ```
@@ -80,7 +80,7 @@ Arguments are positional and optional from the right:
 | `material` | `minecraft:smooth_stone` | Stable full solid block; no fluids, falling blocks or block entities |
 | `checkpoints` | 12 | 8–24 spline checkpoints |
 | `bends` | 0.85 | 0–1; higher values add deeper inward/outward bends |
-| `width` | 5 | Odd number of blocks, 3–11 |
+| `width` | 6 | Road width in blocks, 3–11 |
 | `grade_percent` | 8 | 1–15; maximum grade of the smooth height profile |
 | `variant` | 0 | Non-negative variation index mixed with the Minecraft seed |
 

@@ -37,21 +37,34 @@ public final class TrackGeometry {
             originZ + (p.z - start.z) * factor)).toList();
         // Half-block sampling and overlapping disks produce a connected, full-width road at the seam too.
         Set<Cell> road = new LinkedHashSet<>();
-        int radius = width / 2;
         for (int i = 0; i < scaled.size(); i++) {
             Point a = scaled.get(i), b = scaled.get((i + 1) % scaled.size());
             int steps = Math.max(1, (int) Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) * 2));
             for (int j = 0; j < steps; j++) {
                 int x = (int) Math.round(a.x + (b.x - a.x) * j / steps);
                 int z = (int) Math.round(a.z + (b.z - a.z) * j / steps);
-                for (int dx = -radius; dx <= radius; dx++) {
-                    for (int dz = -radius; dz <= radius; dz++) {
-                        if (dx * dx + dz * dz <= radius * radius) road.add(new Cell(x + dx, z + dz));
-                    }
-                }
+                addRoadDisk(road, x, z, width);
             }
         }
         return new Route(scaled, List.copyOf(road), length(scaled));
+    }
+
+    /** Adds a circular road stamp whose block-aligned diameter is exactly {@code width}, for odd and even widths. */
+    static void addRoadDisk(Set<Cell> road, int x, int z, int width) {
+        int radius = width / 2;
+        double offset = width % 2 == 0 ? 0.5 : 0.0;
+        int low = (int) Math.ceil(offset - radius);
+        int high = (int) Math.floor(offset + radius);
+        double radiusSquared = radius * radius;
+        for (int dx = low; dx <= high; dx++) {
+            for (int dz = low; dz <= high; dz++) {
+                double fromCentreX = dx - offset;
+                double fromCentreZ = dz - offset;
+                if (fromCentreX * fromCentreX + fromCentreZ * fromCentreZ <= radiusSquared) {
+                    road.add(new Cell(x + dx, z + dz));
+                }
+            }
+        }
     }
 
     private static double spline(double a, double b, double c, double d, double t) {

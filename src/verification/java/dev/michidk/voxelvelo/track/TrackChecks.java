@@ -5,11 +5,21 @@ import java.util.*;
 /** Standalone checks: deterministic curves, connected raster, flat terrain preservation and rideable terraces. */
 public final class TrackChecks {
     public static void main(String[] args) {
+        for (int width = 3; width <= 11; width++) {
+            Set<TrackGeometry.Cell> footprint = new HashSet<>();
+            TrackGeometry.addRoadDisk(footprint, 0, 0, width);
+            int minX = footprint.stream().mapToInt(TrackGeometry.Cell::x).min().orElseThrow();
+            int maxX = footprint.stream().mapToInt(TrackGeometry.Cell::x).max().orElseThrow();
+            int minZ = footprint.stream().mapToInt(TrackGeometry.Cell::z).min().orElseThrow();
+            int maxZ = footprint.stream().mapToInt(TrackGeometry.Cell::z).max().orElseThrow();
+            require(maxX - minX + 1 == width && maxZ - minZ + 1 == width,
+                "requested odd or even road width is preserved");
+        }
         for (long seed : new long[] {0, 1, -19, Long.MAX_VALUE}) {
-            var route = TrackGeometry.generate(seed, 124, -320, 10_000, 12, 0.85, 5);
+            var route = TrackGeometry.generate(seed, 124, -320, 10_000, 12, 0.85, 6);
             require(Math.abs(route.length() - 10_000) < 0.0001, "length scaling");
             require(route.centerline().getFirst().equals(new TrackGeometry.Point(124, -320)), "start at command origin");
-            require(route.equals(TrackGeometry.generate(seed, 124, -320, 10_000, 12, 0.85, 5)), "seed reproducibility");
+            require(route.equals(TrackGeometry.generate(seed, 124, -320, 10_000, 12, 0.85, 6)), "seed reproducibility");
             Set<TrackGeometry.Cell> unseen = new HashSet<>(route.road());
             Deque<TrackGeometry.Cell> pending = new ArrayDeque<>();
             pending.add(route.road().getFirst());
