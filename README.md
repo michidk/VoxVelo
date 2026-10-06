@@ -495,17 +495,20 @@ normalized power, work (kJ, about the same number of kcal) and ascent and descen
   Rides up to about 1.8 km across use a vanilla map scale centred on the route, so the map lines up with the world
   and shows your position. Longer rides are fitted to the map and do not track players. In survival this costs one
   empty map from your inventory; creative players get it free. There is a 10-second cooldown.
-- **Map terrain** is drawn only from chunks that are loaded and lie within two chunks of where the server saw you
-  ride a bike during this connection. Everything else stays blank map paper, and Nether-style dimensions show only
-  the route. The route itself comes from your client, but the terrain comes from the server, so a map request
-  cannot reveal parts of the world you have not ridden through, and it never loads or generates chunks. After
-  reconnecting, a map of an earlier ride shows only the line.
+- **Map terrain** is recorded by the server while you ride: once a second it sketches the loaded chunks around your
+  bike, up to 8 chunks away and never beyond the view distance, one sample per 2 x 2 blocks (about 4 MB per player at
+  most, kept for the connection). Those are the chunks your client was sent anyway, so the route comes from your client
+  but the terrain does not: a map request cannot reveal parts of the world you have not seen, and it never loads or
+  generates chunks. Because the sketch is kept, the start of a long ride still has terrain after its chunks unload.
+  Anything not sketched stays blank map paper; Nether-style dimensions show only the route, and after reconnecting a
+  map of an earlier ride shows only the line.
 
 The ride map packet (`ride_map`, protocol v1, serverbound) carries at most 1024 route points; the client thins
 longer rides and keeps the ends of every stretch. `verifyRides` checks the summary numbers, decodes the FIT file
 again (CRCs, messages, scales, timer events), and checks the GPS mapping, route thinning and map layout. The sample
-FIT file it writes with `-PsampleFit=<path>` decodes without errors in Garmin's FIT SDK. Not yet tried: an
-upload to Strava or Garmin Connect, and drawing a map in a running game.
+FIT file it writes with `-PsampleFit=<path>` decodes without errors in Garmin's FIT SDK. Ride maps were drawn on a
+dedicated server from a simulated ride (terrain sketched second by second within the real budget). Not yet tried: an
+upload to Strava or Garmin Connect, and asking for a map from a game client.
 
 ## Configuration
 
