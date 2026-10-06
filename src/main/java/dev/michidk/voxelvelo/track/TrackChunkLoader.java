@@ -29,7 +29,7 @@ final class TrackChunkLoader implements AutoCloseable {
     private int current;
     private int requested;
 
-    static void register() { /* Initialize the ticket type before registries freeze. */ }
+    static void register() { TrackTreeRemoval.register(); }
 
     TrackChunkLoader(ServerLevel level, List<TrackGeometry.ChunkColumns> batches) {
         source = level.getChunkSource();

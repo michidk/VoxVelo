@@ -111,6 +111,11 @@ while allowing players and bikes to pass through and leave the track. Neighborin
 too, and water-height constraints extend onto dry approaches. In ceiling dimensions such as the Nether,
 the survey starts at the command's height instead of the roof.
 
+When construction cuts a trunk or natural canopy, it removes the connected tree, including branches and
+leaves outside the track footprint. Leaves closer to neighboring trees and player-placed persistent leaves
+are preserved. Tree discovery and removal run in batches across chunk boundaries. Unusually large connected
+wood structures stop the build before tree removal rather than allowing an unbounded forest clear.
+
 Every new track includes low stone-brick borders outside the requested riding width, with glowstone
 spaced around the borders. Outdoor edges have no fences or raised walls, so riders can leave the track. Deep cuts through mountains receive stone-brick tunnel walls and ceilings with
 recessed glowstone lighting and at least five blocks of headroom. Dry gaps of three blocks or more become

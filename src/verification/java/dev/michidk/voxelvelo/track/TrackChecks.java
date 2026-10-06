@@ -6,6 +6,7 @@ import java.util.*;
 public final class TrackChecks {
     public static void main(String[] args) {
         TrackStructureChecks.run();
+        TrackTreeChecks.run();
         var boundaryCells = List.of(new TrackGeometry.Cell(-17, 16), new TrackGeometry.Cell(0, 0),
             new TrackGeometry.Cell(-16, -1), new TrackGeometry.Cell(15, 15),
             new TrackGeometry.Cell(-32, 31), new TrackGeometry.Cell(16, -16));

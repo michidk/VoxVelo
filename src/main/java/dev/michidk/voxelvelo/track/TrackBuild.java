@@ -38,6 +38,8 @@ final class TrackBuild {
     private int column;
     private int cursorY = Integer.MIN_VALUE;
     private long changed;
+    private TrackTreeRemoval tree;
+    private BlockPos checkedTree;
     private long phaseAt;
     private final ServerBossEvent bar = new ServerBossEvent(UUID.randomUUID(), Component.literal("Track"),
         BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.PROGRESS);
@@ -75,6 +77,7 @@ final class TrackBuild {
     }
 
     private void finish() {
+        if (tree != null) { tree.close(); tree = null; }
         chunks.close();
         chunk = null;
         bar.removeAllPlayers();
@@ -121,6 +124,12 @@ final class TrackBuild {
         long deadline = System.nanoTime() + 20_000_000;
         int budget = Integer.MAX_VALUE;
         while (budget-- > 0 && System.nanoTime() < deadline) {
+            if (tree != null) {
+                if (!tree.tick(deadline)) return false;
+                changed += tree.changed();
+                tree.close();
+                tree = null;
+            }
             if (phase == Phase.SURVEY) {
                 if (column < surveyCells.size()) {
                     if (chunk == null) chunk = chunks.readyChunk(deadline);
@@ -185,6 +194,11 @@ final class TrackBuild {
             BlockPos pos = new BlockPos(cell.x(), cursorY, cell.z());
             BlockState target = target(section, cursorY);
             BlockState existing = chunk.getBlockState(pos);
+            if (!existing.equals(target) && !pos.equals(checkedTree) && TrackTreeRemoval.candidate(existing)) {
+                checkedTree = pos;
+                tree = new TrackTreeRemoval(level, pos);
+                continue;
+            }
             if (!existing.equals(target)) {
                 if (!level.setBlock(pos, target, Block.UPDATE_ALL))
                     throw new IllegalStateException("World refused placement at " + pos.toShortString());
