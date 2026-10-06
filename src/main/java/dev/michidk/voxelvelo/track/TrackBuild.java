@@ -213,7 +213,9 @@ final class TrackBuild {
             if (y == section.roofY() && section.kind() == TrackPlan.Kind.TUNNEL)
                 return (section.light() ? Blocks.GLOWSTONE : Blocks.STONE_BRICKS).defaultBlockState();
         }
-        return Blocks.AIR.defaultBlockState();
+        // Invisible and collision-free, but unlike air it cannot be washed away by fluids.
+        // Protect tunnel mouths too: roofs alone do not stop water entering from the side.
+        return Blocks.STRUCTURE_VOID.defaultBlockState();
     }
 
     private void nextChunk() {

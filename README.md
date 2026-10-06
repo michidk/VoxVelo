@@ -105,7 +105,9 @@ riding columns differ by at most half a block, including diagonals. Whole-height
 material; half-height surfaces use its matching slab (for example, smooth stone, stone bricks or oak planks).
 Materials without a matching slab, such as obsidian or concrete, use smooth-stone slabs for half steps.
 The grade percentage describes the height profile before rounding; individual steps are not literal 8% ramps.
-Five full air blocks are cleared above every road block, including vegetation. Neighboring surfaces are sampled
+Five blocks of collision-free headroom are cleared above every road block, including vegetation. Invisible
+structure-void blocks keep water and lava from flowing back into this space, including tunnel entrances,
+while allowing players and bikes to pass through and leave the track. Neighboring surfaces are sampled
 too, and water-height constraints extend onto dry approaches. In ceiling dimensions such as the Nether,
 the survey starts at the command's height instead of the roof.
 
