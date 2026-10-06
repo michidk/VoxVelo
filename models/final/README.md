@@ -15,7 +15,9 @@ These are editing sources; the game loads the exported assets under `src/main/re
 1. Edit the `.bbmodel` in Blockbench and export cuboid-only Bedrock geometry for GeckoLib.
 2. Replace the matching bike export in `src/main/resources/assets/voxelvelo/geckolib/models/entity/bikes/`,
    or the helmet export in `src/main/resources/assets/voxelvelo/geckolib/models/armor/bike_helmet.geo.json`.
-3. After changing a bike, run `node scripts/split-bike-models.mjs` to regenerate its frame and component models.
+3. After changing a bike, update its matching exports in `geckolib/models/entity/bike_frames/` and
+   `geckolib/models/entity/bike_parts/` too. Frames retain empty attachment bones; wheel and handlebar
+   component geometry uses a `component` root with the original attachment pivot.
 4. Update the matching metadata and `BikeRig` / `BikeType` measurements if attachment positions changed.
 5. Run `./gradlew :verifyBikeModels` to check the exported bike geometry and component composition.
 

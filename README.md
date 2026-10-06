@@ -138,8 +138,7 @@ build-height limit still applies. Stopping the server or a world-write failure k
 jobs do not resume after restart and there is no undo.
 
 `verifyTracks` checks seed reproducibility, perimeter scaling, road connectivity, chunk batching, terrain grading, half-block
-continuity, structure selection, lighting coverage and loop closure. The command ships in both core and fitness builds. See [track performance measurements](docs/track-generation-performance.md)
-for benchmark results and reproduction steps.
+continuity, structure selection, lighting coverage and loop closure. The command ships in both core and fitness builds.
 
 ## Bike types
 
@@ -564,8 +563,8 @@ exported as GeckoLib-ready, cuboid-only Bedrock geometry (GeckoLib 5.5.7 cannot 
   speed is the cadence, so it plays faster when you pedal harder and pauses when you coast.
 - `models/final/` holds the editable `*.bbmodel` sources of these final models, their `*.json` metadata (saddle top,
   grips, steering pivot and axis, bounds), and editing instructions. To change a model, re-export from Blockbench,
-  copy the files over, regenerate the bike component models with `node scripts/split-bike-models.mjs`, and update
-  `BikeRig` if the metadata changed. Obsolete model drafts have been removed.
+  copy the files over, update the matching frame and component exports, and update `BikeRig` if the metadata changed.
+  Obsolete model drafts have been removed.
 
 Rig the code relies on (`bike` root): `frame_colored` with the tubes `top_tube`, `down_tube`, `seat_tube` and
 `rear_stays`; `fork` with children `handlebar` and `front_wheel`; `rear_wheel`; `crank` with children

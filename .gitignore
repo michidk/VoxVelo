@@ -5,6 +5,14 @@ build/
 out/
 classes/
 
+# local agent and development-tool state
+
+.codex/
+.claude/
+.agents/
+.serena/
+.gitnexus/
+
 # eclipse
 
 *.launch
