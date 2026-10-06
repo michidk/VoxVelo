@@ -16,6 +16,8 @@ public final class BikeServerConfig {
     public double tireDamageRate = 0.0001;
     public double roughTerrainTireDamageMultiplier = 1.75;
     public double collisionTireDamage = 0.08;
+    /** Tallest ledge in blocks that a bike rolls up without stopping (0 = none, 1 = a full block). */
+    public double stepHeightBlocks = 1.0;
 
     public static void load() {
         Path path = FabricLoader.getInstance().getConfigDir().resolve("voxelvelo-server.json");
@@ -31,6 +33,7 @@ public final class BikeServerConfig {
             INSTANCE.tireDamageRate = safe(INSTANCE.tireDamageRate, 0.0001, 1);
             INSTANCE.roughTerrainTireDamageMultiplier = safe(INSTANCE.roughTerrainTireDamageMultiplier, 1.75, 100);
             INSTANCE.collisionTireDamage = safe(INSTANCE.collisionTireDamage, 0.08, 1);
+            INSTANCE.stepHeightBlocks = safe(INSTANCE.stepHeightBlocks, 1.0, 4);
         } catch (Exception e) {
             INSTANCE = new BikeServerConfig();
             VoxelVelo.LOGGER.warn("Cannot read bicycle server configuration; using defaults", e);

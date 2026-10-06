@@ -85,6 +85,8 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 	/** Installed treads and handlebar kind, see {@link BikeComponents#setup}; clients need it for handling and looks. */
 	private static final EntityDataAccessor<Integer> DATA_SETUP = SynchedEntityData.defineId(BikeEntity.class, EntityDataSerializers.INT);
 	private static final EntityDataAccessor<Float> DATA_VEHICLE_DAMAGE = SynchedEntityData.defineId(BikeEntity.class, EntityDataSerializers.FLOAT);
+	/** How tall a ledge the bike rolls up, set by the server config and synced so the rider's client steps the same way. */
+	private static final EntityDataAccessor<Float> DATA_STEP_HEIGHT = SynchedEntityData.defineId(BikeEntity.class, EntityDataSerializers.FLOAT);
 	private static final EntityDataAccessor<Integer> DATA_SPEED_BOOST = SynchedEntityData.defineId(BikeEntity.class, EntityDataSerializers.INT);
 
 	/** The rider's client, installed by the client entrypoint; null on a dedicated server. */
@@ -138,6 +140,7 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 		entityData.define(DATA_SETUP, BikeComponents.stockSetup(BikeType.GRAVEL));
 		entityData.define(DATA_VEHICLE_DAMAGE, 0.0F);
 		entityData.define(DATA_SPEED_BOOST, 0);
+		entityData.define(DATA_STEP_HEIGHT, 1.0F);
 		entityData.define(DATA_TYPE, BikeType.GRAVEL.ordinal());
 		entityData.define(DATA_SPEED, 0.0F);
 		entityData.define(DATA_STEERING, 0.0F);
@@ -321,6 +324,7 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 	}
 
 	private void serverTick() {
+		this.entityData.set(DATA_STEP_HEIGHT, (float) BikeServerConfig.INSTANCE.stepHeightBlocks);
 		Player rider = this.getRider();
 		if (rider != null && !this.canRide()) {
 			this.ejectPassengers();
@@ -498,7 +502,7 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 
 	@Override
 	public float maxUpStep() {
-		return this.getBikeType().stepHeight;
+		return this.entityData.get(DATA_STEP_HEIGHT);
 	}
 
 	@Override
