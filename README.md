@@ -563,9 +563,9 @@ exported as GeckoLib-ready, cuboid-only Bedrock geometry (GeckoLib 5.5.7 cannot 
 - `geckolib/animations/entity/bicycle.animation.json`: a one-second pedal loop shared by all bikes. The controller
   speed is the cadence, so it plays faster when you pedal harder and pauses when you coast.
 - `models/final/` holds the editable `*.bbmodel` sources of these final models, their `*.json` metadata (saddle top,
-  grips, steering pivot and axis, bounds) and the author's notes and validation report. To change a model, re-export
-  from Blockbench, copy the files over, and update `BikeRig` if the metadata changed. (`models/` also keeps the
-  earlier model drafts.)
+  grips, steering pivot and axis, bounds), and editing instructions. To change a model, re-export from Blockbench,
+  copy the files over, regenerate the bike component models with `node scripts/split-bike-models.mjs`, and update
+  `BikeRig` if the metadata changed. Obsolete model drafts have been removed.
 
 Rig the code relies on (`bike` root): `frame_colored` with the tubes `top_tube`, `down_tube`, `seat_tube` and
 `rear_stays`; `fork` with children `handlebar` and `front_wheel`; `rear_wheel`; `crank` with children
