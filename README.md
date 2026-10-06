@@ -100,12 +100,22 @@ places road blocks in the top liquid layer, with solid foundations extending to 
 The road follows the terrain: it takes the ground height, with only as much cutting and filling as the maximum grade
 requires, and where the track was ordered it is exactly the ground, so you stand on it. Over water and lava it never
 sinks below the surface, so approaches may rise slightly above liquid level to preserve grade.
-Grade limiting covers the full road width, overlaps and the loop seam. The surface uses full-block terraces:
-adjacent road columns differ by at most one block, which all VoxelVelo bikes can climb. The grade percentage
-describes the height profile before rounding; individual one-block steps are not literal 8% ramps. Five full
-air blocks are cleared above every road block, including vegetation. Neighboring surfaces are sampled too,
-so water/lava beside the road does not flow into its clearance. In ceiling dimensions such as the Nether,
+Grade limiting covers the full road width, overlaps and the loop seam. Slopes use half-block steps: adjacent
+riding columns differ by at most half a block, including diagonals. Whole-height surfaces use the selected
+material; half-height surfaces use its matching slab (for example, smooth stone, stone bricks or oak planks).
+Materials without a matching slab, such as obsidian or concrete, use smooth-stone slabs for half steps.
+The grade percentage describes the height profile before rounding; individual steps are not literal 8% ramps.
+Five full air blocks are cleared above every road block, including vegetation. Neighboring surfaces are sampled
+too, and water-height constraints extend onto dry approaches. In ceiling dimensions such as the Nether,
 the survey starts at the command's height instead of the roof.
+
+Every new track includes stone-brick curbs and walls outside the requested riding width, with glowstone
+spaced around the borders. Deep cuts through mountains receive stone-brick tunnel walls and ceilings with
+recessed glowstone lighting and at least five blocks of headroom. Dry gaps of three blocks or more become
+thin bridge decks with railings and occasional edge piers, instead of solid embankments filling the valley.
+Empty/void spans have decks without pillars extending to the world floor. Water and lava crossings retain
+solid foundations: the generator does not build submerged bridges or underwater tunnels. These decorations
+are automatic with the existing command; previously built tracks are not changed until regenerated.
 
 Creation runs automatically to completion in batches, shows its progress in a purple boss bar to whoever ordered it,
 and reports when finished. Build time depends on terrain, existing chunks and server hardware. Survey and placement
@@ -119,8 +129,8 @@ pauses. Invalid materials/arguments and routes outside the world border are stil
 build-height limit still applies. Stopping the server or a world-write failure keeps blocks already placed;
 jobs do not resume after restart and there is no undo.
 
-`verifyTracks` checks seed reproducibility, perimeter scaling, road connectivity, chunk batching, terrain grading and loop
-closure. The command ships in both core and fitness builds. See [track performance measurements](docs/track-generation-performance.md)
+`verifyTracks` checks seed reproducibility, perimeter scaling, road connectivity, chunk batching, terrain grading, half-block
+continuity, structure selection, lighting coverage and loop closure. The command ships in both core and fitness builds. See [track performance measurements](docs/track-generation-performance.md)
 for benchmark results and reproduction steps.
 
 ## Bike types

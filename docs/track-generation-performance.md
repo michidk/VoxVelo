@@ -1,7 +1,7 @@
 # Track generation performance
 
 Measured on 2026-10-06 with Minecraft 26.3, Fabric Loader 0.19.5, Java 25 and a 2 GiB server heap.
-Baseline: `b455b40`. Each version used a separate fresh world with seed `824671`, view/simulation distance 2,
+Baseline: `b455b40`; optimized builder: `45b1640`, before borders, lighting, tunnels and slab slopes were added. Each version used a separate fresh world with seed `824671`, view/simulation distance 2,
 no connected players, and `pause-when-empty-seconds=0`. These are individual samples on a shared development
 host, not benchmark medians or a promise for other hardware. Times are the sum of the existing phase logs;
 they exclude initial route rasterization.

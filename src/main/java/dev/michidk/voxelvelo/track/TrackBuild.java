@@ -23,15 +23,17 @@ final class TrackBuild {
     private final ServerLevel level;
     private final TrackGeometry.Route route;
     private final BlockState material;
+    private final BlockState slab;
     private final double grade;
     private final Map<TrackGeometry.Cell, Integer> surfaces = new LinkedHashMap<>();
     private final Set<TrackGeometry.Cell> liquid = new HashSet<>();
+    private final Set<TrackGeometry.Cell> voids = new HashSet<>();
     private final List<TrackGeometry.Cell> surveyCells;
     private TrackChunkLoader chunks;
     private int batchColumn;
     private LevelChunk chunk;
-    private Map<TrackGeometry.Cell, Integer> heights;
-    private CompletableFuture<Map<TrackGeometry.Cell, Integer>> grading;
+    private Map<TrackGeometry.Cell, TrackPlan.Column> plan;
+    private CompletableFuture<Map<TrackGeometry.Cell, TrackPlan.Column>> grading;
     private Phase phase = Phase.SURVEY;
     private int column;
     private int cursorY = Integer.MIN_VALUE;
@@ -65,7 +67,7 @@ final class TrackBuild {
     private void logDeviation() {
         int fill = 0, cut = 0;
         for (TrackGeometry.Cell cell : route.road()) {
-            int d = heights.get(cell) - surfaces.get(cell);
+            int d = (int) Math.round(plan.get(cell).ridingY() - (surfaces.get(cell) + 1));
             fill = Math.max(fill, d);
             cut = Math.max(cut, -d);
         }
@@ -88,6 +90,7 @@ final class TrackBuild {
         this.level = source.getLevel();
         this.route = route;
         this.material = material;
+        this.slab = TrackPalette.slabFor(material);
         this.grade = grade;
         // Survey a shoulder too: bordering liquid must not spill onto a lower road column.
         Set<TrackGeometry.Cell> survey = new LinkedHashSet<>(route.road());
@@ -96,6 +99,10 @@ final class TrackBuild {
                 throw new IllegalArgumentException("Track does not fit inside the world border.");
             for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++)
                 survey.add(new TrackGeometry.Cell(cell.x() + dx, cell.z() + dz));
+        }
+        for (TrackGeometry.Cell cell : survey) {
+            if (!level.getWorldBorder().isWithinBounds(new BlockPos(cell.x(), 0, cell.z())))
+                throw new IllegalArgumentException("Track borders do not fit inside the world border.");
         }
         surveyCells = List.copyOf(survey);
         chunks = new TrackChunkLoader(level, TrackGeometry.byChunk(surveyCells));
@@ -129,7 +136,8 @@ final class TrackBuild {
                 Set<TrackGeometry.Cell> wet = Set.copyOf(liquid);
                 TrackGeometry.Point first = route.centerline().getFirst();
                 TrackGeometry.Cell startCell = new TrackGeometry.Cell((int) Math.round(first.x()), (int) Math.round(first.z()));
-                grading = CompletableFuture.supplyAsync(() -> TrackGeometry.follow(snapshot, wet, grade, startCell));
+                Set<TrackGeometry.Cell> empty = Set.copyOf(voids);
+                grading = CompletableFuture.supplyAsync(() -> TrackPlan.create(route.road(), snapshot, wet, empty, grade, startCell));
                 phase = Phase.GRADE;
                 progress("grading", 0);
                 column = 0;
@@ -138,21 +146,21 @@ final class TrackBuild {
             if (phase == Phase.GRADE) {
                 if (!grading.isDone()) return false;
                 lap("grading");
-                heights = grading.join();
+                plan = grading.join();
                 logDeviation();
                 chunks.close();
-                chunks = new TrackChunkLoader(level, TrackGeometry.byChunk(route.road()));
+                chunks = new TrackChunkLoader(level, TrackGeometry.byChunk(plan.keySet()));
                 phase = Phase.PLACE;
             }
-            if (phase == Phase.PLACE && (column & 15) == 0) progress("building", column / (double) route.road().size());
-            if (column == route.road().size()) {
+            if (phase == Phase.PLACE && (column & 15) == 0) progress("building", column / (double) plan.size());
+            if (column == plan.size()) {
                 lap("placement");
                 finish();
                 TrackGeometry.Point start = route.centerline().getFirst();
                 TrackGeometry.Cell cell = new TrackGeometry.Cell((int) Math.round(start.x()), (int) Math.round(start.z()));
-                int startY = heights.get(cell) + 1;
+                double startY = plan.get(cell).ridingY();
                 source.sendSuccess(() -> Component.literal(String.format(Locale.ROOT,
-                    "Track complete: %.3f km. Start: %d %d %d.", route.length() / 1000,
+                    "Track complete: %.3f km. Start: %d %.1f %d.", route.length() / 1000,
                     cell.x(), startY, cell.z())), true);
                 putPlayerOnTrack(cell, startY);
                 return true;
@@ -160,11 +168,13 @@ final class TrackBuild {
             if (chunk == null) chunk = chunks.readyChunk(deadline);
             if (chunk == null) return false;
             TrackGeometry.Cell cell = chunks.cells().get(batchColumn);
-            int roadY = heights.get(cell);
+            TrackPlan.Column section = plan.get(cell);
+            int roadY = section.deckY();
             if (cursorY == Integer.MIN_VALUE) {
                 // Extend foundations through liquids and caves to solid ground, without a depth rejection.
-                int bottom = Math.min(surfaces.get(cell), roadY);
-                while (bottom > level.getMinY() + 1) {
+                boolean suspended = section.kind() == TrackPlan.Kind.BRIDGE && !section.pier();
+                int bottom = suspended ? roadY - 1 : Math.min(surfaces.get(cell), roadY);
+                while (!suspended && bottom > level.getMinY() + 1) {
                     BlockPos below = new BlockPos(cell.x(), bottom - 1, cell.z());
                     BlockState support = chunk.getBlockState(below);
                     if (support.getFluidState().isEmpty() && support.isCollisionShapeFullBlock(level, below)) break;
@@ -173,20 +183,38 @@ final class TrackBuild {
                 cursorY = bottom;
             }
             BlockPos pos = new BlockPos(cell.x(), cursorY, cell.z());
-            BlockState target = cursorY <= roadY ? material : Blocks.AIR.defaultBlockState();
+            BlockState target = target(section, cursorY);
             BlockState existing = chunk.getBlockState(pos);
             if (!existing.equals(target)) {
                 if (!level.setBlock(pos, target, Block.UPDATE_ALL))
                     throw new IllegalStateException("World refused placement at " + pos.toShortString());
                 changed++;
             }
-            if (++cursorY > roadY + 5) {
+            if (++cursorY > (section.kind() == TrackPlan.Kind.TUNNEL ? section.roofY() : roadY + 5)) {
                 cursorY = Integer.MIN_VALUE;
                 column++;
                 if (++batchColumn == chunks.cells().size()) nextChunk();
             }
         }
         return false;
+    }
+
+    private BlockState target(TrackPlan.Column section, int y) {
+        int deck = section.deckY();
+        if (section.border()) {
+            if (y <= deck) {
+                if (y == deck && section.light()) return Blocks.GLOWSTONE.defaultBlockState();
+                return Blocks.STONE_BRICKS.defaultBlockState();
+            }
+            if (section.kind() == TrackPlan.Kind.TUNNEL) return Blocks.STONE_BRICKS.defaultBlockState();
+            if (y == deck + 1) return Blocks.STONE_BRICK_WALL.defaultBlockState();
+        } else {
+            if (y < deck) return material;
+            if (y == deck) return section.slab() ? slab : material;
+            if (y == section.roofY() && section.kind() == TrackPlan.Kind.TUNNEL)
+                return (section.light() ? Blocks.GLOWSTONE : Blocks.STONE_BRICKS).defaultBlockState();
+        }
+        return Blocks.AIR.defaultBlockState();
     }
 
     private void nextChunk() {
@@ -196,7 +224,7 @@ final class TrackBuild {
     }
 
     /** The track starts where it was ordered, so a player still around there ends up standing on it, not beside or inside the road bed. */
-    private void putPlayerOnTrack(TrackGeometry.Cell start, int y) {
+    private void putPlayerOnTrack(TrackGeometry.Cell start, double y) {
         if (!(source.getEntity() instanceof ServerPlayer player) || player.level() != level) return;
         double away = Math.hypot(player.getX() - (start.x() + 0.5), player.getZ() - (start.z() + 0.5));
         if (away > 24 || player.isPassenger()) return;
@@ -207,19 +235,22 @@ final class TrackBuild {
         int top = chunk.getHeight(Heightmap.Types.WORLD_SURFACE, cell.x() & 15, cell.z() & 15);
         // In the Nether, project downward from the invocation height rather than onto its roof.
         if (level.dimensionType().hasCeiling()) top = Math.min(top, (int) Math.floor(source.getPosition().y));
-        int surface = Math.clamp((int) Math.floor(source.getPosition().y) - 1, level.getMinY() + 1, level.getMaxY() - 5);
+        int surface = Math.clamp((int) Math.floor(source.getPosition().y) - 1, level.getMinY() + 1, level.getMaxY() - 6);
+        boolean found = false;
         for (int y = Math.min(top, level.getMaxY()); y > level.getMinY(); y--) {
             BlockPos pos = new BlockPos(cell.x(), y, cell.z());
             BlockState state = chunk.getBlockState(pos);
             if (state.is(BlockTags.LOGS) || state.is(BlockTags.LEAVES)) continue;
             if (!state.getFluidState().isEmpty() || state.isCollisionShapeFullBlock(level, pos) || state.hasBlockEntity()) {
                 surface = y;
+                found = true;
                 if (!state.getFluidState().isEmpty()) liquid.add(cell);
                 // Lay road above containers and unbreakable supports.
                 if (state.hasBlockEntity() || state.getDestroySpeed(level, pos) < 0) surface++;
                 break;
             }
         }
-        surfaces.put(cell, Math.clamp(surface, level.getMinY() + 1, level.getMaxY() - 5));
+        if (!found) voids.add(cell);
+        surfaces.put(cell, Math.clamp(surface, level.getMinY() + 1, level.getMaxY() - 6));
     }
 }

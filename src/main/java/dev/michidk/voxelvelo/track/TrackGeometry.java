@@ -130,6 +130,20 @@ public final class TrackGeometry {
         return result;
     }
 
+    /** Riding surface in half-block units (not block Y). Water bounds propagate onto dry approaches too. */
+    static Map<Cell, Integer> halfSteps(Map<Cell, Integer> surfaces, Set<Cell> liquid, double grade, Cell start) {
+        Map<Cell, Integer> tops = new LinkedHashMap<>();
+        surfaces.forEach((cell, y) -> tops.put(cell, 2 * (y + 1)));
+        Map<Cell, Integer> result = follow(tops, Set.of(), grade * 2, start);
+        if (!liquid.isEmpty()) {
+            int minimum = Collections.min(tops.values()) - 1;
+            Map<Cell, Integer> waterBounds = new LinkedHashMap<>();
+            tops.forEach((cell, y) -> waterBounds.put(cell, liquid.contains(cell) ? y : minimum));
+            embankment(waterBounds, grade * 2).forEach((cell, y) -> result.merge(cell, y, Math::max));
+        }
+        return result;
+    }
+
     /** Smallest grade-limited embankment above every land/liquid surface. */
     public static Map<Cell, Integer> embankment(Map<Cell, Integer> surfaces, double grade) {
         Map<Cell, Double> upper = envelope(surfaces, grade, -1);

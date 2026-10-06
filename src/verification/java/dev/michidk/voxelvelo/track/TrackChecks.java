@@ -5,6 +5,7 @@ import java.util.*;
 /** Standalone checks: deterministic curves, connected raster, flat terrain preservation and rideable terraces. */
 public final class TrackChecks {
     public static void main(String[] args) {
+        TrackStructureChecks.run();
         var boundaryCells = List.of(new TrackGeometry.Cell(-17, 16), new TrackGeometry.Cell(0, 0),
             new TrackGeometry.Cell(-16, -1), new TrackGeometry.Cell(15, 15),
             new TrackGeometry.Cell(-32, 31), new TrackGeometry.Cell(16, -16));
