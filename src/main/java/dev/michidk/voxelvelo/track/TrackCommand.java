@@ -19,10 +19,12 @@ import net.minecraft.world.level.block.FallingBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 /** Operator-only, incrementally applied world edits. One build per server. */
 public final class TrackCommand {
-    private static final Map<MinecraftServer, TrackBuild> JOBS = new HashMap<>();
+    private static final Map<MinecraftServer, Deque<TrackBuild>> JOBS = new HashMap<>();
     private TrackCommand() {}
 
     public static void register() {
@@ -37,36 +39,26 @@ public final class TrackCommand {
             tail = Commands.argument("length_km", DoubleArgumentType.doubleArg(0.25, 20)).executes(c -> start(c, 1)).then(tail);
             dispatcher.register(Commands.literal("voxelvelo").then(Commands.literal("track")
                 .requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
-                .then(Commands.literal("create").executes(c -> start(c, 0)).then(tail))
-                .then(Commands.literal("status").executes(c -> {
-                    TrackBuild job = JOBS.get(c.getSource().getServer());
-                    c.getSource().sendSuccess(() -> Component.literal(job == null ? "No track build running." : job.status()), false);
-                    return 1;
-                }))
-                .then(Commands.literal("cancel").executes(c -> {
-                    TrackBuild job = JOBS.remove(c.getSource().getServer());
-                    c.getSource().sendSuccess(() -> Component.literal(job == null ? "No track build running."
-                        : "Track build cancelled. Blocks already placed are kept."), true);
-                    return 1;
-                }))));
+                .then(Commands.literal("create").executes(c -> start(c, 0)).then(tail))));
         });
         ServerTickEvents.END_SERVER_TICK.register(server -> {
-            TrackBuild job = JOBS.get(server);
-            if (job == null) return;
+            Deque<TrackBuild> queue = JOBS.get(server);
+            if (queue == null) return;
+            TrackBuild job = queue.getFirst();
             try {
-                if (job.tick()) JOBS.remove(server);
+                if (job.tick()) queue.removeFirst();
             } catch (RuntimeException e) {
-                JOBS.remove(server);
+                queue.removeFirst();
                 job.fail(e.getMessage());
                 dev.michidk.voxelvelo.VoxelVelo.LOGGER.error("Track build stopped", e);
             }
+            if (queue.isEmpty()) JOBS.remove(server);
         });
         ServerLifecycleEvents.SERVER_STOPPED.register(JOBS::remove);
     }
 
     private static int start(CommandContext<CommandSourceStack> c, int arguments) {
         CommandSourceStack source = c.getSource();
-        if (JOBS.containsKey(source.getServer())) return error(source, "A track build is already running. Use /voxelvelo track status.");
         double km = arguments >= 1 ? DoubleArgumentType.getDouble(c, "length_km") : 10;
         BlockState material = arguments >= 2 ? BlockStateArgument.getBlock(c, "material").getState() : Blocks.SMOOTH_STONE.defaultBlockState();
         int checkpoints = arguments >= 3 ? IntegerArgumentType.getInteger(c, "checkpoints") : 12;
@@ -81,13 +73,15 @@ public final class TrackCommand {
             || material.is(Blocks.MAGMA_BLOCK) || material.is(Blocks.CACTUS)) {
             return error(source, "Choose a stable, full solid road block without fluids or a block entity.");
         }
-        if (source.getLevel().dimensionType().hasCeiling()) return error(source, "Track generation requires open terrain, not a dimension with a ceiling.");
         long seed = source.getLevel().getSeed() ^ ((long) origin.getX() * 341873128712L)
             ^ ((long) origin.getZ() * 132897987541L) ^ variant;
         TrackGeometry.Route route = TrackGeometry.generate(seed, origin.getX(), origin.getZ(), km * 1000, checkpoints, bends, width);
-        JOBS.put(source.getServer(), new TrackBuild(source, route, material, grade));
+        TrackBuild job;
+        try { job = new TrackBuild(source, route, material, grade); }
+        catch (IllegalArgumentException e) { return error(source, e.getMessage()); }
+        JOBS.computeIfAbsent(source.getServer(), ignored -> new ArrayDeque<>()).addLast(job);
         source.sendSuccess(() -> Component.literal("Planning " + km + " km track starting at " + origin.getX() + ", " + origin.getZ()
-            + ". Terrain is checked before placement; this may generate chunks. Use /voxelvelo track status or cancel."), true);
+            + ". Construction will finish automatically."), true);
         return 1;
     }
 

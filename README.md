@@ -75,8 +75,6 @@ Operators can build a closed checkpoint circuit starting at their current X/Z po
 ```text
 /voxelvelo track create
 /voxelvelo track create 10 minecraft:smooth_stone 12 0.85 6 8 0
-/voxelvelo track status
-/voxelvelo track cancel
 ```
 
 Arguments are positional and optional from the right:
@@ -95,18 +93,23 @@ Randomness comes from the world seed, start X/Z and variant. Identical inputs re
 layout; final heights also depend on the terrain at build time. One block represents one metre. The kilometre
 target measures the horizontal spline, so the actual ride is slightly longer when it climbs and descends.
 
-The command samples natural ground beneath trees and plants, then cuts and fills a supported road surface.
+The command samples ground beneath trees and plants. Water and lava count as surfaces too: a level crossing
+places road blocks in the top liquid layer, with solid foundations extending to the seabed. Low sections rise
+into gentle embankments to meet hills and shorelines; approaches may sit above liquid level to preserve grade.
 Grade limiting covers the full road width, overlaps and the loop seam. The surface uses full-block terraces:
 adjacent road columns differ by at most one block, which all VoxelVelo bikes can climb. The grade percentage
 describes the height profile before rounding; individual one-block steps are not literal 8% ramps. Five full
-air blocks are cleared above every road block, including vegetation and terrain in cuts.
+air blocks are cleared above every road block, including vegetation. Neighboring surfaces are sampled too,
+so water/lava beside the road does not flow into its clearance. In ceiling dimensions such as the Nether,
+the survey starts at the command's height instead of the roof.
 
-The complete route is checked before placement. Routes crossing liquids, block entities, unbreakable blocks,
-the world border, insufficient build height or more than 32 blocks of cut/fill are rejected. Liquids and falling
-terrain bordering the clearance are also rejected. Choose flatter, open land or another variant if planning
-fails. This is a terrain editor: ordinary blocks in the road corridor may be replaced. Work runs in batches;
-new chunk generation can still cause pauses. One job runs per server. Cancelling, stopping the server or a
-placement failure keeps any blocks already placed; jobs do not resume after restart and there is no undo.
+Creation runs automatically to completion in batches and reports when finished. Additional requests queue;
+there are no status or cancel commands. Liquids, deep foundations and steep terrain do not reject a route,
+and the former 32-block earthwork limit is removed. Empty/void columns use the command's height as a fallback.
+This is a terrain editor: blocks in the road corridor may be replaced. New chunk generation can still cause
+pauses. Invalid materials/arguments and routes outside the world border are still rejected, and Minecraft's
+build-height limit still applies. Stopping the server or a world-write failure keeps blocks already placed;
+jobs do not resume after restart and there is no undo.
 
 `verifyTracks` checks seed reproducibility, perimeter scaling, road connectivity, terrain grading and loop
 closure. The command ships in both core and fitness builds.

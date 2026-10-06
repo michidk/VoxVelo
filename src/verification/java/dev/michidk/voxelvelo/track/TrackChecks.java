@@ -56,6 +56,22 @@ public final class TrackChecks {
             if (heights.containsKey(next)) require(Math.abs(heights.get(cell) - heights.get(next)) <= 1, "loop seam and steep terrain");
         }
         System.out.println("Track geometry and grading checks passed.");
+        // Water/lava surfaces use the same height constraint; a flat crossing stays at surface level.
+        for (int liquidLevel : new int[] {31, 62}) {
+            terrain.replaceAll((cell, y) -> liquidLevel);
+            require(TrackGeometry.embankment(terrain, 0.08).equals(terrain), "flat liquid crossing stays at surface level");
+        }
+        terrain.replaceAll((cell, y) -> cell.x() < 0 ? 31 : 180);
+        heights = TrackGeometry.embankment(terrain, 0.08);
+        for (var cell : terrain.keySet()) {
+            require(heights.get(cell) >= terrain.get(cell), "road never goes below the liquid/ground surface");
+            for (int dx = -1; dx <= 1; dx++) for (int dz = -1; dz <= 1; dz++) {
+                var next = new TrackGeometry.Cell(cell.x() + dx, cell.z() + dz);
+                if (heights.containsKey(next)) require(Math.abs(heights.get(cell) - heights.get(next)) <= 1,
+                    "large shore/cliff transition remains rideable at the loop seam and across the road");
+            }
+        }
+        System.out.println("Liquid surface and embankment checks passed.");
     }
     private static void require(boolean condition, String message) {
         if (!condition) throw new AssertionError(message);

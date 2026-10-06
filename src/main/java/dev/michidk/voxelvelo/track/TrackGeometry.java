@@ -92,6 +92,14 @@ public final class TrackGeometry {
         return result;
     }
 
+    /** Smallest grade-limited embankment above every land/liquid surface. */
+    public static Map<Cell, Integer> embankment(Map<Cell, Integer> surfaces, double grade) {
+        Map<Cell, Double> upper = envelope(surfaces, grade, -1);
+        Map<Cell, Integer> result = new LinkedHashMap<>();
+        surfaces.forEach((cell, y) -> result.put(cell, (int) Math.ceil(-upper.get(cell) - 1e-9)));
+        return result;
+    }
+
     private static Map<Cell, Double> envelope(Map<Cell, Integer> terrain, double grade, int sign) {
         Map<Cell, Double> heights = new HashMap<>();
         PriorityQueue<Visit> queue = new PriorityQueue<>(Comparator.comparingDouble(Visit::height)
