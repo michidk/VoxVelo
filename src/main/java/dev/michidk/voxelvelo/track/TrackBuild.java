@@ -207,7 +207,6 @@ final class TrackBuild {
                 return Blocks.STONE_BRICKS.defaultBlockState();
             }
             if (section.kind() == TrackPlan.Kind.TUNNEL) return Blocks.STONE_BRICKS.defaultBlockState();
-            if (y == deck + 1) return Blocks.STONE_BRICK_WALL.defaultBlockState();
         } else {
             if (y < deck) return material;
             if (y == deck) return section.slab() ? slab : material;

@@ -109,10 +109,10 @@ Five full air blocks are cleared above every road block, including vegetation. N
 too, and water-height constraints extend onto dry approaches. In ceiling dimensions such as the Nether,
 the survey starts at the command's height instead of the roof.
 
-Every new track includes stone-brick curbs and walls outside the requested riding width, with glowstone
-spaced around the borders. Deep cuts through mountains receive stone-brick tunnel walls and ceilings with
+Every new track includes low stone-brick borders outside the requested riding width, with glowstone
+spaced around the borders. Outdoor edges have no fences or raised walls, so riders can leave the track. Deep cuts through mountains receive stone-brick tunnel walls and ceilings with
 recessed glowstone lighting and at least five blocks of headroom. Dry gaps of three blocks or more become
-thin bridge decks with railings and occasional edge piers, instead of solid embankments filling the valley.
+thin bridge decks with open edges and occasional edge piers, instead of solid embankments filling the valley.
 Empty/void spans have decks without pillars extending to the world floor. Water and lava crossings retain
 solid foundations: the generator does not build submerged bridges or underwater tunnels. These decorations
 are automatic with the existing command; previously built tracks are not changed until regenerated.
