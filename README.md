@@ -6,7 +6,9 @@ and release workflow still use the previous Bikes and library IDs. This refactor
 backward compatibility and migration of older installations or saved-world mod data are not provided.
 
 <p align="center">
-  <img src=".github/images/icon_bikes.png" alt="VoxVelo icon" width="144">
+  <img src=".github/images/icon_bikes.png" alt="VoxVelo Bikes icon" width="144">
+  &nbsp;&nbsp;
+  <img src=".github/images/icon_fitness_lib.png" alt="VoxVelo Fitness Library icon" width="144">
   &nbsp;&nbsp;
   <img src=".github/images/icon_fitness.png" alt="VoxVelo Fitness icon" width="144">
 </p>
