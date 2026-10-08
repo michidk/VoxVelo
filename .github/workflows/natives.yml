@@ -29,13 +29,13 @@ jobs:
     env:
       MACOSX_DEPLOYMENT_TARGET: '11.0'
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7.0.1
       - name: Install D-Bus development files
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libdbus-1-dev pkg-config
       - name: Set up Rust
         run: rustup toolchain install stable --profile minimal --target ${{ matrix.target }} && rustup default stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@v2.9.2
         with:
           workspaces: native/ble
           key: ${{ matrix.target }}
@@ -47,7 +47,7 @@ jobs:
         run: |
           mkdir -p "natives/${{ matrix.platform }}"
           cp "native/ble/target/${{ matrix.target }}/release/${{ matrix.file }}" "natives/${{ matrix.platform }}/"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7.0.2
         with:
           name: ble-${{ matrix.platform }}
           path: natives/

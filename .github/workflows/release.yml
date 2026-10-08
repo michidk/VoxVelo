@@ -29,22 +29,22 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
       - name: Download Bluetooth natives
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8.0.2
         with:
           pattern: ble-*
           merge-multiple: true
           path: ble-natives
       - name: Set up JDK 25
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6.0.1
         with:
           distribution: temurin
           java-version: '25'
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6.4.0
 
       - name: Validate publishing dependencies
         env:
@@ -84,14 +84,14 @@ jobs:
           -PrequiredBleNatives=windows-x86_64,windows-aarch64,linux-x86_64,linux-aarch64,macos-x86_64,macos-aarch64
 
       - name: Generate release notes
-        uses: orhun/git-cliff-action@v4
+        uses: orhun/git-cliff-action@v4.9.1
         with:
           version: v2.14.2
           config: cliff.toml
           args: --current --use-branch-tags --strip all --output "${{ runner.temp }}/changelog.md"
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3.0.3
         with:
           name: VoxVelo ${{ steps.versions.outputs.mod }}
           body_path: ${{ runner.temp }}/changelog.md
