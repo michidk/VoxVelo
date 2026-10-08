@@ -4,7 +4,6 @@ header = """
 
 Generated from Conventional Commits with [git-cliff](https://git-cliff.org).
 All three VoxVelo mods share the same version and release notes.
-See [first-release features](docs/first-release-features.md) for the detailed initial feature overview.
 
 """
 body = """

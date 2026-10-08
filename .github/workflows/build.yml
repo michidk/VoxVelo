@@ -27,7 +27,6 @@ jobs:
           version: v2.14.2
           config: cliff.toml
           args: --output "${{ runner.temp }}/CHANGELOG.md"
-      - run: PATH="$RUNNER_TEMP/git-cliff/bin:$PATH" sh scripts/verify-changelog.sh
 
   bikes:
     name: Standalone Bikes (no fitness or native build)

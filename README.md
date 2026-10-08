@@ -1,8 +1,7 @@
 # VoxVelo
 
 VoxVelo is a family of three mods: **VoxVelo Bikes**, **VoxVelo Fitness Library**, and **VoxVelo Fitness**.
-Each mod has its own module, ID, namespace, jar and release project. This is a breaking change;
-backward compatibility and migration of older installations or saved-world mod data are not provided.
+Each mod has its own module, ID, namespace, jar and release project.
 
 <p align="center">
   <img src=".github/images/icon_bikes.png" alt="VoxVelo Bikes icon" width="144">
@@ -71,10 +70,10 @@ feedback and recording samples only when an adapter supports the local player's 
 install all three jars from the same release. Bikes and the library do not depend on each other. The library is
 an explicit, separately installed dependency of Fitness, not bundled inside its jar.
 
-There is no standalone mod named `voxvelo` or `voxel_fitness`. Modrinth publishing declares
-both required dependencies on the VoxVelo Fitness entry so compatible launchers can resolve them.
+The VoxVelo Fitness entry on Modrinth declares both required dependencies so compatible launchers can
+resolve them.
 
-Developers: see the [vehicle integration API](docs/fitness-api.md) and the optional
+Developers: the vehicle integration API is `dev.michidk.voxvelo.fitnesslib.api`; see the optional
 [boat example](examples/fitness-boat/src/main/java/dev/michidk/example/BoatFitness.java).
 
 ## Installation
@@ -111,8 +110,6 @@ need their own mod's multiplayer support; the fitness API does not prescribe a n
 Keys are rebindable under *Controls > VoxVelo Bicycle* and *Fitness*. Sneak-use a bike with an empty hand to pick it up.
 Holding the pedal key produces 200 W of virtual power (adjustable in `B` > *Keyboard...*).
 
-Older identifiers, item aliases and configuration migrations are not supported.
-
 ## Bikes
 
 | | Road | Gravel | Mountain |
@@ -127,7 +124,7 @@ Older identifiers, item aliases and configuration migrations are not supported.
 
 At 200 W on flat stone the three cruise at roughly 34, 32 and 28 km/h; on sand 12, 21 and 21 km/h.
 
-- **Crafting:** a frame (race, gravel or mountain), two wheels, handlebars, a saddle and a pedal set. A wheel is a
+- **Crafting:** a frame (road, gravel or mountain), two wheels, handlebars, a saddle and a pedal set. A wheel is a
   bare wheel plus a road, gravel or mountain tire; any wheel can be re-tired. See [Crafting](#crafting).
 - **Dyes** recolor a bike, a frame or the helmet like leather armor.
 - **Speed Boost I–III** (enchanting table or anvil) adds 10% speed per level. Dismantling a bike loses it.

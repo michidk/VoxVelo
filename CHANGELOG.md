@@ -2,10 +2,21 @@
 
 Generated from Conventional Commits with [git-cliff](https://git-cliff.org).
 All three VoxVelo mods share the same version and release notes.
-See [first-release features](docs/first-release-features.md) for the detailed initial feature overview.
 
 
 ## Unreleased
+
+### Documentation
+
+- Add AGENTS.md with module layout, build and conventions ([af3a6ef](https://github.com/michidk/VoxVelo/commit/af3a6ef51e3ef0989b0b6049ce1c061a8f0a43e1))
+
+### Maintenance
+
+- Update all GitHub Actions to latest stable releases ([c6691dd](https://github.com/michidk/VoxVelo/commit/c6691dd676d2c1a83dfd42f2720a45600502836d))
+
+- **models:** Flatten editable model sources ([a1fc000](https://github.com/michidk/VoxVelo/commit/a1fc000e1019491bbcc3eeb8326a3e8e930a363d))
+
+## 0.1.0
 
 ### Features
 
@@ -28,3 +39,5 @@ See [first-release features](docs/first-release-features.md) for the detailed in
 ### Maintenance
 
 - Integrate upstream settings and document refactor verification ([835110e](https://github.com/michidk/VoxVelo/commit/835110e67799af6fcf2a577a2a5bed7e5053fc1b))
+
+- Generate shared release notes with git-cliff actions ([0312ca2](https://github.com/michidk/VoxVelo/commit/0312ca26141d07bd014417c9d6b8b09185c0c6e8))
