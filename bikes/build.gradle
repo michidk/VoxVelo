@@ -1,0 +1,111 @@
+plugins {
+	id 'net.fabricmc.fabric-loom' version "${loom_version}"
+}
+
+// Bikes owns the bike sources and resources; fitness compiles against it as a separate add-on.
+version = project.mod_version
+group = project.maven_group
+
+base {
+	archivesName = "${project.archives_base_name}-bikes"
+}
+
+repositories {
+	exclusiveContent {
+		forRepository {
+			maven {
+				name = "GeckoLib"
+				url = "https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/"
+			}
+		}
+		filter {
+			includeGroup "com.geckolib"
+		}
+	}
+}
+
+loom {
+	splitEnvironmentSourceSets()
+
+	mods {
+		"voxvelo" {
+			sourceSet sourceSets.main
+			sourceSet sourceSets.client
+		}
+	}
+}
+
+sourceSets {
+	main {
+		java {
+			setSrcDirs(['../src/main/java'])
+		}
+		resources {
+			setSrcDirs(['../src/main/resources'])
+		}
+	}
+	client {
+		java {
+			setSrcDirs(['../src/client/java'])
+		}
+		resources {
+			setSrcDirs(['../src/client/resources'])
+		}
+	}
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+	implementation "com.geckolib:geckolib-fabric-${project.minecraft_version}:${project.geckolib_version}"
+}
+
+processResources {
+	def modVersion = project.version
+	inputs.property "version", modVersion
+
+	from('src/main/metadata')
+
+	filesMatching("fabric.mod.json") {
+		expand "version": modVersion
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 25
+	// Library class files, Minecraft-style constructors and control-flow exceptions only produce noise here.
+	it.options.compilerArgs += ['-Xlint:all', '-Xlint:-classfile', '-Xlint:-this-escape', '-Xlint:-serial', '-Werror']
+}
+
+java {
+	withSourcesJar()
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
+}
+
+jar {
+	from("../LICENSE") {
+		rename { "${it}_voxvelo" }
+	}
+}
+
+// Dev clients start muted: make sure the master volume is 0 in this project's run directory before launching.
+def devOptions = layout.projectDirectory.file('run/options.txt').asFile
+tasks.matching { it.name == 'runClient' }.configureEach {
+	doFirst {
+		def lines = devOptions.exists() ? devOptions.readLines() : []
+		lines = lines.findAll { !it.startsWith('soundCategory_master:') }
+		lines << 'soundCategory_master:0.0'
+		devOptions.parentFile.mkdirs()
+		devOptions.text = lines.join('\n') + '\n'
+	}
+}
+
+// A bare "runClient" or "runServer" runs that task in every project, which would start the bikes game next to the
+// fitness one. The bikes runs are skipped then; ask for them explicitly as ":bikes:runClient" / ":bikes:runServer".
+tasks.matching { it.name == 'runClient' || it.name == 'runServer' }.configureEach {
+	if (gradle.startParameter.taskNames.any { it == 'runClient' || it == 'runServer' }) {
+		enabled = false
+	}
+}

@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:crafting_dye",
+  "category": "equipment",
+  "dye": "#minecraft:dyes",
+  "group": "dyed_bike_frames",
+  "result": {
+    "id": "voxvelo:gravel_bike_frame"
+  },
+  "target": "voxvelo:gravel_bike_frame"
+}

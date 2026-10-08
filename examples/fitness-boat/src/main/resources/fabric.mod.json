@@ -1,0 +1,9 @@
+{
+ "schemaVersion": 1,
+ "id": "fitness_example",
+ "version": "1.0.0",
+ "name": "Fitness Boat Example",
+ "environment": "client",
+ "entrypoints": { "client": ["dev.michidk.example.BoatFitness"] },
+ "depends": { "voxel_fitness": "*", "fabricloader": ">=0.19.5", "minecraft": "~26.3", "java": ">=25" }
+}

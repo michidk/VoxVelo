@@ -1,0 +1,35 @@
+{
+	"schemaVersion": 1,
+	"id": "voxvelo_fitness",
+	"version": "${version}",
+	"name": "VoxVelo Fitness",
+	"description": "Bicycle adapter for Voxel Fitness: VoxVelo controls, terrain, road following and multiplayer rider stats.",
+	"authors": [
+		"Michael Lohr"
+	],
+	"contact": {
+		"homepage": "https://github.com/michidk/VoxVelo",
+		"sources": "https://github.com/michidk/VoxVelo",
+		"issues": "https://github.com/michidk/VoxVelo/issues"
+	},
+	"license": "MIT",
+	"icon": "assets/voxvelo_fitness/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"voxvelo-extension": [
+			"dev.michidk.voxvelo.fitness.FitnessExtension"
+		],
+		"voxvelo-client-extension": [
+			"dev.michidk.voxvelo.client.fitness.FitnessClientExtension"
+		]
+	},
+	"depends": {
+		"voxvelo": "=${version}",
+		"fabricloader": ">=0.19.5",
+		"minecraft": "~26.3",
+		"java": ">=25",
+		"fabric-api": ">=0.161.0",
+		"geckolib": ">=5.5.7 <6",
+		"voxel_fitness": "=${version}"
+	}
+}

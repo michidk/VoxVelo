@@ -1,0 +1,15 @@
+pluginManagement {
+	repositories {
+		maven {
+			name = 'Fabric'
+			url = 'https://maven.fabricmc.net/'
+		}
+		mavenCentral()
+		gradlePluginPortal()
+	}
+}
+
+rootProject.name = 'voxvelo'
+
+// Bikes and generic fitness are independent. The root project is their bicycle adapter.
+include 'bikes', 'fitness'

@@ -1,0 +1,94 @@
+plugins {
+	id 'net.fabricmc.fabric-loom' version "${loom_version}"
+}
+version = project.mod_version
+group = project.maven_group
+base { archivesName = 'voxel-fitness' }
+loom {
+	splitEnvironmentSourceSets()
+	mods {
+		"voxel_fitness" { sourceSet sourceSets.main; sourceSet sourceSets.client }
+	}
+}
+// The Bluetooth library (native/ble, Rust over btleplug) goes into the jar as natives/<os>-<arch>/<file>.
+// -PbleNatives=<dir> packs prebuilt libraries in that layout (CI builds every platform); otherwise cargo builds the one
+// for this machine. Without cargo the jar has no Bluetooth library and the mod reports Bluetooth as unavailable.
+def bleHost = {
+	def os = System.getProperty('os.name').toLowerCase(Locale.ROOT)
+	def arch = System.getProperty('os.arch').toLowerCase(Locale.ROOT) in ['aarch64', 'arm64'] ? 'aarch64' : 'x86_64'
+	if (os.contains('win')) return [platform: "windows-${arch}", file: 'voxvelo_ble.dll']
+	if (os.contains('mac')) return [platform: "macos-${arch}", file: 'libvoxvelo_ble.dylib']
+	return [platform: "linux-${arch}", file: 'libvoxvelo_ble.so']
+}()
+def prebuiltBleNatives = providers.gradleProperty('bleNatives')
+def nativeSourceRoot = rootProject.layout.projectDirectory
+def cargoAvailable = {
+	try {
+		return ['cargo', '--version'].execute().waitFor() == 0
+	} catch (IOException ignored) {
+		return false
+	}
+}
+def cargoBuildBle = tasks.register('cargoBuildBle', Exec) {
+	description = 'Builds the Bluetooth library for this machine.'
+	workingDir = layout.projectDirectory.dir('../native/ble')
+	commandLine 'cargo', 'build', '--release'
+	inputs.files(fileTree('../native/ble') { exclude 'target/**' })
+	outputs.file(layout.projectDirectory.file("../native/ble/target/release/${bleHost.file}"))
+	onlyIf('cargo is installed') { task ->
+		if (cargoAvailable()) return true
+		task.logger.warn('cargo not found: the jar will have no Bluetooth library. Install Rust or pass -PbleNatives=<dir>.')
+		return false
+	}
+}
+def bleNatives = tasks.register('bleNatives', Sync) {
+	into layout.buildDirectory.dir('generated/bleNatives/natives')
+	if (prebuiltBleNatives.present) {
+		from(prebuiltBleNatives.map { nativeSourceRoot.dir(it) })
+	} else {
+		from(cargoBuildBle) { into bleHost.platform }
+	}
+}
+processClientResources { from(bleNatives) { into 'natives' } }
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+	implementation "org.jmdns:jmdns:${project.jmdns_version}"
+	include("org.jmdns:jmdns:${project.jmdns_version}") { transitive = false }
+}
+processResources {
+	def modVersion = project.version
+	inputs.property "version", modVersion
+	filesMatching("fabric.mod.json") { expand "version": modVersion }
+}
+tasks.withType(JavaCompile).configureEach {
+	options.release = 25
+	options.compilerArgs += ['-Xlint:all', '-Xlint:-classfile', '-Xlint:-this-escape', '-Xlint:-serial', '-Werror']
+}
+java {
+	withSourcesJar()
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
+}
+jar { from('../LICENSE') { rename { "${it}_voxel_fitness" } } }
+// Use :fitness:runClient explicitly for the independent fitness client.
+tasks.matching { it.name == 'runClient' || it.name == 'runServer' }.configureEach {
+	if (gradle.startParameter.taskNames.any { it == 'runClient' || it == 'runServer' }) enabled = false
+}
+
+sourceSets {
+	fitnessExample {
+		java.setSrcDirs(['../examples/fitness-boat/src/main/java'])
+		resources.setSrcDirs(['../examples/fitness-boat/src/main/resources'])
+		compileClasspath = sourceSets.client.compileClasspath + sourceSets.client.output
+	}
+}
+tasks.register('fitnessExampleJar', Jar) {
+	dependsOn fitnessExampleClasses
+	archiveFileName = 'fitness-boat-example.jar'
+	destinationDirectory = layout.buildDirectory.dir('examples')
+	from sourceSets.fitnessExample.output
+}
+tasks.named('check') { dependsOn 'fitnessExampleJar' }

@@ -1,0 +1,3 @@
+# Link the C runtime statically on Windows so the library does not depend on an installed vcruntime140.dll.
+[target.'cfg(all(windows, target_env = "msvc"))']
+rustflags = ["-C", "target-feature=+crt-static"]

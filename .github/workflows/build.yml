@@ -1,0 +1,53 @@
+name: Build and verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  natives:
+    uses: ./.github/workflows/natives.yml
+
+  build:
+    needs: natives
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - name: Download Bluetooth natives
+        uses: actions/download-artifact@v4
+        with:
+          pattern: ble-*
+          merge-multiple: true
+          path: ble-natives
+      - name: Set up JDK 25
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Build and verify all three mods
+        run: >-
+          ./gradlew :build :bikes:build :fitness:build --no-daemon --console=plain
+          -PbleNatives="$PWD/ble-natives"
+          -PrequiredBleNatives=windows-x86_64,windows-aarch64,linux-x86_64,linux-aarch64,macos-x86_64,macos-aarch64
+      - name: Upload mod jars
+        uses: actions/upload-artifact@v4
+        with:
+          name: voxvelo-jars
+          path: |
+            build/libs/*.jar
+            bikes/build/libs/*.jar
+            fitness/build/libs/*.jar
+            !**/*-sources.jar
+          if-no-files-found: error

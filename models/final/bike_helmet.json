@@ -1,0 +1,35 @@
+{
+  "identifier": "geometry.bike_helmet",
+  "units_per_block": 16,
+  "forward": "-Z",
+  "mount_bone": "head",
+  "mount_pivot": [
+    0,
+    0,
+    0
+  ],
+  "reference_head_bounds": {
+    "min": [
+      -4,
+      0,
+      -4
+    ],
+    "max": [
+      4,
+      8,
+      4
+    ]
+  },
+  "reference_head_top": 8,
+  "texture_size": [
+    32,
+    32
+  ],
+  "shell_bone": "helmet_shell",
+  "untinted_bones": [
+    "helmet_trim",
+    "chin_straps",
+    "buckle"
+  ],
+  "note": "Head-local coordinates: align head pivot to the wearer head/neck pivot. Custom visual model only; armor slot registration and renderer binding belong to the integration."
+}

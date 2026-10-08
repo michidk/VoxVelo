@@ -1,0 +1,20 @@
+{
+  "type": "voxvelo:bike_assembly",
+  "category": "equipment",
+  "pattern": [
+    " H ",
+    "WFW",
+    " SP"
+  ],
+  "key": {
+    "H": "#voxvelo:handlebars",
+    "W": "voxvelo:bike_wheel",
+    "F": "voxvelo:gravel_bike_frame",
+    "S": "voxvelo:bike_saddle",
+    "P": "voxvelo:pedal_set"
+  },
+  "result": {
+    "id": "voxvelo:gravel_bike",
+    "count": 1
+  }
+}

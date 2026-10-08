@@ -1,0 +1,53 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.voxvelo.bicycle.pedal": {
+      "loop": true,
+      "animation_length": 1,
+      "bones": {
+        "crank": {
+          "rotation": {
+            "0.0": [
+              0,
+              0,
+              0
+            ],
+            "1.0": [
+              360,
+              0,
+              0
+            ]
+          }
+        },
+        "left_pedal": {
+          "rotation": {
+            "0.0": [
+              0,
+              0,
+              0
+            ],
+            "1.0": [
+              -360,
+              0,
+              0
+            ]
+          }
+        },
+        "right_pedal": {
+          "rotation": {
+            "0.0": [
+              0,
+              0,
+              0
+            ],
+            "1.0": [
+              -360,
+              0,
+              0
+            ]
+          }
+        }
+      }
+    }
+  }
+}

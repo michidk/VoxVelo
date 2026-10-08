@@ -1,0 +1,54 @@
+name: Bluetooth natives
+
+# Builds native/ble (the Bluetooth library over btleplug) for every platform the fitness jar supports. Each job
+# uploads an artifact "ble-<platform>" holding "<platform>/<library>"; download them all with the pattern "ble-*"
+# and merge-multiple into one directory to get the layout that -PbleNatives=<dir> expects.
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { platform: windows-x86_64, os: windows-2022, target: x86_64-pc-windows-msvc, file: voxvelo_ble.dll }
+          - { platform: windows-aarch64, os: windows-2022, target: aarch64-pc-windows-msvc, file: voxvelo_ble.dll }
+          # The oldest supported Ubuntu keeps the glibc requirement low, so the library loads on older distributions.
+          - { platform: linux-x86_64, os: ubuntu-22.04, target: x86_64-unknown-linux-gnu, file: libvoxvelo_ble.so }
+          - { platform: linux-aarch64, os: ubuntu-22.04-arm, target: aarch64-unknown-linux-gnu, file: libvoxvelo_ble.so }
+          - { platform: macos-x86_64, os: macos-14, target: x86_64-apple-darwin, file: libvoxvelo_ble.dylib }
+          - { platform: macos-aarch64, os: macos-14, target: aarch64-apple-darwin, file: libvoxvelo_ble.dylib }
+    env:
+      MACOSX_DEPLOYMENT_TARGET: '11.0'
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install D-Bus development files
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libdbus-1-dev pkg-config
+      - name: Set up Rust
+        run: rustup toolchain install stable --profile minimal --target ${{ matrix.target }} && rustup default stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: native/ble
+          key: ${{ matrix.target }}
+      - name: Build
+        working-directory: native/ble
+        run: cargo build --release --locked --target ${{ matrix.target }}
+      - name: Stage
+        shell: bash
+        run: |
+          mkdir -p "natives/${{ matrix.platform }}"
+          cp "native/ble/target/${{ matrix.target }}/release/${{ matrix.file }}" "natives/${{ matrix.platform }}/"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ble-${{ matrix.platform }}
+          path: natives/
+          if-no-files-found: error

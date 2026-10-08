@@ -1,0 +1,22 @@
+[package]
+name = "voxvelo_ble"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+description = "Bluetooth LE for VoxVelo: a small C ABI over btleplug, called from Java through the FFM API"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+btleplug = "0.13"
+futures = "0.3"
+tokio = { version = "1", features = ["rt-multi-thread", "sync", "time"] }
+uuid = "1"
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+strip = true

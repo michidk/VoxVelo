@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "LLL",
+    " I "
+  ],
+  "key": {
+    "L": "minecraft:leather",
+    "I": "minecraft:iron_nugget"
+  },
+  "result": {
+    "id": "voxvelo:bike_saddle",
+    "count": 1
+  }
+}
