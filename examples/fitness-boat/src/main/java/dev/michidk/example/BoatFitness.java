@@ -1,9 +1,9 @@
 package dev.michidk.example;
 
-import dev.michidk.voxelfitness.api.Fitness;
-import dev.michidk.voxelfitness.api.FitnessControls;
-import dev.michidk.voxelfitness.api.VehicleAdapter;
-import dev.michidk.voxelfitness.api.VehicleTelemetry;
+import dev.michidk.voxvelo.fitnesslib.api.Fitness;
+import dev.michidk.voxvelo.fitnesslib.api.FitnessControls;
+import dev.michidk.voxvelo.fitnesslib.api.VehicleAdapter;
+import dev.michidk.voxvelo.fitnesslib.api.VehicleTelemetry;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.minecraft.client.player.LocalPlayer;

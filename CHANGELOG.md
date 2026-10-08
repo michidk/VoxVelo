@@ -7,13 +7,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [0.1.0] - Unreleased
 
-First public release, for Minecraft 26.3 (Fabric). **VoxVelo** (`voxvelo`) is the bikes bike mod;
-**VoxVelo Fitness** (`voxvelo_fitness`) is an optional add-on requiring the matching bikes version.
+First public release, for Minecraft 26.3 (Fabric). **VoxVelo Bikes** (`voxvelo_bikes`) provides standalone
+bicycles. **VoxVelo Fitness Library** (`voxvelo_fitness_lib`) provides vehicle-independent fitness services.
+**VoxVelo Fitness** (`voxvelo_fitness`) requires matching versions of both. Each mod has its own jar and
+Modrinth/CurseForge project. Old mod IDs, namespaces and configuration paths are not migrated.
 
 ### Added
 
-- Road bike and road bike frame use `voxvelo:road_bike` and `voxvelo:road_bike_frame`; legacy `race_bike`
-  and `race_bike_frame` inventory items still load through registry aliases.
+- Road bike and road bike frame use `voxvelo_bikes:road_bike` and `voxvelo_bikes:road_bike_frame`.
+- Separate `bikes`, `fitness-lib` and `fitness` modules, with independent Bikes and library compilation.
+- CI verifies all three jars and publishes Fitness with both required project dependencies.
 
 #### Bikes mod
 
@@ -31,8 +34,9 @@ First public release, for Minecraft 26.3 (Fabric). **VoxVelo** (`voxvelo`) is th
   damage.
 - Speed Boost I–III enchantment for assembled bikes.
 - Keyboard riding with rebindable keys, rider mass and personal speed limit, and a settings hub (`B`) linked from
-  the pause and options menus.
-- `/voxvelo track` generator for seeded, terrain-following loop roads with slab slopes, lit borders, tunnels,
+  the pause and options menus. Settings pages use the vanilla options layout, grouped under headings, and scroll
+  when the window is small.
+- `/voxvelo_bikes track` generator for seeded, terrain-following loop roads with slab slopes, lit borders, tunnels,
   bridges, water and lava crossings, tree removal, progress boss bar, `status` and `cancel`.
 - Distance Cycled and Time on a Bicycle statistics.
 
@@ -48,5 +52,7 @@ First public release, for Minecraft 26.3 (Fabric). **VoxVelo** (`voxvelo`) is th
 - Road follow (hands-free steering) with configurable road blocks and LEFT / RIGHT junction prompts.
 - Riding HUD, heart rate graph and a server-wide rider stats overlay with sharing controls.
 - Ride recording with summaries, FIT export (optionally with GPS), and ride maps drawn by the server.
+- Fitness settings hub (`F8`) listing the same pages as the bike settings; vehicle mods add pages with
+  `Fitness.addSettingsPage`.
 
 [0.1.0]: https://github.com/michidk/VoxVelo/releases/tag/v0.1.0

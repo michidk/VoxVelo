@@ -11,5 +11,5 @@ pluginManagement {
 
 rootProject.name = 'voxvelo'
 
-// Bikes and generic fitness are independent. The root project is their bicycle adapter.
-include 'bikes', 'fitness'
+// Bikes and Fitness Library are independent; Fitness integrates the two.
+include 'bikes', 'fitness-lib', 'fitness'

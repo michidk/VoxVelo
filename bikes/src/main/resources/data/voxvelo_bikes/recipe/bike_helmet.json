@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "NWN",
+    "S S"
+  ],
+  "key": {
+    "N": "minecraft:iron_nugget",
+    "W": "#minecraft:wool",
+    "S": "minecraft:string"
+  },
+  "result": {
+    "id": "voxvelo_bikes:bike_helmet",
+    "count": 1
+  }
+}

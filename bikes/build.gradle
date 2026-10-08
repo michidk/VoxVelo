@@ -28,28 +28,9 @@ loom {
 	splitEnvironmentSourceSets()
 
 	mods {
-		"voxvelo" {
+		"voxvelo_bikes" {
 			sourceSet sourceSets.main
 			sourceSet sourceSets.client
-		}
-	}
-}
-
-sourceSets {
-	main {
-		java {
-			setSrcDirs(['../src/main/java'])
-		}
-		resources {
-			setSrcDirs(['../src/main/resources'])
-		}
-	}
-	client {
-		java {
-			setSrcDirs(['../src/client/java'])
-		}
-		resources {
-			setSrcDirs(['../src/client/resources'])
 		}
 	}
 }
@@ -64,8 +45,6 @@ dependencies {
 processResources {
 	def modVersion = project.version
 	inputs.property "version", modVersion
-
-	from('src/main/metadata')
 
 	filesMatching("fabric.mod.json") {
 		expand "version": modVersion
@@ -86,7 +65,7 @@ java {
 
 jar {
 	from("../LICENSE") {
-		rename { "${it}_voxvelo" }
+			rename { "${it}_voxvelo_bikes" }
 	}
 }
 

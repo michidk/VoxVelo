@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:crafting_dye",
+  "category": "equipment",
+  "dye": "#minecraft:dyes",
+  "group": "dyed_bikes",
+  "result": {
+    "id": "voxvelo_bikes:mountain_bike"
+  },
+  "target": "voxvelo_bikes:mountain_bike"
+}

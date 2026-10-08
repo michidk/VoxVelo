@@ -1,68 +1,58 @@
 plugins {
 	id 'net.fabricmc.fabric-loom' version "${loom_version}"
 }
+
 version = project.mod_version
 group = project.maven_group
-base { archivesName = 'voxel-fitness' }
+base { archivesName = 'voxvelo-fitness' }
+
+evaluationDependsOn(':bikes')
+evaluationDependsOn(':fitness-lib')
+
+repositories {
+	exclusiveContent {
+		forRepository {
+			maven { url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/' }
+		}
+		filter { includeGroup 'com.geckolib' }
+	}
+}
+
 loom {
 	splitEnvironmentSourceSets()
 	mods {
-		"voxel_fitness" { sourceSet sourceSets.main; sourceSet sourceSets.client }
+		'voxvelo_bikes' {
+			sourceSet project(':bikes').sourceSets.main
+			sourceSet project(':bikes').sourceSets.client
+		}
+		'voxvelo_fitness_lib' {
+			sourceSet project(':fitness-lib').sourceSets.main
+			sourceSet project(':fitness-lib').sourceSets.client
+		}
+		'voxvelo_fitness' {
+			sourceSet sourceSets.main
+			sourceSet sourceSets.client
+		}
 	}
 }
-// The Bluetooth library (native/ble, Rust over btleplug) goes into the jar as natives/<os>-<arch>/<file>.
-// -PbleNatives=<dir> packs prebuilt libraries in that layout (CI builds every platform); otherwise cargo builds the one
-// for this machine. Without cargo the jar has no Bluetooth library and the mod reports Bluetooth as unavailable.
-def bleHost = {
-	def os = System.getProperty('os.name').toLowerCase(Locale.ROOT)
-	def arch = System.getProperty('os.arch').toLowerCase(Locale.ROOT) in ['aarch64', 'arm64'] ? 'aarch64' : 'x86_64'
-	if (os.contains('win')) return [platform: "windows-${arch}", file: 'voxvelo_ble.dll']
-	if (os.contains('mac')) return [platform: "macos-${arch}", file: 'libvoxvelo_ble.dylib']
-	return [platform: "linux-${arch}", file: 'libvoxvelo_ble.so']
-}()
-def prebuiltBleNatives = providers.gradleProperty('bleNatives')
-def nativeSourceRoot = rootProject.layout.projectDirectory
-def cargoAvailable = {
-	try {
-		return ['cargo', '--version'].execute().waitFor() == 0
-	} catch (IOException ignored) {
-		return false
-	}
-}
-def cargoBuildBle = tasks.register('cargoBuildBle', Exec) {
-	description = 'Builds the Bluetooth library for this machine.'
-	workingDir = layout.projectDirectory.dir('../native/ble')
-	commandLine 'cargo', 'build', '--release'
-	inputs.files(fileTree('../native/ble') { exclude 'target/**' })
-	outputs.file(layout.projectDirectory.file("../native/ble/target/release/${bleHost.file}"))
-	onlyIf('cargo is installed') { task ->
-		if (cargoAvailable()) return true
-		task.logger.warn('cargo not found: the jar will have no Bluetooth library. Install Rust or pass -PbleNatives=<dir>.')
-		return false
-	}
-}
-def bleNatives = tasks.register('bleNatives', Sync) {
-	into layout.buildDirectory.dir('generated/bleNatives/natives')
-	if (prebuiltBleNatives.present) {
-		from(prebuiltBleNatives.map { nativeSourceRoot.dir(it) })
-	} else {
-		from(cargoBuildBle) { into bleHost.platform }
-	}
-}
-processClientResources { from(bleNatives) { into 'natives' } }
 
 dependencies {
+	implementation project(':bikes')
+	implementation project(':fitness-lib')
+	clientImplementation rootProject.project(':bikes').sourceSets.client.output
+	clientImplementation rootProject.project(':fitness-lib').sourceSets.client.output
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
-	implementation "org.jmdns:jmdns:${project.jmdns_version}"
-	include("org.jmdns:jmdns:${project.jmdns_version}") { transitive = false }
+	implementation "com.geckolib:geckolib-fabric-${project.minecraft_version}:${project.geckolib_version}"
 }
+
 processResources {
 	def modVersion = project.version
-	inputs.property "version", modVersion
-	filesMatching("fabric.mod.json") { expand "version": modVersion }
+	inputs.property 'version', modVersion
+	filesMatching('fabric.mod.json') { expand 'version': modVersion }
 }
+
 tasks.withType(JavaCompile).configureEach {
 	options.release = 25
 	options.compilerArgs += ['-Xlint:all', '-Xlint:-classfile', '-Xlint:-this-escape', '-Xlint:-serial', '-Werror']
@@ -72,23 +62,158 @@ java {
 	sourceCompatibility = JavaVersion.VERSION_25
 	targetCompatibility = JavaVersion.VERSION_25
 }
-jar { from('../LICENSE') { rename { "${it}_voxel_fitness" } } }
-// Use :fitness:runClient explicitly for the independent fitness client.
-tasks.matching { it.name == 'runClient' || it.name == 'runServer' }.configureEach {
-	if (gradle.startParameter.taskNames.any { it == 'runClient' || it == 'runServer' }) enabled = false
-}
+jar { from('../LICENSE') { rename { "${it}_voxvelo_fitness" } } }
 
 sourceSets {
-	fitnessExample {
-		java.setSrcDirs(['../examples/fitness-boat/src/main/java'])
-		resources.setSrcDirs(['../examples/fitness-boat/src/main/resources'])
-		compileClasspath = sourceSets.client.compileClasspath + sourceSets.client.output
+	verification {
+		java.setSrcDirs(['../src/verification/java'])
+		compileClasspath += sourceSets.main.output + sourceSets.client.output + sourceSets.client.compileClasspath
+		runtimeClasspath += output + compileClasspath + sourceSets.client.runtimeClasspath
 	}
 }
-tasks.register('fitnessExampleJar', Jar) {
-	dependsOn fitnessExampleClasses
-	archiveFileName = 'fitness-boat-example.jar'
-	destinationDirectory = layout.buildDirectory.dir('examples')
-	from sourceSets.fitnessExample.output
+
+tasks.register('verifyVirtualShifting', JavaExec) {
+	dependsOn verificationClasses
+	classpath = sourceSets.verification.runtimeClasspath
+	mainClass = 'dev.michidk.voxvelo.fitnesslib.client.ftms.VirtualShiftingChecks'
 }
-tasks.named('check') { dependsOn 'fitnessExampleJar' }
+tasks.named('check') { dependsOn 'verifyVirtualShifting' }
+
+tasks.register('verifyTracks', JavaExec) {
+	dependsOn verificationClasses
+	classpath = sourceSets.verification.runtimeClasspath
+	mainClass = 'dev.michidk.voxvelo.bikes.track.TrackChecks'
+}
+tasks.named('check') { dependsOn 'verifyTracks' }
+
+tasks.register('verifyBikeDurability', JavaExec) {
+	dependsOn verificationClasses
+	classpath = sourceSets.verification.runtimeClasspath
+	mainClass = 'dev.michidk.voxvelo.bikes.bike.BikeDurabilityChecks'
+}
+tasks.named('check') { dependsOn 'verifyBikeDurability' }
+
+tasks.register('verifyBikeSpeedBoost', JavaExec) {
+	dependsOn verificationClasses
+	classpath = sourceSets.verification.runtimeClasspath
+	mainClass = 'dev.michidk.voxvelo.bikes.bike.BikeSpeedBoostChecks'
+}
+tasks.named('check') { dependsOn 'verifyBikeSpeedBoost' }
+
+tasks.register('verifyBikeRideDistance', JavaExec) {
+	dependsOn verificationClasses
+	classpath = sourceSets.verification.runtimeClasspath
+	mainClass = 'dev.michidk.voxvelo.bikes.bike.BikeRideDistanceChecks'
+}
+tasks.named('check') { dependsOn 'verifyBikeRideDistance' }
+
+tasks.register('verifyPowerMeter', JavaExec) {
+	dependsOn verificationClasses
+	classpath = sourceSets.verification.runtimeClasspath
+	mainClass = 'dev.michidk.voxvelo.fitnesslib.client.powermeter.PowerMeterChecks'
+}
+tasks.named('check') { dependsOn 'verifyPowerMeter' }
+
+tasks.register('verifyInput', JavaExec) {
+	dependsOn verificationClasses
+	classpath = sourceSets.verification.runtimeClasspath
+	mainClass = 'dev.michidk.voxvelo.bikes.client.input.InputManagerChecks'
+}
+tasks.named('check') { dependsOn 'verifyInput' }
+
+tasks.register('verifyHeartRate', JavaExec) {
+	dependsOn verificationClasses
+	classpath = sourceSets.verification.runtimeClasspath
+	mainClass = 'dev.michidk.voxvelo.fitnesslib.client.heartrate.HeartRateChecks'
+}
+tasks.named('check') { dependsOn 'verifyHeartRate' }
+
+tasks.register('verifyBikeRiderState', JavaExec) {
+	dependsOn verificationClasses
+	classpath = sourceSets.verification.runtimeClasspath
+	mainClass = 'dev.michidk.voxvelo.bikes.bike.BikeRiderStateChecks'
+}
+tasks.named('check') { dependsOn 'verifyBikeRiderState' }
+
+tasks.register('verifyBikeHitboxes', JavaExec) {
+	dependsOn verificationClasses
+	classpath = sourceSets.verification.runtimeClasspath
+	mainClass = 'dev.michidk.voxvelo.bikes.bike.BikeHitboxLayoutChecks'
+}
+tasks.named('check') { dependsOn 'verifyBikeHitboxes' }
+
+tasks.register('verifyBikeModels', JavaExec) {
+	dependsOn verificationClasses
+	classpath = sourceSets.verification.runtimeClasspath
+	mainClass = 'dev.michidk.voxvelo.bikes.client.render.BikeModelCompositionChecks'
+	workingDir = rootProject.layout.projectDirectory
+}
+tasks.named('check') { dependsOn 'verifyBikeModels' }
+
+tasks.register('verifyRides', JavaExec) {
+	dependsOn verificationClasses
+	classpath = sourceSets.verification.runtimeClasspath
+	mainClass = 'dev.michidk.voxvelo.fitnesslib.client.ride.RideChecks'
+	if (project.hasProperty('sampleFit')) {
+		args project.property('sampleFit')
+	}
+}
+tasks.named('check') { dependsOn 'verifyRides' }
+
+tasks.register('verifyConnections', JavaExec) {
+	dependsOn verificationClasses
+	classpath = sourceSets.verification.runtimeClasspath
+	mainClass = 'dev.michidk.voxvelo.fitnesslib.client.bluetooth.ConnectionChecks'
+	// Minecraft's logging configuration writes logs relative to the working directory.
+	workingDir = layout.buildDirectory.get().asFile
+}
+tasks.named('check') { dependsOn 'verifyConnections' }
+
+tasks.register('verifyObcMenus', JavaExec) {
+	dependsOn verificationClasses
+	classpath = sourceSets.verification.runtimeClasspath
+	mainClass = 'dev.michidk.voxvelo.fitnesslib.client.obc.ObcMenuChecks'
+	workingDir = layout.buildDirectory.get().asFile
+}
+tasks.named('check') { dependsOn 'verifyObcMenus' }
+
+tasks.register('verifyRideSession', JavaExec) {
+	dependsOn verificationClasses
+	classpath = sourceSets.verification.runtimeClasspath
+	mainClass = 'dev.michidk.voxvelo.fitnesslib.client.ride.RideSessionChecks'
+}
+tasks.register('verifyRoads', JavaExec) {
+	dependsOn verificationClasses
+	classpath = sourceSets.verification.runtimeClasspath
+	mainClass = 'dev.michidk.voxvelo.fitness.client.road.RoadChecks'
+}
+tasks.named('check') { dependsOn 'verifyRideSession', 'verifyRoads' }
+
+tasks.register('verifyBuildLayout', JavaExec) {
+	dependsOn verificationClasses, tasks.named('jar'), ':bikes:jar', ':fitness-lib:jar'
+	classpath = sourceSets.verification.runtimeClasspath
+	mainClass = 'dev.michidk.voxvelo.bikes.packaging.BuildLayoutChecks'
+	workingDir = rootProject.layout.projectDirectory
+	args project(':fitness').layout.buildDirectory.file("libs/voxvelo-fitness-${project.mod_version}.jar").get().asFile,
+		project(':bikes').layout.buildDirectory.file("libs/${project.archives_base_name}-bikes-${project.mod_version}.jar").get().asFile,
+		project(':fitness-lib').layout.buildDirectory.file("libs/voxvelo-fitness-lib-${project.mod_version}.jar").get().asFile
+	systemProperty 'voxvelo_fitness_lib.requiredNatives', providers.gradleProperty('requiredBleNatives').getOrElse('')
+}
+tasks.named('check') { dependsOn 'verifyBuildLayout' }
+
+tasks.register('verifyRecipeBook', JavaExec) {
+	dependsOn verificationClasses
+	classpath = sourceSets.verification.runtimeClasspath
+	mainClass = 'dev.michidk.voxvelo.bikes.recipe.RecipeBookChecks'
+	workingDir = rootProject.layout.projectDirectory
+}
+tasks.named('check') { dependsOn 'verifyRecipeBook' }
+
+tasks.register('verifyFitnessApi', JavaExec) {
+	dependsOn verificationClasses
+	classpath = sourceSets.verification.runtimeClasspath
+	mainClass = 'dev.michidk.voxvelo.fitnesslib.FitnessApiChecks'
+}
+tasks.named('check') { dependsOn 'verifyFitnessApi' }
+
+tasks.named('check') { dependsOn ':fitness-lib:fitnessExampleJar' }

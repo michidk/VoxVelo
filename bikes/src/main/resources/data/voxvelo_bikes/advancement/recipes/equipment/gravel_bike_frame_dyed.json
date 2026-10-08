@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_the_recipe": {
+      "conditions": {
+        "recipes": "voxvelo_bikes:gravel_bike_frame_dyed"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    },
+    "has_gravel_bike_frame": {
+      "conditions": {
+        "items": [
+          {
+            "items": "voxvelo_bikes:gravel_bike_frame"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_gravel_bike_frame"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "voxvelo_bikes:gravel_bike_frame_dyed"
+    ]
+  }
+}

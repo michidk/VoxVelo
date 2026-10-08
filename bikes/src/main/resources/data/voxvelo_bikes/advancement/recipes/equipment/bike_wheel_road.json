@@ -1,0 +1,35 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_the_recipe": {
+      "conditions": {
+        "recipes": "voxvelo_bikes:bike_wheel_road"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    },
+    "has_ingredient": {
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "voxvelo_bikes:bare_wheel",
+              "voxvelo_bikes:road_tire"
+            ]
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_ingredient"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "voxvelo_bikes:bike_wheel_road"
+    ]
+  }
+}

@@ -1,5 +1,7 @@
 # Generic fitness verification — 2026-10-08
 
+Historical verification before the three-module path and mod-ID refactor. Commands and paths below refer to that earlier tree, not the current layout.
+
 Validated with Java 25, Minecraft 26.3 / Fabric 0.19.5 in Docker, Xvfb and Mesa software Vulkan.
 The launches used packaged jars, excluded Gradle source outputs and external JmDNS, and loaded the bundled
 nested JmDNS jar. Generic-only and boat launches used fitness's own Loom Minecraft jars without GeckoLib's

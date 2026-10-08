@@ -1,5 +1,5 @@
 // Writes the licence texts of every Rust crate compiled into the Bluetooth library, for all shipped platforms, to
-// src/fitness/main/resources/META-INF/licenses/voxvelo_ble-THIRD-PARTY.txt. Run after changing dependencies:
+// fitness-lib/src/main/resources/META-INF/licenses/voxvelo_ble-THIRD-PARTY.txt. Run after changing dependencies:
 //   node native/ble/licenses.mjs
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -8,7 +8,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const output = join(here, '../../src/fitness/main/resources/META-INF/licenses/voxvelo_ble-THIRD-PARTY.txt');
+const output = join(here, '../../fitness-lib/src/main/resources/META-INF/licenses/voxvelo_ble-THIRD-PARTY.txt');
 const targets = [
 	'x86_64-pc-windows-msvc',
 	'aarch64-pc-windows-msvc',

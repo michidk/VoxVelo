@@ -1,0 +1,9 @@
+Use case: logo-brand
+Asset type: square Modrinth project icon for VoxVelo Fitness Library.
+Input image 1: existing VoxVelo Bikes icon, reference for pixel art style, sky, grass/dirt ground and colors only.
+Input image 2: existing VoxVelo Fitness icon, reference for pixel art style and heart/power motifs only.
+Primary request: create a new sibling icon for the vehicle-independent FITNESS LIBRARY, matching both reference icons extremely closely in art style. Replace the bicycle with a compact black and dark gray fitness sensor/connection hub, sitting on the same green grass and brown Minecraft dirt platform. The hub is a friendly blocky rectangular device, with a small cyan screen showing a crisp white ECG heartbeat line, a few dark hardware details, and a bright cyan wireless signal symbol floating just above it. Keep the red pixel-art heart in the upper left and yellow pixel-art lightning bolt in the upper right, matching image 2. This represents Bluetooth, fitness sensors, heart rate, power and reusable connections rather than a bicycle mod.
+Style/medium: crisp detailed Minecraft-inspired pixel art, same block pixel size and restrained shading as references.
+Scene/backdrop: uniform bright blue sky and one grass/dirt ground stripe at the bottom, matching the references.
+Composition/framing: one bold central fitness connection hub, heart and bolt balanced in the top corners, legible at 64 by 64 pixels; square full bleed icon.
+Constraints: no bicycle, no rider, no text, no letters, no watermark, no border, no photorealism, no gradients or soft outlines. Preserve the shared sky blue, grass green, earthy browns, charcoal black, red heart and yellow bolt palette.

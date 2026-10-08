@@ -1,9 +1,9 @@
 # Vehicle integration API (v1)
 
-Voxel Fitness is a Fabric client service for Minecraft 26.3 / Java 25. Its mod ID is `voxel_fitness`; its jar is
-`voxel-fitness-<version>.jar`. Depend on the matching version in `fabric.mod.json`. It has no VoxVelo or
-GeckoLib dependency. Public integration types live in `dev.michidk.voxelfitness.api`; the retained
-`dev.michidk.voxvelo.client.*` service packages are internal, not a vehicle integration API.
+VoxVelo Fitness Library is a Fabric client service for Minecraft 26.3 / Java 25. Its mod ID is `voxvelo_fitness_lib`; its jar is
+`voxvelo-fitness-lib-<version>.jar`. Depend on the matching version in `fabric.mod.json`. It has no Bikes,
+VoxVelo Fitness or GeckoLib dependency. Public integration types live in `dev.michidk.voxvelo.fitnesslib.api`;
+`dev.michidk.voxvelo.fitnesslib.client.*` service packages are internal, not a vehicle integration API.
 
 ## Register a vehicle
 
@@ -43,7 +43,13 @@ session. Stopping through the API exports FIT using the user's settings. The pla
 recording summary/export screen and `F8` for device, trainer and recording settings. Disconnect and game exit
 save an unexported ride. There is one local session and one trainer owner, even with multiple vehicle mods.
 
-Settings use `config/voxvelo-fitness.json`, and ride exports use `.minecraft/voxvelo/rides/`.
+`Fitness.openSettings(parent)` opens the fitness settings hub. `Fitness.addSettingsPage(labelKey, factory)` adds
+a page button to that hub after the built-in Bluetooth, trainer, OpenBikeControl and recording pages; the button's
+tooltip is the translation of `labelKey + ".tip"`, and the factory receives the screen to return to. Call it once
+from your client initializer. `Fitness.settingsPages()` lists every page in order, so a vehicle mod can offer the
+same pages in its own settings menu.
+
+Settings use `config/voxvelo-fitness-lib.json`, and ride exports use `.minecraft/voxvelo_fitness_lib/rides/`.
 The VoxVelo rename changes these paths and translation keys without migrating older installations.
 Legacy road/stats fields remain in the config for the bicycle adapter; generic
 fitness does not execute road following or bicycle network packets. Server ride maps and rider stats are
@@ -53,18 +59,18 @@ provided by the VoxVelo adapter when its server is installed.
 
 [BoatFitness.java](../examples/fitness-boat/src/main/java/dev/michidk/example/BoatFitness.java) is a second
 adapter requiring only the public fitness API and Minecraft/Fabric. Build it with
-`./gradlew :fitness:fitnessExampleJar`; the optional demonstration jar appears at
-`fitness/build/examples/fitness-boat-example.jar`. It is excluded from production/release jars. Its acceleration
+`./gradlew :fitness-lib:fitnessExampleJar`; the optional demonstration jar appears at
+`fitness-lib/build/examples/fitness-boat-example.jar`. It is excluded from production/release jars. Its acceleration
 is a simple client-prediction demonstration; production vehicles must use their own authoritative packets.
 
 Compile against the fitness sources jar or local dependency (the repository currently publishes release jars,
-not a Maven coordinate). A Loom multi-project consumer can use `implementation project(':fitness')` plus
-`clientImplementation rootProject.project(':fitness').sourceSets.client.output`. Do not add bikes to the
-consumer classpath. `:fitness:compileClientJava` and the boat example compile without bikes; `verifyBuildLayout`
+not a Maven coordinate). A Loom multi-project consumer can use `implementation project(':fitness-lib')` plus
+`clientImplementation rootProject.project(':fitness-lib').sourceSets.client.output`. Do not add bikes to the
+consumer classpath. `:fitness-lib:compileClientJava` and the boat example compile without bikes; `verifyBuildLayout`
 checks all three jars for ownership/duplicates/dependencies. `verifyFitnessApi` checks selection, release,
 non-bicycle physics and malformed measurements; existing device/session/FIT checks verify retained behavior.
 
-Release project IDs for generic fitness are `MODRINTH_VOXEL_FITNESS_ID` and `CURSEFORGE_VOXEL_FITNESS_ID`.
+Release project IDs for the library are `MODRINTH_FITNESS_LIB_ID` and `CURSEFORGE_FITNESS_LIB_ID`.
 The existing `*_FITNESS_ID` variables publish the bicycle adapter. All three jars are always attached to the
-GitHub release; platform publishing is conditional on configured project IDs. The adapter is skipped on a platform until
-its generic fitness project ID is configured, preventing publication with a missing dependency.
+GitHub release; platform publishing is conditional on configured project IDs. Configuring a Fitness project
+without both the Bikes and Fitness Library project IDs fails validation before publishing.

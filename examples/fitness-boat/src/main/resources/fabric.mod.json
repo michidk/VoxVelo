@@ -5,5 +5,5 @@
  "name": "Fitness Boat Example",
  "environment": "client",
  "entrypoints": { "client": ["dev.michidk.example.BoatFitness"] },
- "depends": { "voxel_fitness": "*", "fabricloader": ">=0.19.5", "minecraft": "~26.3", "java": ">=25" }
+ "depends": { "voxvelo_fitness_lib": "*", "fabricloader": ">=0.19.5", "minecraft": "~26.3", "java": ">=25" }
 }

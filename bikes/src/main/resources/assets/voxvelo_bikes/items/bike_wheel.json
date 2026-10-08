@@ -1,0 +1,27 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "property": "minecraft:component",
+    "component": "voxvelo_bikes:tread",
+    "cases": [
+      {
+        "when": "road",
+        "model": {
+          "type": "minecraft:model",
+          "model": "voxvelo_bikes:item/bike_wheel_road"
+        }
+      },
+      {
+        "when": "mountain",
+        "model": {
+          "type": "minecraft:model",
+          "model": "voxvelo_bikes:item/bike_wheel_mountain"
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "voxvelo_bikes:item/bike_wheel"
+    }
+  }
+}

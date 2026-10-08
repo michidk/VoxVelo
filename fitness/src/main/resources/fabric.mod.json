@@ -1,9 +1,9 @@
 {
 	"schemaVersion": 1,
-	"id": "voxel_fitness",
+	"id": "voxvelo_fitness",
 	"version": "${version}",
-	"name": "Voxel Fitness",
-	"description": "Vehicle-independent fitness devices, trainer feedback, HUD and FIT ride recording.",
+	"name": "VoxVelo Fitness",
+	"description": "Bicycle adapter for VoxVelo Fitness Library: VoxVelo controls, terrain, road following and multiplayer rider stats.",
 	"authors": [
 		"Michael Lohr"
 	],
@@ -13,33 +13,23 @@
 		"issues": "https://github.com/michidk/VoxVelo/issues"
 	},
 	"license": "MIT",
+	"icon": "assets/voxvelo_fitness/icon.png",
 	"environment": "*",
 	"entrypoints": {
-		"client": [
-			"dev.michidk.voxelfitness.client.FitnessClient"
+		"voxvelo_bikes-extension": [
+			"dev.michidk.voxvelo.fitness.fitness.FitnessExtension"
+		],
+		"voxvelo_bikes-client-extension": [
+			"dev.michidk.voxvelo.fitness.client.fitness.FitnessClientExtension"
 		]
 	},
 	"depends": {
+		"voxvelo_bikes": "=${version}",
 		"fabricloader": ">=0.19.5",
 		"minecraft": "~26.3",
 		"java": ">=25",
-		"fabric-api": ">=0.161.0"
-	},
-	"custom": {
-		"voxvelo:bundled_licenses": {
-			"note": "VoxVelo's own code is MIT. This jar bundles third-party libraries under their own licences; full texts are in META-INF/licenses/.",
-			"btleplug": {
-				"artifact": "natives/*/voxvelo_ble (Rust: btleplug 0.13 and its dependencies)",
-				"license": "BSD-3-Clause AND MIT AND Apache-2.0",
-				"url": "https://github.com/deviceplug/btleplug",
-				"file": "META-INF/licenses/voxvelo_ble-THIRD-PARTY.txt"
-			},
-			"jmdns": {
-				"artifact": "org.jmdns:jmdns:3.6.3",
-				"license": "Apache-2.0",
-				"url": "https://github.com/jmdns/jmdns",
-				"file": "META-INF/licenses/JmDNS-LICENSE.txt"
-			}
-		}
+		"fabric-api": ">=0.161.0",
+		"geckolib": ">=5.5.7 <6",
+		"voxvelo_fitness_lib": "=${version}"
 	}
 }

@@ -1,6 +1,6 @@
 name: Bluetooth natives
 
-# Builds native/ble (the Bluetooth library over btleplug) for every platform the fitness jar supports. Each job
+# Builds native/ble (Bluetooth over btleplug) for every platform the Fitness Library jar supports. Each job
 # uploads an artifact "ble-<platform>" holding "<platform>/<library>"; download them all with the pattern "ble-*"
 # and merge-multiple into one directory to get the layout that -PbleNatives=<dir> expects.
 

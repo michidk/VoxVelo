@@ -1,12 +1,13 @@
 # VoxVelo
 
 VoxVelo is a family of three mods: **VoxVelo Bikes**, **VoxVelo Fitness Library**, and **VoxVelo Fitness**.
-The three-mod naming and dependency model below is the target of the upcoming refactor. The code, build outputs
-and release workflow still use the previous Bikes and library IDs. This refactor will be a breaking change;
+Each mod has its own module, ID, namespace, jar and release project. This is a breaking change;
 backward compatibility and migration of older installations or saved-world mod data are not provided.
 
 <p align="center">
-  <img src=".github/images/icon_bikes.png" alt="VoxVelo icon" width="144">
+  <img src=".github/images/icon_bikes.png" alt="VoxVelo Bikes icon" width="144">
+  &nbsp;&nbsp;
+  <img src=".github/images/icon_fitness_lib.png" alt="VoxVelo Fitness Library icon" width="144">
   &nbsp;&nbsp;
   <img src=".github/images/icon_fitness.png" alt="VoxVelo Fitness icon" width="144">
 </p>
@@ -38,7 +39,7 @@ BikeControl phone app, and record your rides as FIT files.
 - **Multiplayer first:** a synchronized entity that rides like a horse or boat. Everyone sees steering, wheels,
   cranks and a posed rider. Works in singleplayer, on LAN and on dedicated servers.
 - **Keyboard riding** is always available and fully rebindable.
-- **Cycling track generator:** `/voxvelo track` builds a closed, terrain-following loop road with slab slopes,
+- **Cycling track generator:** `/voxvelo_bikes track` builds a closed, terrain-following loop road with slab slopes,
   borders, tunnels and bridges.
 - **Cycling statistics:** Distance Cycled and Time on a Bicycle in the vanilla statistics screen.
 - **Fitness add-on:**
@@ -51,7 +52,7 @@ BikeControl phone app, and record your rides as FIT files.
 
 ## The three mods
 
-Each mod has its own jar and is intended to have its own Modrinth entry:
+Each mod has its own jar and a separately configured Modrinth entry:
 
 | Jar | Mod ID | Purpose | Requires |
 | --- | --- | --- | --- |
@@ -70,7 +71,7 @@ feedback and recording samples only when an adapter supports the local player's 
 install all three jars from the same release. Bikes and the library do not depend on each other. The library is
 an explicit, separately installed dependency of Fitness, not bundled inside its jar.
 
-There is no standalone mod named `voxvelo` or `voxel_fitness` in this model. Modrinth publishing will declare
+There is no standalone mod named `voxvelo` or `voxel_fitness`. Modrinth publishing declares
 both required dependencies on the VoxVelo Fitness entry so compatible launchers can resolve them.
 
 Developers: see the [vehicle integration API](docs/fitness-api.md) and the optional
@@ -87,13 +88,10 @@ Developers: see the [vehicle integration API](docs/fitness-api.md) and the optio
 maps. The library is safe on a dedicated server: its device services have only a client entrypoint. Other vehicles
 need their own mod's multiplayer support; the fitness API does not prescribe a network protocol.
 
-The jar names above describe the refactor target. Until it lands, the library build is still named
-`voxel-fitness-<version>.jar`; the current Bikes and library mod IDs are `voxvelo` and `voxel_fitness`.
-
 ## Quick start
 
 1. Get a bike: craft one from parts (every recipe is in the recipe book), or in creative take one from the
-   Tools & Utilities tab or run `/give @s voxvelo:road_bike` (also `gravel_bike`, `mountain_bike`).
+   Tools & Utilities tab or run `/give @s voxvelo_bikes:road_bike` (also `gravel_bike`, `mountain_bike`).
 2. Right-click a block to place it, right-click the bike to mount.
 3. Ride with the default controls below. Press `B` for the settings hub.
 
@@ -113,8 +111,7 @@ The jar names above describe the refactor target. Until it lands, the library bu
 Keys are rebindable under *Controls > VoxVelo Bicycle* and *Fitness*. Sneak-use a bike with an empty hand to pick it up.
 Holding the pedal key produces 200 W of virtual power (adjustable in `B` > *Keyboard...*).
 
-The commands, resource IDs and configuration paths below describe the current implementation and will be
-updated with the refactor. Older identifiers are not part of the new compatibility contract.
+Older identifiers, item aliases and configuration migrations are not supported.
 
 ## Bikes
 
@@ -195,8 +192,8 @@ leather armor. Any wheel plus any tire swaps the tread, and a worn tire comes ba
 Operators can build a closed loop road through the landscape, starting at their current X/Z position:
 
 ```text
-/voxvelo track
-/voxvelo track 10 minecraft:smooth_stone 12 0.85 6 8 0
+/voxvelo_bikes track
+/voxvelo_bikes track 10 minecraft:smooth_stone 12 0.85 6 8 0
 ```
 
 Arguments are positional and optional from the right:
@@ -216,7 +213,7 @@ Arguments are positional and optional from the right:
 
 The road follows the ground with half-block slab steps, crosses water and lava on solid foundations, bridges dry
 valleys and tunnels through mountains, with low lit borders and five blocks of headroom. Progress shows in a boss
-bar; `/voxvelo track status` and `/voxvelo track cancel` inspect or stop it (cancelling keeps what is already
+bar; `/voxvelo_bikes track status` and `/voxvelo_bikes track cancel` inspect or stop it (cancelling keeps what is already
 built). Only one track can be built per server at a time. The same seed, position and arguments give the same layout.
 
 ## Fitness features
@@ -295,7 +292,7 @@ bike takes the widest way. Slow down for tight junctions.
 Press `R` to start and stop a ride. The summary shows distance, times, speed, power, normalized power, cadence,
 heart rate, work and climbing. In `B` > *Ride Recording...*:
 
-- **Export .FIT** saves the ride to `.minecraft/voxvelo/rides/` for Strava, Garmin Connect, intervals.icu or
+- **Export .FIT** saves the ride to `.minecraft/voxvelo_fitness_lib/rides/` for Strava, Garmin Connect, intervals.icu or
   TrainingPeaks. With *GPS in FIT* on, the route is placed on the globe (in the mid Atlantic by default, set by
   `rideFitOriginLat`/`rideFitOriginLon`) so websites draw it.
 - **Draw on Map** gives you a filled map of the route (one empty map in survival).
@@ -305,8 +302,8 @@ automatically.
 
 ## Configuration
 
-Press `B` for bicycle settings, or `F8` for Fitness Library settings. Client settings are stored in `config/voxvelo-client.json` (fitness:
-`config/voxvelo-fitness.json`). Server settings are in `config/voxvelo-server.json`, for example
+Press `B` for bicycle settings, or `F8` for Fitness Library settings. Client settings are stored in `config/voxvelo-bikes-client.json` (fitness:
+`config/voxvelo-fitness-lib.json`). Server settings are in `config/voxvelo-bikes-server.json`, for example
 `enableVehicleDamage` and `vehicleDamageInCreativeMode`.
 
 ## Compatibility
@@ -328,7 +325,7 @@ VoxVelo's own code and assets are licensed under the [MIT License](LICENSE).
 The **VoxVelo Fitness Library** jar bundles third-party code that keeps its own licences. All of it is permissive (MIT,
 Apache-2.0, BSD-3-Clause), so the library jar can be used, shared and published commercially. The full texts
 ship inside the library jar under `META-INF/licenses/` (source:
-[`fitness/src/main/resources/META-INF/licenses/`](fitness/src/main/resources/META-INF/licenses/)).
+[`fitness-lib/src/main/resources/META-INF/licenses/`](fitness-lib/src/main/resources/META-INF/licenses/)).
 The VoxVelo Bikes jar bundles no third-party code.
 
 | Library | Version | Licence | Used for |

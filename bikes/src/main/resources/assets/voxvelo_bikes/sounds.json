@@ -1,0 +1,119 @@
+{
+	"bike.place": {
+		"subtitle": "subtitles.voxvelo_bikes.bike.place",
+		"sounds": [
+			{
+				"name": "minecraft:block.chain.place",
+				"type": "event"
+			}
+		]
+	},
+	"bike.pickup": {
+		"subtitle": "subtitles.voxvelo_bikes.bike.pickup",
+		"sounds": [
+			{
+				"name": "minecraft:entity.item.pickup",
+				"type": "event"
+			}
+		]
+	},
+	"bike.mount": {
+		"subtitle": "subtitles.voxvelo_bikes.bike.mount",
+		"sounds": [
+			{
+				"name": "minecraft:item.armor.equip_chain",
+				"type": "event"
+			}
+		]
+	},
+	"bike.dismount": {
+		"subtitle": "subtitles.voxvelo_bikes.bike.dismount",
+		"sounds": [
+			{
+				"name": "minecraft:block.chain.step",
+				"type": "event"
+			}
+		]
+	},
+	"bike.gear_shift": {
+		"subtitle": "subtitles.voxvelo_bikes.bike.gear_shift",
+		"sounds": [
+			{
+				"name": "minecraft:block.lever.click",
+				"type": "event"
+			}
+		]
+	},
+	"bike.land": {
+		"subtitle": "subtitles.voxvelo_bikes.bike.land",
+		"sounds": [
+			{
+				"name": "minecraft:entity.generic.small_fall",
+				"type": "event"
+			}
+		]
+	},
+	"bike.land_hard": {
+		"subtitle": "subtitles.voxvelo_bikes.bike.land_hard",
+		"sounds": [
+			{
+				"name": "minecraft:entity.generic.big_fall",
+				"type": "event"
+			}
+		]
+	},
+	"bike.crash": {
+		"subtitle": "subtitles.voxvelo_bikes.bike.crash",
+		"sounds": [
+			{
+				"name": "minecraft:entity.player.attack.knockback",
+				"type": "event"
+			}
+		]
+	},
+	"bike.tire_burst": {
+		"subtitle": "subtitles.voxvelo_bikes.bike.tire_burst",
+		"sounds": [
+			{
+				"name": "minecraft:item.shield.break",
+				"type": "event"
+			}
+		]
+	},
+	"bike.tire_hiss": {
+		"subtitle": "subtitles.voxvelo_bikes.bike.tire_hiss",
+		"sounds": [
+			{
+				"name": "minecraft:block.fire.extinguish",
+				"type": "event"
+			}
+		]
+	},
+	"bike.repair": {
+		"subtitle": "subtitles.voxvelo_bikes.bike.repair",
+		"sounds": [
+			{
+				"name": "minecraft:block.anvil.use",
+				"type": "event"
+			}
+		]
+	},
+	"bike.break": {
+		"subtitle": "subtitles.voxvelo_bikes.bike.break",
+		"sounds": [
+			{
+				"name": "minecraft:entity.item.break",
+				"type": "event"
+			}
+		]
+	},
+	"bike.deny": {
+		"subtitle": "subtitles.voxvelo_bikes.bike.deny",
+		"sounds": [
+			{
+				"name": "minecraft:block.dispenser.fail",
+				"type": "event"
+			}
+		]
+	}
+}
