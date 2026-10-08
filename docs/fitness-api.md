@@ -43,6 +43,12 @@ session. Stopping through the API exports FIT using the user's settings. The pla
 recording summary/export screen and `F8` for device, trainer and recording settings. Disconnect and game exit
 save an unexported ride. There is one local session and one trainer owner, even with multiple vehicle mods.
 
+`Fitness.openSettings(parent)` opens the fitness settings hub. `Fitness.addSettingsPage(labelKey, factory)` adds
+a page button to that hub after the built-in Bluetooth, trainer, OpenBikeControl and recording pages; the button's
+tooltip is the translation of `labelKey + ".tip"`, and the factory receives the screen to return to. Call it once
+from your client initializer. `Fitness.settingsPages()` lists every page in order, so a vehicle mod can offer the
+same pages in its own settings menu.
+
 Settings use `config/voxvelo-fitness.json`, and ride exports use `.minecraft/voxvelo/rides/`.
 The VoxVelo rename changes these paths and translation keys without migrating older installations.
 Legacy road/stats fields remain in the config for the bicycle adapter; generic

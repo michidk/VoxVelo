@@ -2,49 +2,33 @@ package dev.michidk.voxvelo.client.ui;
 
 import dev.michidk.voxvelo.bike.RiderSettings;
 import dev.michidk.voxvelo.client.ClientContext;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractSliderButton;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
 /** Rider mass and personal speed limit. Both are sent to the server (and clamped there). */
-public class RiderScreen extends Screen {
-	private static final int WIDTH = 310;
+public class RiderScreen extends SettingsScreen {
+	private static final int WIDTH = SettingsList.WIDTH;
 	/** The first slice of the limit slider means "no limit". */
 	private static final double OFF_ZONE = 0.05;
 
-	private final Screen parent;
 	private final ClientContext ctx = ClientContext.get();
 
 	public RiderScreen(Screen parent) {
-		super(Component.translatable("voxvelo.rider.title"));
-		this.parent = parent;
+		super(parent, Component.translatable("voxvelo.rider.title"));
 	}
 
 	@Override
-	protected void init() {
-		int left = this.width / 2 - WIDTH / 2;
-		int y = 46;
-		this.addRenderableWidget(new MassSlider(left, y));
-		y += 24;
-		this.addRenderableWidget(new LimitSlider(left, y));
-		this.addRenderableWidget(Button.builder(Component.translatable("gui.done"), button -> this.onClose())
-			.bounds(left, this.height - 30, WIDTH, 20).build());
+	protected void addOptions() {
+		this.rows.addText(() -> Component.translatable("voxvelo.rider.note"), HINT);
+		this.rows.addRow(new MassSlider(0, 0));
+		this.rows.addRow(new LimitSlider(0, 0));
 	}
 
 	@Override
-	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
-		super.extractRenderState(graphics, mouseX, mouseY, a);
-		graphics.centeredText(this.font, this.title, this.width / 2, 20, 0xFFFFFFFF);
-		graphics.centeredText(this.font, Component.translatable("voxvelo.rider.note"), this.width / 2, 33, 0xFF909090);
-	}
-
-	@Override
-	public void onClose() {
+	protected void save() {
 		this.ctx.config.save();
 		this.ctx.sendRiderSettings();
-		this.minecraft.gui.setScreen(this.parent);
 	}
 
 	private final class MassSlider extends AbstractSliderButton {

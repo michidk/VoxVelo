@@ -1,5 +1,7 @@
 package dev.michidk.voxvelo.client.fitness;
 
+import dev.michidk.voxelfitness.api.Fitness;
+import dev.michidk.voxelfitness.api.SettingsPage;
 import dev.michidk.voxvelo.VoxVelo;
 import dev.michidk.voxvelo.client.ClientContext;
 import dev.michidk.voxvelo.client.ext.VoxVeloClientExtension;
@@ -7,9 +9,6 @@ import dev.michidk.voxvelo.client.hud.JunctionPrompt;
 import dev.michidk.voxvelo.client.hud.StatsOverlay;
 import dev.michidk.voxvelo.client.ride.BicycleRideExport;
 import dev.michidk.voxvelo.client.ride.RideExport;
-import dev.michidk.voxvelo.client.ride.RideScreen;
-import dev.michidk.voxvelo.client.ui.BluetoothScreen;
-import dev.michidk.voxvelo.client.ui.ObcScreen;
 import dev.michidk.voxvelo.client.ui.RoadScreen;
 import dev.michidk.voxvelo.network.RiderStatsPayload;
 
@@ -60,20 +59,16 @@ public final class FitnessClientExtension implements VoxVeloClientExtension {
 						() ->
 								FitnessStatus.obcStatus(
 										dev.michidk.voxelfitness.client.FitnessRuntime.get()));
-		core.settingsPages()
-				.add(
-						new ClientContext.SettingsPage(
-								"voxvelo.config.bluetooth_page", BluetoothScreen::new));
-		core.settingsPages()
-				.add(new ClientContext.SettingsPage("voxvelo.config.obc", ObcScreen::new));
-		core.settingsPages()
-				.add(new ClientContext.SettingsPage("voxvelo.config.road", RoadScreen::new));
-		core.settingsPages()
-				.add(new ClientContext.SettingsPage("voxvelo.config.stats", StatsScreen::new));
-		core.settingsPages()
-				.add(
-						new ClientContext.SettingsPage(
-								"voxvelo.config.ride_recording", RideScreen::new));
+		// The bicycle pages join the fitness settings, and the bike settings list every fitness page, so both
+		// menus lead to the same pages.
+		Fitness.addSettingsPage("voxvelo.config.road", RoadScreen::new);
+		Fitness.addSettingsPage("voxvelo.config.stats", StatsScreen::new);
+		for (SettingsPage page : Fitness.settingsPages()) {
+			core.settingsPages()
+					.add(
+							new ClientContext.SettingsPage(
+									page.labelKey(), page.factory(), "voxvelo.config.section.fitness"));
+		}
 
 		HudElementRegistry.attachElementAfter(
 				VanillaHudElements.HOTBAR, VoxVelo.id("stats_overlay"), new StatsOverlay(ctx));

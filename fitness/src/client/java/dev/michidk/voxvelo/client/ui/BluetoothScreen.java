@@ -1,6 +1,8 @@
 package dev.michidk.voxvelo.client.ui;
 
 import dev.michidk.voxelfitness.client.FitnessRuntime;
+import dev.michidk.voxelfitness.client.ui.SettingsList;
+import dev.michidk.voxelfitness.client.ui.SettingsScreen;
 import dev.michidk.voxelfitness.client.ui.Tips;
 import dev.michidk.voxvelo.client.bluetooth.BleServiceClient;
 import dev.michidk.voxvelo.client.bluetooth.BluetoothDevice;
@@ -15,7 +17,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.CycleButton;
 import net.minecraft.client.gui.screens.Screen;
@@ -27,11 +29,8 @@ import org.jspecify.annotations.Nullable;
  * all nearby devices that can fill one of these roles, and each device offers a button per role it supports.
  * Everything here is non-blocking.
  */
-public class BluetoothScreen extends Screen {
-	private static final int MAX_ROWS = 6;
-	private static final int WIDTH = 310;
-	private static final int ROLES_TOP = 48;
-	private static final int ROW_HEIGHT = 22;
+public class BluetoothScreen extends SettingsScreen {
+	private static final int WIDTH = SettingsList.WIDTH;
 	/** A role's status text fills its row up to the Disconnect and Forget buttons, which only exist when they can do something. */
 	private static final int DISCONNECT_WIDTH = 68;
 	private static final int FORGET_WIDTH = 54;
@@ -94,79 +93,82 @@ public class BluetoothScreen extends Screen {
 	/** A nearby device with the roles it can be connected as right now. */
 	private record Row(BluetoothDevice device, List<Role> roles) {}
 
-	private final Screen parent;
 	private final FitnessRuntime ctx = FitnessRuntime.get();
 	private String signature = "";
-	private List<Row> shown = List.of();
-	private int hidden;
-	private int listTop;
 
 	public BluetoothScreen(Screen parent) {
-		super(Component.translatable("voxvelo.bluetooth.title"));
-		this.parent = parent;
+		super(parent, Component.translatable("voxvelo.bluetooth.title"));
 	}
 
 	@Override
-	protected void init() {
-		int left = this.width / 2 - WIDTH / 2;
-		int y = ROLES_TOP;
+	protected void addOptions() {
+		this.rows.addText(this::headline, HINT);
 
 		for (Role role : Role.values()) {
-			int edge = left + WIDTH;
+			List<AbstractWidget> buttons = new ArrayList<>();
+			int edge = WIDTH;
 			if (this.canForget(role)) {
 				edge -= FORGET_WIDTH;
-				this.addRenderableWidget(Button.builder(Component.translatable("voxvelo.trainer.forget"), button -> this.forget(role))
-					.tooltip(Tips.of("voxvelo.trainer.forget")).bounds(edge, y, FORGET_WIDTH, 20).build());
+				buttons.add(Button.builder(Component.translatable("voxvelo.trainer.forget"), button -> this.forget(role))
+					.tooltip(Tips.of("voxvelo.trainer.forget")).bounds(edge, 0, FORGET_WIDTH, 20).build());
 				edge -= 2;
 			}
 			if (this.canDisconnect(role)) {
 				edge -= DISCONNECT_WIDTH;
-				this.addRenderableWidget(Button.builder(Component.translatable("voxvelo.trainer.disconnect"), button -> this.client(role).disconnect())
-					.tooltip(Tips.of("voxvelo.trainer.disconnect")).bounds(edge, y, DISCONNECT_WIDTH, 20).build());
+				buttons.add(Button.builder(Component.translatable("voxvelo.trainer.disconnect"), button -> this.client(role).disconnect())
+					.tooltip(Tips.of("voxvelo.trainer.disconnect")).bounds(edge, 0, DISCONNECT_WIDTH, 20).build());
 			} else if (this.canConnect(role)) {
 				edge -= DISCONNECT_WIDTH;
-				this.addRenderableWidget(Button.builder(Component.translatable("voxvelo.bluetooth.connect"), button -> this.connectSaved(role))
-					.tooltip(Tips.of("voxvelo.bluetooth.connect")).bounds(edge, y, DISCONNECT_WIDTH, 20).build());
+				buttons.add(Button.builder(Component.translatable("voxvelo.bluetooth.connect"), button -> this.connectSaved(role))
+					.tooltip(Tips.of("voxvelo.bluetooth.connect")).bounds(edge, 0, DISCONNECT_WIDTH, 20).build());
 			}
-			y += ROW_HEIGHT;
+			this.rows.addRow(buttons, (graphics, font, left, top) ->
+				graphics.text(font, this.fit(role.status.apply(this.ctx).getString(), this.statusWidth(role)), left, top + 6, STATUS));
 		}
-		y += 4;
 
-		this.addRenderableWidget(Button.builder(this.scanLabel(), button -> this.toggleScan())
-			.tooltip(Tips.of("voxvelo.bluetooth.scan")).bounds(left, y, WIDTH, 20).build());
-		y += ROW_HEIGHT + 2;
+		this.rows.addRow(Button.builder(this.scanLabel(), button -> this.toggleScan())
+			.tooltip(Tips.of("voxvelo.bluetooth.scan")).bounds(0, 0, WIDTH, 20).build());
 
-		this.listTop = y;
-		List<Row> rows = this.rows();
-		int visible = Math.max(0, Math.min(MAX_ROWS, (this.height - 58 - y + 2) / ROW_HEIGHT));
-		this.shown = rows.subList(0, Math.min(visible, rows.size()));
-		this.hidden = rows.size() - this.shown.size();
-		for (Row row : this.shown) {
+		for (Row row : this.nearby()) {
+			List<AbstractWidget> buttons = new ArrayList<>();
 			for (Role role : row.roles()) {
-				int x = left + WIDTH - (Role.values().length - role.ordinal()) * ROLE_COLUMN + 2;
-				this.addRenderableWidget(Button.builder(role.label(), button -> this.choose(role, row.device()))
-					.tooltip(Tips.of("voxvelo.bluetooth.role." + role.key)).bounds(x, y, ROLE_BUTTON_WIDTH, 20).build());
+				int x = WIDTH - (Role.values().length - role.ordinal()) * ROLE_COLUMN + 2;
+				buttons.add(Button.builder(role.label(), button -> this.choose(role, row.device()))
+					.tooltip(Tips.of("voxvelo.bluetooth.role." + role.key)).bounds(x, 0, ROLE_BUTTON_WIDTH, 20).build());
 			}
-			y += ROW_HEIGHT;
+			BluetoothDevice device = row.device();
+			this.rows.addRow(buttons, (graphics, font, left, top) -> {
+				String rssi = String.valueOf(device.rssi());
+				graphics.text(font, this.fit(device.displayName(), NAME_WIDTH - font.width(rssi) - 10), left, top + 6, 0xFFFFFFFF);
+				graphics.text(font, rssi, left + NAME_WIDTH - 4 - font.width(rssi), top + 6, 0xFF808080);
+			});
 		}
 
-		int half = (WIDTH - 10) / 2;
-		int by = this.height - 54;
 		FitnessConfig config = this.ctx.config;
 		boolean autoAll = config.autoConnectTrainer && config.autoConnectPowerMeter && config.autoConnectHeartRate;
-		this.addRenderableWidget(CycleButton.onOffBuilder(autoAll)
-			.withTooltip(value -> Tips.of("voxvelo.config.auto_connect"))
-			.create(left, by, half, 20, Component.translatable("voxvelo.config.auto_connect"), (button, value) -> {
-				config.autoConnectTrainer = value;
-				config.autoConnectPowerMeter = value;
-				config.autoConnectHeartRate = value;
-			}));
-		this.addRenderableWidget(Button.builder(Component.translatable("voxvelo.bluetooth.trainer_settings"),
-				button -> this.minecraft.gui.setScreen(new TrainerSettingsScreen(this)))
-			.tooltip(Tips.of("voxvelo.bluetooth.trainer_settings")).bounds(left + half + 10, by, half, 20).build());
-		this.addRenderableWidget(Button.builder(Component.translatable("gui.done"), button -> this.onClose())
-			.bounds(left, this.height - 30, WIDTH, 20).build());
+		this.rows.addRow(CycleButton.onOffBuilder(autoAll)
+				.withTooltip(value -> Tips.of("voxvelo.config.auto_connect"))
+				.create(0, 0, SettingsList.HALF, 20, Component.translatable("voxvelo.config.auto_connect"), (button, value) -> {
+					config.autoConnectTrainer = value;
+					config.autoConnectPowerMeter = value;
+					config.autoConnectHeartRate = value;
+				}),
+			Button.builder(Component.translatable("voxvelo.bluetooth.trainer_settings"),
+					button -> this.minecraft.gui.setScreen(new TrainerSettingsScreen(this)))
+				.tooltip(Tips.of("voxvelo.bluetooth.trainer_settings")).bounds(WIDTH - SettingsList.HALF, 0, SettingsList.HALF, 20).build());
 		this.signature = this.currentSignature();
+	}
+
+	/** Why Bluetooth cannot be used, why the last connection failed, or else how this page works. */
+	private Component headline() {
+		if (!this.ctx.bluetooth.isAvailable()) {
+			return Component.translatable("voxvelo.bluetooth.unavailable", this.ctx.bluetooth.unavailableReason()).withColor(ERROR & 0xFFFFFF);
+		}
+		Component failure = this.failure();
+		if (failure != null) {
+			return Component.literal(this.fit(failure.getString(), WIDTH)).withColor(ERROR & 0xFFFFFF);
+		}
+		return Component.translatable("voxvelo.bluetooth.hint");
 	}
 
 	private Component scanLabel() {
@@ -174,7 +176,7 @@ public class BluetoothScreen extends Screen {
 	}
 
 	/** Nearby devices that advertise a role's service. One device can fill several roles, such as a trainer that also reports power. */
-	private List<Row> rows() {
+	private List<Row> nearby() {
 		List<String> services = Arrays.stream(Role.values()).map(role -> role.service).toList();
 		List<Row> rows = new ArrayList<>();
 		for (BluetoothDevice device : this.ctx.bluetooth.devicesAdvertisingAny(services)) {
@@ -269,9 +271,8 @@ public class BluetoothScreen extends Screen {
 		for (Role role : Role.values()) {
 			sb.append('/').append(this.savedId(role)).append(this.client(role).state() == ConnectionState.DISCONNECTED ? 'x' : 'c');
 		}
-		List<Row> rows = this.rows();
-		for (int i = 0; i < Math.min(MAX_ROWS, rows.size()); i++) {
-			Row row = rows.get(i);
+		List<Row> rows = this.nearby();
+		for (Row row : rows) {
 			sb.append('|').append(row.device().id()).append(row.device().name()).append(row.device().rssi() / 5).append(row.roles());
 		}
 		return sb.append('#').append(rows.size()).toString();
@@ -285,40 +286,6 @@ public class BluetoothScreen extends Screen {
 		}
 	}
 
-	@Override
-	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
-		super.extractRenderState(graphics, mouseX, mouseY, a);
-		int left = this.width / 2 - WIDTH / 2;
-		int cx = this.width / 2;
-		graphics.centeredText(this.font, this.title, cx, 20, 0xFFFFFFFF);
-		Component failure = this.failure();
-		if (!this.ctx.bluetooth.isAvailable()) {
-			graphics.centeredText(this.font, Component.translatable("voxvelo.bluetooth.unavailable", this.ctx.bluetooth.unavailableReason()), cx, 36, 0xFFFF8080);
-		} else if (failure != null) {
-			graphics.centeredText(this.font, Component.literal(this.fit(failure.getString(), WIDTH + 40)), cx, 36, 0xFFFF8080);
-		} else {
-			graphics.centeredText(this.font, Component.translatable("voxvelo.bluetooth.hint"), cx, 36, 0xFF909090);
-		}
-
-		int y = ROLES_TOP;
-		for (Role role : Role.values()) {
-			graphics.text(this.font, this.fit(role.status.apply(this.ctx).getString(), this.statusWidth(role)), left, y + 6, 0xFFC0C0C0);
-			y += ROW_HEIGHT;
-		}
-
-		y = this.listTop;
-		for (Row row : this.shown) {
-			BluetoothDevice device = row.device();
-			String rssi = String.valueOf(device.rssi());
-			graphics.text(this.font, this.fit(device.displayName(), NAME_WIDTH - this.font.width(rssi) - 10), left, y + 6, 0xFFFFFFFF);
-			graphics.text(this.font, rssi, left + NAME_WIDTH - 4 - this.font.width(rssi), y + 6, 0xFF808080);
-			y += ROW_HEIGHT;
-		}
-		if (this.hidden > 0) {
-			graphics.text(this.font, Component.translatable("voxvelo.bluetooth.more", this.hidden), left, y + 6, 0xFF909090);
-		}
-	}
-
 	/** Shortens text with an ellipsis so it never runs into the buttons next to it. */
 	private String fit(String text, int maxWidth) {
 		if (this.font.width(text) <= maxWidth) {
@@ -328,9 +295,13 @@ public class BluetoothScreen extends Screen {
 	}
 
 	@Override
-	public void onClose() {
+	protected void save() {
 		this.ctx.config.save();
+	}
+
+	@Override
+	public void onClose() {
 		this.ctx.bluetooth.stopScan();
-		this.minecraft.gui.setScreen(this.parent);
+		super.onClose();
 	}
 }

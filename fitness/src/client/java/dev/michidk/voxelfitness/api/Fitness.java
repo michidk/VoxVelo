@@ -2,7 +2,9 @@ package dev.michidk.voxelfitness.api;
 
 import dev.michidk.voxelfitness.client.FitnessRuntime;
 import dev.michidk.voxelfitness.client.FitnessSettingsScreen;
+import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 
@@ -43,5 +45,15 @@ public final class Fitness {
 
 	public static void openSettings(Screen parent) {
 		Minecraft.getInstance().gui.setScreen(new FitnessSettingsScreen(parent));
+	}
+
+	/** Adds a page to the fitness settings, after the built-in ones. Call once, from a client initializer. */
+	public static void addSettingsPage(String labelKey, Function<Screen, Screen> factory) {
+		FitnessSettingsScreen.PAGES.add(new SettingsPage(labelKey, factory));
+	}
+
+	/** The pages of the fitness settings in order, for a mod that lists them in its own settings. */
+	public static List<SettingsPage> settingsPages() {
+		return List.copyOf(FitnessSettingsScreen.PAGES);
 	}
 }

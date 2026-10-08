@@ -43,7 +43,6 @@
 	"voxvelo.bluetooth.scan": "Scan",
 	"voxvelo.bluetooth.scan.tip": "Search for nearby smart trainers, power meters and heart rate sensors. Other Bluetooth devices are not listed.",
 	"voxvelo.bluetooth.scanning": "Scanning...",
-	"voxvelo.bluetooth.more": "+%s more nearby",
 	"voxvelo.bluetooth.failure": "%s: %s",
 	"voxvelo.bluetooth.connect": "Connect",
 	"voxvelo.bluetooth.connect.tip": "Connect to the saved device again. It is searched for first if it has not been seen yet.",
@@ -216,5 +215,13 @@
 	"voxvelo.ride.stat.descent": "Descent",
 	"key.category.voxel_fitness.fitness": "Fitness",
 	"key.voxel_fitness.settings": "Fitness settings",
-	"voxel_fitness.settings.title": "Fitness"
+	"voxel_fitness.settings.title": "Fitness",
+	"voxvelo.config.section.fitness": "Fitness",
+	"voxvelo.stats.section.hud": "HUD",
+	"voxvelo.stats.section.sharing": "Shared with Other Riders",
+	"voxvelo.road.section.following": "Road Following",
+	"voxvelo.road.section.terrain": "Terrain",
+	"voxvelo.road.section.blocks": "Road Blocks",
+	"voxvelo.road.nothing_under": "There is no block under you",
+	"voxvelo.road.not_looking": "Look at a block first"
 }

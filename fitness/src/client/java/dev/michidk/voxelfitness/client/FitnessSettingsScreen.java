@@ -1,67 +1,68 @@
 package dev.michidk.voxelfitness.client;
 
+import dev.michidk.voxelfitness.api.SettingsPage;
+import dev.michidk.voxelfitness.client.ui.SettingsList;
+import dev.michidk.voxelfitness.client.ui.SettingsScreen;
+import dev.michidk.voxelfitness.client.ui.Tips;
+import dev.michidk.voxvelo.client.fitness.FitnessStatus;
 import dev.michidk.voxvelo.client.ride.RideScreen;
 import dev.michidk.voxvelo.client.ui.BluetoothScreen;
 import dev.michidk.voxvelo.client.ui.ObcScreen;
 import dev.michidk.voxvelo.client.ui.TrainerSettingsScreen;
-
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Function;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import org.jspecify.annotations.Nullable;
 
-public final class FitnessSettingsScreen extends Screen {
-	private final Screen parent;
+/**
+ * The fitness settings hub: the state of every connection, then one button per settings page. Vehicle mods add their
+ * own pages through {@link dev.michidk.voxelfitness.api.Fitness#addSettingsPage}.
+ */
+public final class FitnessSettingsScreen extends SettingsScreen {
+	/** Every page in order: the built-in ones, then those vehicle mods added. */
+	public static final List<SettingsPage> PAGES = new ArrayList<>(List.of(
+		new SettingsPage("voxvelo.config.bluetooth_page", BluetoothScreen::new),
+		new SettingsPage("voxvelo.bluetooth.trainer_settings", TrainerSettingsScreen::new),
+		new SettingsPage("voxvelo.config.obc", ObcScreen::new),
+		new SettingsPage("voxvelo.config.ride_recording", RideScreen::new)));
 
-	public FitnessSettingsScreen(Screen parent) {
-		super(Component.translatable("voxel_fitness.settings.title"));
-		this.parent = parent;
+	private final FitnessRuntime ctx = FitnessRuntime.get();
+
+	public FitnessSettingsScreen(@Nullable Screen parent) {
+		super(parent, Component.translatable("voxel_fitness.settings.title"));
 	}
 
 	@Override
-	protected void init() {
-		int x = width / 2 - 100, y = 60;
-		addRenderableWidget(
-				Button.builder(
-								Component.translatable("voxvelo.config.bluetooth_page"),
-								b -> minecraft.gui.setScreen(new BluetoothScreen(this)))
-						.bounds(x, y, 200, 20)
-						.build());
-		y += 24;
-		addRenderableWidget(
-				Button.builder(
-								Component.translatable("voxvelo.config.obc"),
-								b -> minecraft.gui.setScreen(new ObcScreen(this)))
-						.bounds(x, y, 200, 20)
-						.build());
-		y += 24;
-		addRenderableWidget(
-				Button.builder(
-								Component.translatable("voxvelo.trainer_settings.title"),
-								b -> minecraft.gui.setScreen(new TrainerSettingsScreen(this)))
-						.bounds(x, y, 200, 20)
-						.build());
-		y += 24;
-		addRenderableWidget(
-				Button.builder(
-								Component.translatable("voxvelo.config.ride_recording"),
-								b -> minecraft.gui.setScreen(new RideScreen(this)))
-						.bounds(x, y, 200, 20)
-						.build());
-		addRenderableWidget(
-				Button.builder(Component.translatable("gui.done"), b -> onClose())
-						.bounds(x, height - 30, 200, 20)
-						.build());
+	protected void addOptions() {
+		this.rows.addText(() -> FitnessStatus.trainerStatus(this.ctx), STATUS);
+		this.rows.addText(() -> FitnessStatus.powerMeterStatus(this.ctx), STATUS);
+		this.rows.addText(() -> FitnessStatus.heartRateStatus(this.ctx), STATUS);
+		this.rows.addText(() -> FitnessStatus.telemetryLine(this.ctx), STATUS);
+		this.rows.addText(() -> FitnessStatus.obcStatus(this.ctx), STATUS);
+		// Two buttons per row; a lone last one takes the whole row.
+		for (int i = 0; i < PAGES.size(); i += 2) {
+			if (i == PAGES.size() - 1) {
+				this.rows.addRow(this.page(0, SettingsList.WIDTH, PAGES.get(i)));
+			} else {
+				this.rows.addRow(this.page(0, SettingsList.HALF, PAGES.get(i)),
+					this.page(SettingsList.WIDTH - SettingsList.HALF, SettingsList.HALF, PAGES.get(i + 1)));
+			}
+		}
+	}
+
+	/** A button that opens another settings page, built when the button is pressed. */
+	private AbstractWidget page(int x, int width, SettingsPage page) {
+		Function<Screen, Screen> factory = page.factory();
+		return Button.builder(Component.translatable(page.labelKey()), button -> this.minecraft.gui.setScreen(factory.apply(this)))
+			.tooltip(Tips.of(page.labelKey())).bounds(x, 0, width, 20).build();
 	}
 
 	@Override
-	public void extractRenderState(GuiGraphicsExtractor graphics, int x, int y, float delta) {
-		super.extractRenderState(graphics, x, y, delta);
-		graphics.centeredText(font, title, width / 2, 20, 0xFFFFFFFF);
-	}
-
-	@Override
-	public void onClose() {
-		minecraft.gui.setScreen(parent);
+	protected void save() {
+		this.ctx.config.save();
 	}
 }

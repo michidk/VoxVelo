@@ -31,7 +31,8 @@ First public release, for Minecraft 26.3 (Fabric). **VoxVelo** (`voxvelo`) is th
   damage.
 - Speed Boost I–III enchantment for assembled bikes.
 - Keyboard riding with rebindable keys, rider mass and personal speed limit, and a settings hub (`B`) linked from
-  the pause and options menus.
+  the pause and options menus. Settings pages use the vanilla options layout, grouped under headings, and scroll
+  when the window is small.
 - `/voxvelo track` generator for seeded, terrain-following loop roads with slab slopes, lit borders, tunnels,
   bridges, water and lava crossings, tree removal, progress boss bar, `status` and `cancel`.
 - Distance Cycled and Time on a Bicycle statistics.
@@ -48,5 +49,7 @@ First public release, for Minecraft 26.3 (Fabric). **VoxVelo** (`voxvelo`) is th
 - Road follow (hands-free steering) with configurable road blocks and LEFT / RIGHT junction prompts.
 - Riding HUD, heart rate graph and a server-wide rider stats overlay with sharing controls.
 - Ride recording with summaries, FIT export (optionally with GPS), and ride maps drawn by the server.
+- Fitness settings hub (`F8`) listing the same pages as the bike settings; vehicle mods add pages with
+  `Fitness.addSettingsPage`.
 
 [0.1.0]: https://github.com/michidk/VoxVelo/releases/tag/v0.1.0

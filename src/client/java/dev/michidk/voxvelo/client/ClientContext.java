@@ -19,8 +19,13 @@ import net.minecraft.network.chat.Component;
 public final class ClientContext {
 	private static ClientContext instance;
 
-	/** A page of the settings hub added by an add-on. */
-	public record SettingsPage(String labelKey, Function<Screen, Screen> factory) {
+	/** A page of the settings hub added by an add-on, listed under the heading {@code sectionKey}. */
+	public record SettingsPage(String labelKey, Function<Screen, Screen> factory, String sectionKey) {
+		public static final String ADD_ONS = "voxvelo.config.section.add_ons";
+
+		public SettingsPage(String labelKey, Function<Screen, Screen> factory) {
+			this(labelKey, factory, ADD_ONS);
+		}
 	}
 
 	public final VoxVeloConfig config;
