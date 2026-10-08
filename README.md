@@ -1,7 +1,9 @@
 # VoxVelo
 
-The VoxVelo rename is a breaking change: mod IDs, namespaces, Java packages, configuration files and ride
-export paths now use `voxvelo`. Older installations and saved-world mod data are not migrated.
+VoxVelo is a family of three mods: **VoxVelo Bikes**, **VoxVelo Fitness Library**, and **VoxVelo Fitness**.
+The three-mod naming and dependency model below is the target of the upcoming refactor. The code, build outputs
+and release workflow still use the previous Bikes and library IDs. This refactor will be a breaking change;
+backward compatibility and migration of older installations or saved-world mod data are not provided.
 
 <p align="center">
   <img src=".github/images/icon_bikes.png" alt="VoxVelo icon" width="144">
@@ -47,20 +49,29 @@ BikeControl phone app, and record your rides as FIT files.
   - Riding HUD, heart rate graph and a server-wide rider stats overlay.
   - Ride recording with summaries, FIT export for Strava, Garmin Connect and others, and ride maps.
 
-## VoxVelo Bikes, generic fitness and bicycle adapter
+## The three mods
 
-Three jars have separate responsibilities and mod IDs:
+Each mod has its own jar and is intended to have its own Modrinth entry:
 
 | Jar | Mod ID | Purpose | Requires |
 | --- | --- | --- | --- |
-| `voxvelo-bikes-<version>.jar` | `voxvelo` | Bikes, physics, recipes, keyboard riding, tracks | Fabric API, GeckoLib |
-| `voxel-fitness-<version>.jar` | `voxel_fitness` | Devices, trainer feedback, HUD, sessions and FIT export | Fabric API |
-| `voxvelo-fitness-<version>.jar` | `voxvelo_fitness` | Connects bikes to fitness; road following, rider stats and ride maps | Matching VoxVelo Bikes and generic fitness |
+| `voxvelo-bikes-<version>.jar` | `voxvelo_bikes` | Bikes, physics, recipes, keyboard riding, tracks | Fabric API, GeckoLib |
+| `voxvelo-fitness-lib-<version>.jar` | `voxvelo_fitness_lib` | Reusable Bluetooth/device connections, trainer feedback, HUD, sessions, recording and FIT export | Fabric API |
+| `voxvelo-fitness-<version>.jar` | `voxvelo_fitness` | Connects bikes to the fitness library; road following, rider stats and ride maps | Matching VoxVelo Bikes and VoxVelo Fitness Library, plus Fabric API and GeckoLib |
 
-Install VoxVelo Bikes for keyboard-only bicycles. For bicycle fitness features, install all three jars from the same
-release. The generic fitness mod runs independently and other vehicle mods can depend on it without installing
-VoxVelo or GeckoLib. It activates vehicle feedback and recording samples only when an adapter supports the
-local player's vehicle. VoxVelo Bikes stays active because it owns the bicycles; the adapter adds fitness controls.
+**VoxVelo Bikes** works independently. It contains no Bluetooth support, fitness-device integrations, workout
+recording or fitness libraries. Players who just want bicycles only need Bikes and its normal dependencies.
+
+**VoxVelo Fitness Library** is vehicle-independent. Other developers can use its public API to build fitness
+integrations for their own vehicles without depending on Bikes, VoxVelo Fitness or GeckoLib. It activates vehicle
+feedback and recording samples only when an adapter supports the local player's vehicle.
+
+**VoxVelo Fitness** requires both `voxvelo_bikes` and `voxvelo_fitness_lib`. For bicycle fitness features,
+install all three jars from the same release. Bikes and the library do not depend on each other. The library is
+an explicit, separately installed dependency of Fitness, not bundled inside its jar.
+
+There is no standalone mod named `voxvelo` or `voxel_fitness` in this model. Modrinth publishing will declare
+both required dependencies on the VoxVelo Fitness entry so compatible launchers can resolve them.
 
 Developers: see the [vehicle integration API](docs/fitness-api.md) and the optional
 [boat example](examples/fitness-boat/src/main/java/dev/michidk/example/BoatFitness.java).
@@ -69,14 +80,15 @@ Developers: see the [vehicle integration API](docs/fitness-api.md) and the optio
 
 1. Install [Fabric Loader](https://fabricmc.net/use/) 0.19.5 or newer for Minecraft 26.3 and [Fabric API](https://modrinth.com/mod/fabric-api).
 2. For bicycles, install [GeckoLib](https://modrinth.com/mod/geckolib) 5.5.7 and `voxvelo-bikes-<version>.jar`.
-3. For bicycle fitness, also install `voxel-fitness-<version>.jar` and `voxvelo-fitness-<version>.jar`.
+3. For bicycle fitness, also install `voxvelo-fitness-lib-<version>.jar` and `voxvelo-fitness-<version>.jar`.
 4. Put the jars in your `mods/` folder. Download matching versions from the [releases](https://github.com/michidk/VoxVelo/releases).
 
 **Servers:** VoxVelo Bikes supports keyboard and fitness riders. Install all three jars for server rider stats and ride
-maps. The generic jar is safe on a dedicated server: its services have only a client entrypoint. Other vehicles
+maps. The library is safe on a dedicated server: its device services have only a client entrypoint. Other vehicles
 need their own mod's multiplayer support; the fitness API does not prescribe a network protocol.
 
-When upgrading an older VoxVelo Fitness installation, add the matching VoxVelo Bikes and generic fitness jars.
+The jar names above describe the refactor target. Until it lands, the library build is still named
+`voxel-fitness-<version>.jar`; the current Bikes and library mod IDs are `voxvelo` and `voxel_fitness`.
 
 ## Quick start
 
@@ -93,7 +105,7 @@ When upgrading an older VoxVelo Fitness installation, add the matching VoxVelo B
 | Hard brake | `Left Alt` |
 | Dismount | `Shift` (vanilla sneak) |
 | Bike settings | `B` |
-| Generic fitness settings | `F8` |
+| Fitness Library settings | `F8` |
 | Shift gear up / down (fitness) | `X` / `Z` |
 | Toggle rider stats overlay (fitness) | `H` |
 | Start / stop ride recording (fitness) | `R` |
@@ -101,8 +113,8 @@ When upgrading an older VoxVelo Fitness installation, add the matching VoxVelo B
 Keys are rebindable under *Controls > VoxVelo Bicycle* and *Fitness*. Sneak-use a bike with an empty hand to pick it up.
 Holding the pedal key produces 200 W of virtual power (adjustable in `B` > *Keyboard...*).
 
-The road bike and its frame use `voxvelo:road_bike` and `voxvelo:road_bike_frame`. Items saved with the old
-`race_bike` and `race_bike_frame` IDs still load as road bikes and road bike frames.
+The commands, resource IDs and configuration paths below describe the current implementation and will be
+updated with the refactor. Older identifiers are not part of the new compatibility contract.
 
 ## Bikes
 
@@ -207,7 +219,9 @@ valleys and tunnels through mountains, with low lit borders and five blocks of h
 bar; `/voxvelo track status` and `/voxvelo track cancel` inspect or stop it (cancelling keeps what is already
 built). Only one track can be built per server at a time. The same seed, position and arguments give the same layout.
 
-## Fitness build
+## Fitness features
+
+These features require VoxVelo Fitness and both of its dependencies. They are not included in Bikes alone.
 
 ### Devices
 
@@ -291,7 +305,7 @@ automatically.
 
 ## Configuration
 
-Press `B` for bicycle settings, or `F8` for generic fitness settings. Client settings are stored in `config/voxvelo-client.json` (fitness:
+Press `B` for bicycle settings, or `F8` for Fitness Library settings. Client settings are stored in `config/voxvelo-client.json` (fitness:
 `config/voxvelo-fitness.json`). Server settings are in `config/voxvelo-server.json`, for example
 `enableVehicleDamage` and `vehicleDamageInCreativeMode`.
 
@@ -311,9 +325,9 @@ VoxVelo's own code and assets are licensed under the [MIT License](LICENSE).
 
 ### Third-party licences
 
-The **generic fitness** jar bundles third-party code that keeps its own licences. All of it is permissive (MIT,
-Apache-2.0, BSD-3-Clause), so the whole fitness jar can be used, shared and published commercially. The full texts
-ship inside the fitness jar under `META-INF/licenses/` (source:
+The **VoxVelo Fitness Library** jar bundles third-party code that keeps its own licences. All of it is permissive (MIT,
+Apache-2.0, BSD-3-Clause), so the library jar can be used, shared and published commercially. The full texts
+ship inside the library jar under `META-INF/licenses/` (source:
 [`fitness/src/main/resources/META-INF/licenses/`](fitness/src/main/resources/META-INF/licenses/)).
 The VoxVelo Bikes jar bundles no third-party code.
 
