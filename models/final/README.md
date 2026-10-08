@@ -1,7 +1,7 @@
 # Editable model sources
 
 This folder contains the current Blockbench sources and export metadata for the three bikes and the helmet.
-These are editing sources; the game loads the exported assets under `src/main/resources/assets/voxvelo/`.
+These are editing sources; the game loads the exported assets under `bikes/src/main/resources/assets/voxvelo_bikes/`.
 
 | Source | Purpose |
 | --- | --- |
@@ -13,8 +13,8 @@ These are editing sources; the game loads the exported assets under `src/main/re
 ## Editing and exporting
 
 1. Edit the `.bbmodel` in Blockbench and export cuboid-only Bedrock geometry for GeckoLib.
-2. Replace the matching bike export in `src/main/resources/assets/voxvelo/geckolib/models/entity/bikes/`,
-   or the helmet export in `src/main/resources/assets/voxvelo/geckolib/models/armor/bike_helmet.geo.json`.
+2. Replace the matching bike export in `bikes/src/main/resources/assets/voxvelo_bikes/geckolib/models/entity/bikes/`,
+   or the helmet export in `bikes/src/main/resources/assets/voxvelo_bikes/geckolib/models/armor/bike_helmet.geo.json`.
 3. After changing a bike, update its matching exports in `geckolib/models/entity/bike_frames/` and
    `geckolib/models/entity/bike_parts/` too. Frames retain empty attachment bones; wheel and handlebar
    component geometry uses a `component` root with the original attachment pivot.
