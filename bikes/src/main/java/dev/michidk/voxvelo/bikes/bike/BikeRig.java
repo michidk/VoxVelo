@@ -2,7 +2,7 @@ package dev.michidk.voxvelo.bikes.bike;
 
 /**
  * Measurements of a bike model that gameplay and rider posing depend on, taken from the model export metadata
- * (models/final/{race,gravel,mountain}_bike.json). All lengths are in model units (16 per block, before {@link #MODEL_SCALE}), with
+ * (models/{road,gravel,mountain}_bike.json). All lengths are in model units (16 per block, before {@link #MODEL_SCALE}), with
  * the front of the bike toward -Z and the ground at Y = 0.
  *
  * @param saddleY       height of the top of the saddle
