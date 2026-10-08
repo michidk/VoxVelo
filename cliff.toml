@@ -1,0 +1,45 @@
+[changelog]
+header = """
+# Changelog
+
+Generated from Conventional Commits with [git-cliff](https://git-cliff.org).
+All three VoxVelo mods share the same version and release notes.
+See [first-release features](docs/first-release-features.md) for the detailed initial feature overview.
+
+"""
+body = """
+{% if version %}\n## {{ version | trim_start_matches(pat="v") }}\n
+{% else %}\n## Unreleased\n
+{% endif %}
+{% for group, commits in commits | group_by(attribute="group") %}
+### {{ group | striptags | trim }}
+{% for commit in commits %}
+- {% if commit.breaking %}**BREAKING:** {% endif %}{% if commit.scope %}**{{ commit.scope }}:** {% endif %}{{ commit.message | upper_first }} ([{{ commit.id | truncate(length=7, end="") }}](https://github.com/michidk/VoxVelo/commit/{{ commit.id }}))
+{% if commit.breaking_description %}  {{ commit.breaking_description }}
+{% endif %}{% endfor %}
+{% endfor %}
+"""
+trim = true
+postprocessors = [
+  { pattern = '\n{3,}', replace = "\n\n" },
+  { pattern = '\n+$', replace = "\n" },
+]
+
+[git]
+conventional_commits = true
+filter_unconventional = false
+split_commits = false
+protect_breaking_commits = true
+filter_commits = false
+tag_pattern = '^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'
+sort_commits = "oldest"
+topo_order = true
+commit_parsers = [
+  { message = "^feat", group = "<!-- 0 -->Features" },
+  { message = "^fix", group = "<!-- 1 -->Fixes" },
+  { message = "^perf", group = "<!-- 2 -->Performance" },
+  { message = "^refactor", group = "<!-- 3 -->Refactoring" },
+  { message = "^docs", group = "<!-- 4 -->Documentation" },
+  { message = "^(test|build|ci|chore|style|revert)", group = "<!-- 5 -->Maintenance" },
+  { message = ".*", group = "<!-- 6 -->Other changes" },
+]

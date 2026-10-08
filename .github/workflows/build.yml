@@ -14,6 +14,21 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changelog:
+    name: Changelog generation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: orhun/git-cliff-action@v4
+        with:
+          version: v2.14.2
+          config: cliff.toml
+          args: --output "${{ runner.temp }}/CHANGELOG.md"
+      - run: PATH="$RUNNER_TEMP/git-cliff/bin:$PATH" sh scripts/verify-changelog.sh
+
   bikes:
     name: Standalone Bikes (no fitness or native build)
     runs-on: ubuntu-24.04

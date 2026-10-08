@@ -30,6 +30,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
       - name: Download Bluetooth natives
         uses: actions/download-artifact@v4
         with:
@@ -81,19 +83,24 @@ jobs:
           -PbleNatives="$PWD/ble-natives"
           -PrequiredBleNatives=windows-x86_64,windows-aarch64,linux-x86_64,linux-aarch64,macos-x86_64,macos-aarch64
 
+      - name: Generate release notes
+        uses: orhun/git-cliff-action@v4
+        with:
+          version: v2.14.2
+          config: cliff.toml
+          args: --current --use-branch-tags --strip all --output "${{ runner.temp }}/changelog.md"
+
       - name: Create GitHub Release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ steps.versions.outputs.mod }}
-        run: |
-          prerelease=""
-          case "$VERSION" in *-*) prerelease="--prerelease" ;; esac
-          gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes $prerelease \
-            --title "VoxVelo $VERSION" \
-            "bikes/build/libs/voxvelo-bikes-$VERSION.jar" \
-            "fitness-lib/build/libs/voxvelo-fitness-lib-$VERSION.jar" \
-            "fitness/build/libs/voxvelo-fitness-$VERSION.jar"
-          gh release view "$GITHUB_REF_NAME" --json body --jq .body > "$RUNNER_TEMP/changelog.md"
+        uses: softprops/action-gh-release@v2
+        with:
+          name: VoxVelo ${{ steps.versions.outputs.mod }}
+          body_path: ${{ runner.temp }}/changelog.md
+          prerelease: ${{ contains(steps.versions.outputs.mod, '-') }}
+          fail_on_unmatched_files: true
+          files: |
+            bikes/build/libs/voxvelo-bikes-${{ steps.versions.outputs.mod }}.jar
+            fitness-lib/build/libs/voxvelo-fitness-lib-${{ steps.versions.outputs.mod }}.jar
+            fitness/build/libs/voxvelo-fitness-${{ steps.versions.outputs.mod }}.jar
 
       # Fitness requires matching Bikes and Fitness Library on both platforms.
       # Fabric API and GeckoLib resolve by mod id, which is also their slug on both platforms.

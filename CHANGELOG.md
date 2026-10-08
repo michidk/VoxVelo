@@ -1,58 +1,30 @@
 # Changelog
 
-All notable changes to this project are documented in this file.
+Generated from Conventional Commits with [git-cliff](https://git-cliff.org).
+All three VoxVelo mods share the same version and release notes.
+See [first-release features](docs/first-release-features.md) for the detailed initial feature overview.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
-[Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.0] - Unreleased
+## Unreleased
 
-First public release, for Minecraft 26.3 (Fabric). **VoxVelo Bikes** (`voxvelo_bikes`) provides standalone
-bicycles. **VoxVelo Fitness Library** (`voxvelo_fitness_lib`) provides vehicle-independent fitness services.
-**VoxVelo Fitness** (`voxvelo_fitness`) requires matching versions of both. Each mod has its own jar and
-Modrinth/CurseForge project. Old mod IDs, namespaces and configuration paths are not migrated.
+### Features
 
-### Added
+- **BREAKING:** Launch VoxVelo Bikes and Fitness ([ea13a97](https://github.com/michidk/VoxVelo/commit/ea13a97b59ce54d7b47597eaf3f73c9ee603c39f))
+  old mod IDs, Java packages, configuration paths and saved-world namespaces are not migrated.
 
-- Road bike and road bike frame use `voxvelo_bikes:road_bike` and `voxvelo_bikes:road_bike_frame`.
-- Separate `bikes`, `fitness-lib` and `fitness` modules, with independent Bikes and library compilation.
-- CI verifies all three jars and publishes Fitness with both required project dependencies.
+- **ui:** Move settings pages to scrolling vanilla options layout ([527dcf7](https://github.com/michidk/VoxVelo/commit/527dcf7c3406e2b0eb0f4a93b4759a8cca4569cc))
 
-#### Bikes mod
+### Refactoring
 
-- Multiplayer bicycle entity that rides like a horse or boat: the rider's client simulates it, the server validates
-  the versioned `bike_state` packet and handles the consequences.
-- Road, gravel and mountain bikes with their own physics, suspension and GeckoLib models, and a rider pose that
-  follows the bars and pedals.
-- Power-based physics with rolling resistance per surface, air drag, slope gravity read from the terrain, braking,
-  one-block step climbing, suspension and reduced fall damage.
-- Collisions: blocks, other bikes, boats and minecarts; mobs and players are shoved or hurt depending on closing
-  speed and mass. Rotating multipart hitboxes.
-- Craftable bike parts (frames, wheels, tires, handlebars, saddle, pedals, helmet) with recipe-book unlocks, dyeable
-  frames and helmets, and re-tiring wheels with tire wear.
-- Bike durability from crashes and falls, Bike Wrench repair and dismantling, server option to disable vehicle
-  damage.
-- Speed Boost I–III enchantment for assembled bikes.
-- Keyboard riding with rebindable keys, rider mass and personal speed limit, and a settings hub (`B`) linked from
-  the pause and options menus. Settings pages use the vanilla options layout, grouped under headings, and scroll
-  when the window is small.
-- `/voxvelo_bikes track` generator for seeded, terrain-following loop roads with slab slopes, lit borders, tunnels,
-  bridges, water and lava crossings, tree removal, progress boss bar, `status` and `cancel`.
-- Distance Cycled and Time on a Bicycle statistics.
+- **BREAKING:** Split bikes, fitness library and adapter into standalone mods ([ce3a884](https://github.com/michidk/VoxVelo/commit/ce3a8848ee7a67bbc7b70c054b6f60fe09800ec3))
+  split bikes, fitness library and adapter into standalone mods
 
-#### Fitness add-on
+### Documentation
 
-- Bluetooth FTMS smart trainers as propulsion, plus secondary power meters (Cycling Power Service) and heart rate
-  sensors (Heart Rate Service), managed in one Bluetooth Devices menu with auto-connect.
-- Trainer resistance feedback from slope and surface, with a configurable slope window, intensity and safe limits.
-- Virtual shifting with 12 gears, physical ratio and wheel circumference settings.
-- OpenBikeControl steering, braking and shifting over mDNS/TCP or Bluetooth LE (works with the BikeControl phone
-  app).
-- Mixed input: keyboard, trainer, power meter and controller work together without choosing a mode.
-- Road follow (hands-free steering) with configurable road blocks and LEFT / RIGHT junction prompts.
-- Riding HUD, heart rate graph and a server-wide rider stats overlay with sharing controls.
-- Ride recording with summaries, FIT export (optionally with GPS), and ride maps drawn by the server.
-- Fitness settings hub (`F8`) listing the same pages as the bike settings; vehicle mods add pages with
-  `Fitness.addSettingsPage`.
+- Define three-mod distribution and dependencies ([ec13145](https://github.com/michidk/VoxVelo/commit/ec131452e5a6cb5b255d7d74f15a017ccb456533))
 
-[0.1.0]: https://github.com/michidk/VoxVelo/releases/tag/v0.1.0
+- **modrinth:** Prepare project listings and fitness library icon ([d29d899](https://github.com/michidk/VoxVelo/commit/d29d8995ff536f147542d19695e3dd6b4bc4dadf))
+
+### Maintenance
+
+- Integrate upstream settings and document refactor verification ([835110e](https://github.com/michidk/VoxVelo/commit/835110e67799af6fcf2a577a2a5bed7e5053fc1b))
