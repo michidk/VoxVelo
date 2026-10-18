@@ -1,0 +1,196 @@
+name: Publish
+
+# Publishes an existing GitHub release to Modrinth and/or CurseForge without rebuilding it. Start it by hand from
+# the Actions tab to add a platform after the fact (for example CurseForge once its projects exist) or to retry an
+# upload that failed. The tag-triggered Release workflow already publishes every new version to all configured
+# platforms, so a version that went out that way does not need this.
+#
+# Jars and release notes come from the GitHub release of the tag, so the files are exactly the ones that were built
+# and verified there. A platform rejects a version number it already has, so pick only the platform that is missing.
+#
+# Repository variables (project IDs; a mod is skipped on a platform while its ID is unset):
+#   CURSEFORGE_BIKES_ID, CURSEFORGE_FITNESS_LIB_ID, CURSEFORGE_FITNESS_ID   (numeric, shown on the project page)
+#   MODRINTH_BIKES_ID, MODRINTH_FITNESS_LIB_ID, MODRINTH_FITNESS_ID
+# Optional repository variables (CurseForge URL slugs of the two dependencies of Fitness; they default to
+# voxvelo-bikes and voxvelo-fitness-lib). Dependencies go by slug because a project that CurseForge has not approved
+# yet cannot be looked up by ID, and the dependency would be dropped without a warning:
+#   CURSEFORGE_BIKES_SLUG, CURSEFORGE_FITNESS_LIB_SLUG
+# Repository secrets: CURSEFORGE_TOKEN, MODRINTH_TOKEN
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to publish, for example v0.1.0
+        required: true
+        type: string
+      platform:
+        description: Platform to publish to
+        required: true
+        type: choice
+        default: curseforge
+        options:
+          - curseforge
+          - modrinth
+          - both
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-${{ inputs.tag }}-${{ inputs.platform }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ inputs.tag }}
+      PLATFORM: ${{ inputs.platform }}
+    steps:
+      - name: Check the selected platforms are configured
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+          CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
+          MODRINTH_BIKES_ID: ${{ vars.MODRINTH_BIKES_ID }}
+          MODRINTH_FITNESS_LIB_ID: ${{ vars.MODRINTH_FITNESS_LIB_ID }}
+          MODRINTH_FITNESS_ID: ${{ vars.MODRINTH_FITNESS_ID }}
+          CURSEFORGE_BIKES_ID: ${{ vars.CURSEFORGE_BIKES_ID }}
+          CURSEFORGE_FITNESS_LIB_ID: ${{ vars.CURSEFORGE_FITNESS_LIB_ID }}
+          CURSEFORGE_FITNESS_ID: ${{ vars.CURSEFORGE_FITNESS_ID }}
+        run: |
+          case "$PLATFORM" in
+            curseforge) platforms="CURSEFORGE" ;;
+            modrinth) platforms="MODRINTH" ;;
+            both) platforms="MODRINTH CURSEFORGE" ;;
+          esac
+          for platform in $platforms; do
+            token="${platform}_TOKEN"
+            bikes="${platform}_BIKES_ID"
+            library="${platform}_FITNESS_LIB_ID"
+            fitness="${platform}_FITNESS_ID"
+            if [ -z "${!token}" ]; then
+              echo "::error::The ${token} secret is not set"
+              exit 1
+            fi
+            if [ -z "${!bikes}" ] && [ -z "${!library}" ] && [ -z "${!fitness}" ]; then
+              echo "::error::None of ${bikes}, ${library} and ${fitness} is set, so nothing would be published to ${platform}"
+              exit 1
+            fi
+            if [ -n "${!fitness}" ] && { [ -z "${!bikes}" ] || [ -z "${!library}" ]; }; then
+              echo "::error::${fitness} requires both ${bikes} and ${library}"
+              exit 1
+            fi
+          done
+
+      # The version in gradle.properties at the tag supplies the Minecraft version the jars were built for.
+      - name: Read versions and check the tag
+        id: versions
+        run: |
+          gh api -H "Accept: application/vnd.github.raw" \
+            "repos/${GITHUB_REPOSITORY}/contents/gradle.properties?ref=${TAG}" > "${RUNNER_TEMP}/gradle.properties"
+          mod_version=$(sed -n 's/^mod_version=//p' "${RUNNER_TEMP}/gradle.properties")
+          minecraft_version=$(sed -n 's/^minecraft_version=//p' "${RUNNER_TEMP}/gradle.properties")
+          if [ "${TAG}" != "v${mod_version}" ]; then
+            echo "::error::Tag ${TAG} does not match mod_version ${mod_version} in gradle.properties"
+            exit 1
+          fi
+          echo "mod=${mod_version}" >> "$GITHUB_OUTPUT"
+          echo "minecraft=${minecraft_version}" >> "$GITHUB_OUTPUT"
+
+      - name: Download the release files and notes
+        env:
+          MOD_VERSION: ${{ steps.versions.outputs.mod }}
+        run: |
+          gh release download "${TAG}" --pattern 'voxvelo-*.jar' --dir "${RUNNER_TEMP}/release"
+          gh release view "${TAG}" --json body --jq .body > "${RUNNER_TEMP}/changelog.md"
+          for jar in "voxvelo-bikes-${MOD_VERSION}.jar" "voxvelo-fitness-lib-${MOD_VERSION}.jar" "voxvelo-fitness-${MOD_VERSION}.jar"; do
+            if [ ! -f "${RUNNER_TEMP}/release/${jar}" ]; then
+              echo "::error::Release ${TAG} has no ${jar} asset"
+              exit 1
+            fi
+          done
+
+      # Fitness requires matching Bikes and Fitness Library on both platforms.
+      # Fabric API and GeckoLib resolve by mod id, which is also their slug on both platforms.
+      - name: Collect dependencies
+        id: dependencies
+        env:
+          MODRINTH_BIKES_ID: ${{ vars.MODRINTH_BIKES_ID }}
+          MODRINTH_FITNESS_LIB_ID: ${{ vars.MODRINTH_FITNESS_LIB_ID }}
+          CURSEFORGE_BIKES_SLUG: ${{ vars.CURSEFORGE_BIKES_SLUG || 'voxvelo-bikes' }}
+          CURSEFORGE_FITNESS_LIB_SLUG: ${{ vars.CURSEFORGE_FITNESS_LIB_SLUG || 'voxvelo-fitness-lib' }}
+          MOD_VERSION: ${{ steps.versions.outputs.mod }}
+        run: |
+          {
+            echo "bikes<<EOF"
+            echo "fabric-api(required)"
+            echo "geckolib(required)"
+            echo "EOF"
+            echo "generic<<EOF"
+            echo "fabric-api(required)"
+            echo "EOF"
+            echo "fitness<<EOF"
+            echo "fabric-api(required)"
+            echo "geckolib(required)"
+            bikes_dependency="voxvelo-bikes@$MOD_VERSION(required){curseforge:$CURSEFORGE_BIKES_SLUG}"
+            if [ -n "$MODRINTH_BIKES_ID" ]; then bikes_dependency="$bikes_dependency{modrinth:$MODRINTH_BIKES_ID}"; fi
+            echo "$bikes_dependency"
+            generic_dependency="voxvelo-fitness-lib@$MOD_VERSION(required){curseforge:$CURSEFORGE_FITNESS_LIB_SLUG}"
+            if [ -n "$MODRINTH_FITNESS_LIB_ID" ]; then generic_dependency="$generic_dependency{modrinth:$MODRINTH_FITNESS_LIB_ID}"; fi
+            echo "$generic_dependency"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Publish bikes
+        if: (inputs.platform != 'curseforge' && vars.MODRINTH_BIKES_ID != '') || (inputs.platform != 'modrinth' && vars.CURSEFORGE_BIKES_ID != '')
+        uses: Kira-NT/mc-publish@v3.3.1
+        with:
+          modrinth-id: ${{ inputs.platform != 'curseforge' && vars.MODRINTH_BIKES_ID || '' }}
+          modrinth-token: ${{ inputs.platform != 'curseforge' && vars.MODRINTH_BIKES_ID != '' && secrets.MODRINTH_TOKEN || '' }}
+          curseforge-id: ${{ inputs.platform != 'modrinth' && vars.CURSEFORGE_BIKES_ID || '' }}
+          curseforge-token: ${{ inputs.platform != 'modrinth' && vars.CURSEFORGE_BIKES_ID != '' && secrets.CURSEFORGE_TOKEN || '' }}
+          files: ${{ runner.temp }}/release/voxvelo-bikes-${{ steps.versions.outputs.mod }}.jar
+          name: VoxVelo Bikes ${{ steps.versions.outputs.mod }}
+          version: ${{ steps.versions.outputs.mod }}
+          changelog-file: ${{ runner.temp }}/changelog.md
+          loaders: fabric
+          game-versions: ${{ steps.versions.outputs.minecraft }}
+          java: 25
+          dependencies: ${{ steps.dependencies.outputs.bikes }}
+
+      - name: Publish Fitness Library
+        if: (inputs.platform != 'curseforge' && vars.MODRINTH_FITNESS_LIB_ID != '') || (inputs.platform != 'modrinth' && vars.CURSEFORGE_FITNESS_LIB_ID != '')
+        uses: Kira-NT/mc-publish@v3.3.1
+        with:
+          modrinth-id: ${{ inputs.platform != 'curseforge' && vars.MODRINTH_FITNESS_LIB_ID || '' }}
+          modrinth-token: ${{ inputs.platform != 'curseforge' && vars.MODRINTH_FITNESS_LIB_ID != '' && secrets.MODRINTH_TOKEN || '' }}
+          curseforge-id: ${{ inputs.platform != 'modrinth' && vars.CURSEFORGE_FITNESS_LIB_ID || '' }}
+          curseforge-token: ${{ inputs.platform != 'modrinth' && vars.CURSEFORGE_FITNESS_LIB_ID != '' && secrets.CURSEFORGE_TOKEN || '' }}
+          files: ${{ runner.temp }}/release/voxvelo-fitness-lib-${{ steps.versions.outputs.mod }}.jar
+          name: VoxVelo Fitness Library ${{ steps.versions.outputs.mod }}
+          version: ${{ steps.versions.outputs.mod }}
+          changelog-file: ${{ runner.temp }}/changelog.md
+          loaders: fabric
+          game-versions: ${{ steps.versions.outputs.minecraft }}
+          java: 25
+          dependencies: ${{ steps.dependencies.outputs.generic }}
+
+      - name: Publish fitness
+        if: (inputs.platform != 'curseforge' && vars.MODRINTH_FITNESS_ID != '' && vars.MODRINTH_BIKES_ID != '' && vars.MODRINTH_FITNESS_LIB_ID != '') || (inputs.platform != 'modrinth' && vars.CURSEFORGE_FITNESS_ID != '' && vars.CURSEFORGE_BIKES_ID != '' && vars.CURSEFORGE_FITNESS_LIB_ID != '')
+        uses: Kira-NT/mc-publish@v3.3.1
+        with:
+          modrinth-id: ${{ inputs.platform != 'curseforge' && vars.MODRINTH_BIKES_ID != '' && vars.MODRINTH_FITNESS_LIB_ID != '' && vars.MODRINTH_FITNESS_ID || '' }}
+          modrinth-token: ${{ inputs.platform != 'curseforge' && vars.MODRINTH_FITNESS_ID != '' && vars.MODRINTH_BIKES_ID != '' && vars.MODRINTH_FITNESS_LIB_ID != '' && secrets.MODRINTH_TOKEN || '' }}
+          curseforge-id: ${{ inputs.platform != 'modrinth' && vars.CURSEFORGE_BIKES_ID != '' && vars.CURSEFORGE_FITNESS_LIB_ID != '' && vars.CURSEFORGE_FITNESS_ID || '' }}
+          curseforge-token: ${{ inputs.platform != 'modrinth' && vars.CURSEFORGE_FITNESS_ID != '' && vars.CURSEFORGE_BIKES_ID != '' && vars.CURSEFORGE_FITNESS_LIB_ID != '' && secrets.CURSEFORGE_TOKEN || '' }}
+          files: ${{ runner.temp }}/release/voxvelo-fitness-${{ steps.versions.outputs.mod }}.jar
+          name: VoxVelo Fitness ${{ steps.versions.outputs.mod }}
+          version: ${{ steps.versions.outputs.mod }}
+          changelog-file: ${{ runner.temp }}/changelog.md
+          loaders: fabric
+          game-versions: ${{ steps.versions.outputs.minecraft }}
+          java: 25
+          dependencies: ${{ steps.dependencies.outputs.fitness }}

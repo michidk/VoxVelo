@@ -7,7 +7,11 @@ name: Release
 # Repository variables (project IDs; a platform is skipped while its ID is unset):
 #   MODRINTH_BIKES_ID, MODRINTH_FITNESS_ID, CURSEFORGE_BIKES_ID, CURSEFORGE_FITNESS_ID
 #   MODRINTH_FITNESS_LIB_ID, CURSEFORGE_FITNESS_LIB_ID (reusable fitness library)
+# Optional repository variables: CURSEFORGE_BIKES_SLUG, CURSEFORGE_FITNESS_LIB_SLUG (URL slugs of the two projects
+#   that Fitness depends on; default voxvelo-bikes and voxvelo-fitness-lib)
 # Repository secrets: MODRINTH_TOKEN, CURSEFORGE_TOKEN
+#
+# To add a platform to a version that is already released, run the Publish workflow instead of tagging again.
 
 on:
   push:
@@ -104,13 +108,15 @@ jobs:
 
       # Fitness requires matching Bikes and Fitness Library on both platforms.
       # Fabric API and GeckoLib resolve by mod id, which is also their slug on both platforms.
+      # CurseForge dependencies go by slug: a project CurseForge has not approved yet cannot be looked up by ID,
+      # and the dependency would be dropped without a warning.
       - name: Collect dependencies
         id: dependencies
         env:
           MODRINTH_BIKES_ID: ${{ vars.MODRINTH_BIKES_ID }}
-          CURSEFORGE_BIKES_ID: ${{ vars.CURSEFORGE_BIKES_ID }}
+          CURSEFORGE_BIKES_SLUG: ${{ vars.CURSEFORGE_BIKES_SLUG || 'voxvelo-bikes' }}
           MODRINTH_FITNESS_LIB_ID: ${{ vars.MODRINTH_FITNESS_LIB_ID }}
-          CURSEFORGE_FITNESS_LIB_ID: ${{ vars.CURSEFORGE_FITNESS_LIB_ID }}
+          CURSEFORGE_FITNESS_LIB_SLUG: ${{ vars.CURSEFORGE_FITNESS_LIB_SLUG || 'voxvelo-fitness-lib' }}
           MOD_VERSION: ${{ steps.versions.outputs.mod }}
         run: |
           {
@@ -124,13 +130,11 @@ jobs:
             echo "fitness<<EOF"
             echo "fabric-api(required)"
             echo "geckolib(required)"
-            bikes_dependency="voxvelo-bikes@$MOD_VERSION(required)"
+            bikes_dependency="voxvelo-bikes@$MOD_VERSION(required){curseforge:$CURSEFORGE_BIKES_SLUG}"
             if [ -n "$MODRINTH_BIKES_ID" ]; then bikes_dependency="$bikes_dependency{modrinth:$MODRINTH_BIKES_ID}"; fi
-            if [ -n "$CURSEFORGE_BIKES_ID" ]; then bikes_dependency="$bikes_dependency{curseforge:$CURSEFORGE_BIKES_ID}"; fi
             echo "$bikes_dependency"
-            generic_dependency="voxvelo-fitness-lib@$MOD_VERSION(required)"
+            generic_dependency="voxvelo-fitness-lib@$MOD_VERSION(required){curseforge:$CURSEFORGE_FITNESS_LIB_SLUG}"
             if [ -n "$MODRINTH_FITNESS_LIB_ID" ]; then generic_dependency="$generic_dependency{modrinth:$MODRINTH_FITNESS_LIB_ID}"; fi
-            if [ -n "$CURSEFORGE_FITNESS_LIB_ID" ]; then generic_dependency="$generic_dependency{curseforge:$CURSEFORGE_FITNESS_LIB_ID}"; fi
             echo "$generic_dependency"
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
