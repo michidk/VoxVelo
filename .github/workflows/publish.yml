@@ -24,6 +24,16 @@ on:
         description: Release tag to publish, for example v0.1.0
         required: true
         type: string
+      mod:
+        description: Mod to publish (select one when retrying a partial upload)
+        required: true
+        type: choice
+        default: all
+        options:
+          - all
+          - bikes
+          - fitness-lib
+          - fitness
       platform:
         description: Platform to publish to
         required: true
@@ -145,7 +155,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Publish bikes
-        if: (inputs.platform != 'curseforge' && vars.MODRINTH_BIKES_ID != '') || (inputs.platform != 'modrinth' && vars.CURSEFORGE_BIKES_ID != '')
+        if: (inputs.mod == 'all' || inputs.mod == 'bikes') && ((inputs.platform != 'curseforge' && vars.MODRINTH_BIKES_ID != '') || (inputs.platform != 'modrinth' && vars.CURSEFORGE_BIKES_ID != ''))
         uses: Kira-NT/mc-publish@v3.3.1
         with:
           modrinth-id: ${{ inputs.platform != 'curseforge' && vars.MODRINTH_BIKES_ID || '' }}
@@ -157,12 +167,13 @@ jobs:
           version: ${{ steps.versions.outputs.mod }}
           changelog-file: ${{ runner.temp }}/changelog.md
           loaders: fabric
+          environment: client | server
           game-versions: ${{ steps.versions.outputs.minecraft }}
           java: 25
           dependencies: ${{ steps.dependencies.outputs.bikes }}
 
       - name: Publish Fitness Library
-        if: (inputs.platform != 'curseforge' && vars.MODRINTH_FITNESS_LIB_ID != '') || (inputs.platform != 'modrinth' && vars.CURSEFORGE_FITNESS_LIB_ID != '')
+        if: (inputs.mod == 'all' || inputs.mod == 'fitness-lib') && ((inputs.platform != 'curseforge' && vars.MODRINTH_FITNESS_LIB_ID != '') || (inputs.platform != 'modrinth' && vars.CURSEFORGE_FITNESS_LIB_ID != ''))
         uses: Kira-NT/mc-publish@v3.3.1
         with:
           modrinth-id: ${{ inputs.platform != 'curseforge' && vars.MODRINTH_FITNESS_LIB_ID || '' }}
@@ -174,12 +185,13 @@ jobs:
           version: ${{ steps.versions.outputs.mod }}
           changelog-file: ${{ runner.temp }}/changelog.md
           loaders: fabric
+          environment: client | server
           game-versions: ${{ steps.versions.outputs.minecraft }}
           java: 25
           dependencies: ${{ steps.dependencies.outputs.generic }}
 
       - name: Publish fitness
-        if: (inputs.platform != 'curseforge' && vars.MODRINTH_FITNESS_ID != '' && vars.MODRINTH_BIKES_ID != '' && vars.MODRINTH_FITNESS_LIB_ID != '') || (inputs.platform != 'modrinth' && vars.CURSEFORGE_FITNESS_ID != '' && vars.CURSEFORGE_BIKES_ID != '' && vars.CURSEFORGE_FITNESS_LIB_ID != '')
+        if: (inputs.mod == 'all' || inputs.mod == 'fitness') && ((inputs.platform != 'curseforge' && vars.MODRINTH_FITNESS_ID != '' && vars.MODRINTH_BIKES_ID != '' && vars.MODRINTH_FITNESS_LIB_ID != '') || (inputs.platform != 'modrinth' && vars.CURSEFORGE_FITNESS_ID != '' && vars.CURSEFORGE_BIKES_ID != '' && vars.CURSEFORGE_FITNESS_LIB_ID != ''))
         uses: Kira-NT/mc-publish@v3.3.1
         with:
           modrinth-id: ${{ inputs.platform != 'curseforge' && vars.MODRINTH_BIKES_ID != '' && vars.MODRINTH_FITNESS_LIB_ID != '' && vars.MODRINTH_FITNESS_ID || '' }}
@@ -191,6 +203,7 @@ jobs:
           version: ${{ steps.versions.outputs.mod }}
           changelog-file: ${{ runner.temp }}/changelog.md
           loaders: fabric
+          environment: client | server
           game-versions: ${{ steps.versions.outputs.minecraft }}
           java: 25
           dependencies: ${{ steps.dependencies.outputs.fitness }}

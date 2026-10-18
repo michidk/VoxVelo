@@ -152,6 +152,7 @@ jobs:
           version: ${{ steps.versions.outputs.mod }}
           changelog-file: ${{ runner.temp }}/changelog.md
           loaders: fabric
+          environment: client | server
           game-versions: ${{ steps.versions.outputs.minecraft }}
           java: 25
           dependencies: ${{ steps.dependencies.outputs.bikes }}
@@ -169,6 +170,7 @@ jobs:
           version: ${{ steps.versions.outputs.mod }}
           changelog-file: ${{ runner.temp }}/changelog.md
           loaders: fabric
+          environment: client | server
           game-versions: ${{ steps.versions.outputs.minecraft }}
           java: 25
           dependencies: ${{ steps.dependencies.outputs.generic }}
@@ -186,6 +188,7 @@ jobs:
           version: ${{ steps.versions.outputs.mod }}
           changelog-file: ${{ runner.temp }}/changelog.md
           loaders: fabric
+          environment: client | server
           game-versions: ${{ steps.versions.outputs.minecraft }}
           java: 25
           dependencies: ${{ steps.dependencies.outputs.fitness }}
