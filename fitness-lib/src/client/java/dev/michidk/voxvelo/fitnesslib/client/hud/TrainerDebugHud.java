@@ -32,7 +32,8 @@ public final class TrainerDebugHud implements HudElement {
 			+ " | riding: " + (vehicle != null ? "yes" : "no"));
 		if (vehicle != null) {
 			lines.add(format("Road: %+.2f%% | intensity %.2fx", vehicle.gradient() * 100, this.ctx.config.trainerResistanceIntensity));
-			lines.add(format("Virtual gear: %.2f | %s", vehicle.virtualGearRatio(),
+			lines.add(format("Virtual gear: %.2f | range %s %.2f-%.2f | %s", vehicle.virtualGearRatio(), this.ctx.config.virtualGearRange,
+				this.ctx.config.virtualGearRange.lowest, this.ctx.config.virtualGearRange.highest,
 				this.ctx.config.virtualShiftingEnabled ? "ON" : "OFF"));
 		}
 		var telemetry = this.ctx.ftms.freshTelemetry();

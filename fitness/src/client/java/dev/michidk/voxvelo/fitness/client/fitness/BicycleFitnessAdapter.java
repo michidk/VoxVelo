@@ -53,7 +53,7 @@ public final class BicycleFitnessAdapter implements VehicleAdapter, BikeInputSou
 				bike.params().slopeGravityFactor(),
 				bike.params().rolling(bike.getSurface()),
 				bike.getBikeType().params().bikeMass() + ctx.core.config.riderMassKg,
-				VirtualShifting.ratio(bike.getGear()),
+				VirtualShifting.ratio(bike.getGear(), ctx.config.virtualGearRange),
 				bike.getGear() + "/" + BikeControlState.MAX_GEAR);
 	}
 

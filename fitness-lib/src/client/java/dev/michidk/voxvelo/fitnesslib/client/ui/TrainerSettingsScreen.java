@@ -3,6 +3,7 @@ package dev.michidk.voxvelo.fitnesslib.client.ui;
 import dev.michidk.voxvelo.fitnesslib.client.FitnessRuntime;
 import dev.michidk.voxvelo.fitnesslib.client.fitness.FitnessStatus;
 import dev.michidk.voxvelo.fitnesslib.client.ftms.TrainerLimits;
+import dev.michidk.voxvelo.fitnesslib.client.ftms.VirtualShifting;
 import java.util.Locale;
 import net.minecraft.client.gui.components.CycleButton;
 import net.minecraft.client.gui.screens.Screen;
@@ -39,6 +40,11 @@ public class TrainerSettingsScreen extends SettingsScreen {
 			.withTooltip(value -> Tips.of("voxvelo_fitness_lib.config.virtual_shifting"))
 			.create(0, 0, SettingsList.WIDTH, 20, Component.translatable("voxvelo_fitness_lib.config.virtual_shifting"),
 				(button, value) -> this.ctx.config.virtualShiftingEnabled = value));
+		this.rows.addRow(CycleButton.builder(VirtualShifting.GearRange::label, this.ctx.config.virtualGearRange)
+			.withValues(VirtualShifting.GearRange.values())
+			.withTooltip(value -> Tips.of("voxvelo_fitness_lib.config.gear_range"))
+			.create(0, 0, WIDTH, 20, Component.translatable("voxvelo_fitness_lib.config.gear_range"),
+				(button, value) -> this.ctx.config.virtualGearRange = value));
 		this.rows.addRow(new ValueSlider(0, 0, WIDTH, TrainerLimits.MIN_WHEEL_CIRCUMFERENCE_M, TrainerLimits.MAX_WHEEL_CIRCUMFERENCE_M, 0.05, this.ctx.config.trainerWheelCircumferenceM,
 				v -> Component.translatable("voxvelo_fitness_lib.config.wheel_circumference", String.format(Locale.ROOT, "%.2f", v)),
 				v -> this.ctx.config.trainerWheelCircumferenceM = v).tip("voxvelo_fitness_lib.config.wheel_circumference"));

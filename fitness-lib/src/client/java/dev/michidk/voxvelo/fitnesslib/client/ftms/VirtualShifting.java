@@ -1,12 +1,45 @@
 package dev.michidk.voxvelo.fitnesslib.client.ftms;
 
+import java.util.Locale;
+import net.minecraft.network.chat.Component;
+
 /** Independent road-load model for virtual gears over standard FTMS simulation control. */
 public final class VirtualShifting {
 	private VirtualShifting() {}
 
-	/** Twelve evenly spaced ratios, with gear six using the reference ratio (50/20). */
+	public static final int GEAR_COUNT = 12;
+
+	/** The lowest and highest virtual ratio; the gears in between are spaced evenly on a geometric curve. */
+	public enum GearRange {
+		DEFAULT(0.75, 5.49),
+		COMPACT(1.0, 4.0),
+		WIDE(0.5, 6.5),
+		ONE_BY(2.2, 4.2);
+
+		public final double lowest;
+		public final double highest;
+
+		GearRange(double lowest, double highest) {
+			this.lowest = lowest;
+			this.highest = highest;
+		}
+
+		public Component label() {
+			return Component.translatable("voxvelo_fitness_lib.gear_range." + this.name().toLowerCase(Locale.ROOT),
+				String.format(Locale.ROOT, "%.2f", this.lowest), String.format(Locale.ROOT, "%.2f", this.highest));
+		}
+	}
+
+	/** Ratio of a gear on the default range. */
 	public static double ratio(int gear) {
-		return TrainerLimits.DEFAULT_GEAR_RATIO * Math.pow(1.13, Math.max(1, Math.min(12, gear)) - 6);
+		return ratio(gear, GearRange.DEFAULT);
+	}
+
+	/** Ratio of a gear, 1..{@link #GEAR_COUNT}, with the same step between every pair of neighbours. */
+	public static double ratio(int gear, GearRange range) {
+		GearRange chosen = range == null ? GearRange.DEFAULT : range;
+		double position = (Math.max(1, Math.min(GEAR_COUNT, gear)) - 1) / (double) (GEAR_COUNT - 1);
+		return chosen.lowest * Math.pow(chosen.highest / chosen.lowest, position);
 	}
 
 	/**

@@ -17,8 +17,18 @@ public final class VirtualShiftingChecks {
 		}
 		double lowPower = power(target(flat, 1, 90, 10), 10);
 		double highPower = power(target(flat, 12, 90, 10), 10);
-		require(lowPower > 30 && lowPower < 40, "gear 1 at 90 rpm should demand about 35 W");
-		require(highPower > 1100 && highPower < 1300, "gear 12 at 90 rpm should demand about 1.2 kW");
+		require(lowPower > 8 && lowPower < 15, "gear 1 at 90 rpm should demand about 11 W, got " + lowPower);
+		require(highPower > 1250 && highPower < 1500, "gear 12 at 90 rpm should demand about 1.4 kW, got " + highPower);
+		for (VirtualShifting.GearRange range : VirtualShifting.GearRange.values()) {
+			near(VirtualShifting.ratio(1, range), range.lowest);
+			near(VirtualShifting.ratio(12, range), range.highest);
+			double step = VirtualShifting.ratio(2, range) / VirtualShifting.ratio(1, range);
+			for (int gear = 2; gear <= 12; gear++) {
+				near(VirtualShifting.ratio(gear, range) / VirtualShifting.ratio(gear - 1, range), step);
+			}
+		}
+		near(VirtualShifting.ratio(0, null), VirtualShifting.GearRange.DEFAULT.lowest);
+		near(VirtualShifting.ratio(99, VirtualShifting.GearRange.WIDE), 6.5);
 		for (int gear : new int[] {1, 6, 9}) {
 			for (double speed : new double[] {6, 8, 12}) {
 				near(power(target(flat, gear, 90, speed), speed), power(target(flat, gear, 90, 10), 10));
