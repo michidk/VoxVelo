@@ -23,12 +23,6 @@ public abstract class BikeCameraMixin {
 		return context != null && context.config.bikeCameraFollow ? BikeEntity.riddenBy(client.player) : null;
 	}
 
-	@Inject(method = "getViewYRot", at = @At("HEAD"), cancellable = true)
-	private void voxvelo$lookAhead(float partialTick, CallbackInfoReturnable<Float> result) {
-		BikeEntity bike = this.voxvelo$cameraBike();
-		if (bike != null) result.setReturnValue(bike.getViewYRot(partialTick));
-	}
-
 	@Inject(method = "getViewXRot", at = @At("HEAD"), cancellable = true)
 	private void voxvelo$levelView(float partialTick, CallbackInfoReturnable<Float> result) {
 		if (this.voxvelo$cameraBike() != null) result.setReturnValue(0.0F);
