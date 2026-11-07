@@ -23,10 +23,8 @@ import net.minecraft.resources.Identifier;
  * A "VoxVelo" button on the pause menu and the options menu that opens the settings hub.
  *
  * <p>To live next to other mods it never uses fixed coordinates for the normal case: it is placed against vanilla
- * buttons found by their label or position, above "Save and Quit to Title" on the pause menu and as a row under the
- * settings grid (spanning both columns) on the options menu. The listener runs after the default phase, so buttons
- * added by other mods already exist; if the spot is taken it moves one row further away. On the options menu it
- * then tries above "Done", and as a last resort every screen falls back to the top-left corner.
+	 * buttons found by their label or position, above "Save and Quit to Title" on the pause menu and beside "Done" in
+	 * the options footer. The listener runs after the default phase, so buttons added by other mods already exist.
  */
 public final class MenuButton {
 	private static final Identifier PHASE = VoxVelo.id("menu_button");
@@ -36,6 +34,8 @@ public final class MenuButton {
 	/** Buttons this class added, held weakly so closed screens can be collected. */
 	private static final Set<Button> ADDED = Collections.newSetFromMap(new WeakHashMap<>());
 	private static final Map<AbstractWidget, MovedButton> MOVED = new WeakHashMap<>();
+	private static final Map<AbstractWidget, Footer> FOOTERS = new WeakHashMap<>();
+	private record Footer(Slot original, Slot resized) {}
 
 	private MenuButton() {
 	}
@@ -55,6 +55,11 @@ public final class MenuButton {
 			// drop the button from the previous pass before placing it again.
 			if (screen instanceof PauseScreen || screen instanceof OptionsScreen) {
 				for (AbstractWidget widget : Screens.getWidgets(screen)) {
+					Footer footer = FOOTERS.remove(widget);
+					if (footer != null && widget.getX() == footer.resized().x() && widget.getY() == footer.resized().y()
+						&& widget.getWidth() == footer.resized().width()) {
+						widget.setWidth(footer.original().width());
+					}
 					MovedButton moved = MOVED.remove(widget);
 					if (moved != null && widget.getY() == moved.movedY()) {
 						widget.setY(moved.originalY());
@@ -84,36 +89,34 @@ public final class MenuButton {
 		place(client, screen, widgets, slot);
 	}
 
-	/** Adds the button as a row under the settings grid, or above "Done" when there is no room below the grid. */
+	/** Uses a full grid row when it fits, otherwise shares the footer with Done in short windows. */
 	private static void addToOptions(Minecraft client, Screen screen) {
 		List<AbstractWidget> widgets = Screens.getWidgets(screen);
 		AbstractWidget done = find(widgets, CommonComponents.GUI_DONE);
-
-		int gridBottom = Integer.MIN_VALUE;
-		for (AbstractWidget widget : widgets) {
-			if (widget != done && widget.visible) {
-				gridBottom = Math.max(gridBottom, widget.getY());
+		int bottom = widgets.stream().filter(widget -> widget != done && widget.visible)
+			.mapToInt(widget -> widget.getY() + widget.getHeight()).max().orElse(0);
+		List<AbstractWidget> lastRow = widgets.stream().filter(widget -> widget != done && widget.visible
+			&& widget.getY() + widget.getHeight() == bottom).toList();
+		if (!lastRow.isEmpty()) {
+			int left = lastRow.stream().mapToInt(AbstractWidget::getX).min().orElse(0);
+			int right = lastRow.stream().mapToInt(widget -> widget.getX() + widget.getWidth()).max().orElse(0);
+			int y = bottom + GAP;
+			if (y + HEIGHT + GAP <= (done == null ? screen.height : done.getY()) && isFree(widgets, left, y, right - left)) {
+				place(client, screen, widgets, new Slot(left, y, right - left));
+				return;
 			}
 		}
-
-		Slot slot = null;
-		if (gridBottom != Integer.MIN_VALUE) {
-			int left = Integer.MAX_VALUE;
-			int right = Integer.MIN_VALUE;
-			for (AbstractWidget widget : widgets) {
-				if (widget != done && widget.visible && widget.getY() == gridBottom) {
-					left = Math.min(left, widget.getX());
-					right = Math.max(right, widget.getX() + widget.getWidth());
-				}
-			}
-			slot = findSlot(screen, widgets, left, gridBottom + HEIGHT + GAP, right - left, 1);
+		if (done == null) {
+			place(client, screen, widgets, null);
+			return;
 		}
-		if (slot == null && done != null) {
-			slot = findSlot(screen, widgets, done.getX(), done.getY() - HEIGHT - GAP, done.getWidth(), -1);
-		}
-		place(client, screen, widgets, slot);
+		Slot original = new Slot(done.getX(), done.getY(), done.getWidth());
+		int half = (original.width() - GAP) / 2;
+		Slot resized = new Slot(original.x(), original.y(), half);
+		done.setWidth(half);
+		FOOTERS.put(done, new Footer(original, resized));
+		place(client, screen, widgets, new Slot(original.x() + half + GAP, original.y(), original.width() - half - GAP));
 	}
-
 	private static AbstractWidget find(List<AbstractWidget> widgets, Component label) {
 		for (AbstractWidget widget : widgets) {
 			if (widget instanceof Button && widget.getMessage().getString().equals(label.getString())) {
