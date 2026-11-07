@@ -25,14 +25,25 @@ public final class LevelGround implements TerrainSlope.Ground {
 		int top = (int) Math.floor(referenceY) + STEP_UP;
 		int bottom = (int) Math.floor(referenceY) - DROP_DOWN;
 		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+		double closest = Double.NaN;
+		double distance = Double.POSITIVE_INFINITY;
 		for (int y = top; y >= bottom; y--) {
 			pos.set(x, y, z);
 			BlockState state = this.level.getBlockState(pos);
 			VoxelShape shape = state.getCollisionShape(this.level, pos);
 			if (!shape.isEmpty()) {
-				return OptionalDouble.of(y + shape.max(Direction.Axis.Y));
+				// Buried block tops inside a solid hill are not rideable surfaces.
+				BlockPos above = pos.above();
+				VoxelShape cover = this.level.getBlockState(above).getCollisionShape(this.level, above);
+				if (shape.max(Direction.Axis.Y) >= 1 && !cover.isEmpty() && cover.min(Direction.Axis.Y) <= 0) continue;
+				double surface = y + shape.max(Direction.Axis.Y);
+				double delta = Math.abs(surface - referenceY);
+				if (delta < distance) {
+					closest = surface;
+					distance = delta;
+				}
 			}
 		}
-		return OptionalDouble.empty();
+		return Double.isNaN(closest) ? OptionalDouble.empty() : OptionalDouble.of(closest);
 	}
 }

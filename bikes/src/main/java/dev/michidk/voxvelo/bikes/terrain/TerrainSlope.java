@@ -29,7 +29,7 @@ public final class TerrainSlope {
 
 	/**
 	 * Least-squares slope (rise over run) of the surface along the heading, from {@code window} blocks behind to
-	 * {@code window} blocks ahead of the position. Columns without ground are skipped; fewer than five usable
+	 * {@code window} blocks ahead of the position. Sampling stops at gaps or unrideable steps; fewer than five usable
 	 * samples give no result.
 	 *
 	 * @param px,pz   position in blocks
@@ -63,10 +63,12 @@ public final class TerrainSlope {
 				OptionalDouble h = ground.height(x, z, reference);
 				int index = w + d * direction;
 				if (h.isPresent()) {
+					// A wall, roof or gap is not a continuation of the road the bike is riding.
+					if (Math.abs(h.getAsDouble() - reference) > 1.0 + 1.0e-6) break;
 					heights[index] = h.getAsDouble();
 					known[index] = true;
 					reference = h.getAsDouble();
-				}
+				} else break;
 			}
 		}
 
