@@ -90,8 +90,8 @@ jobs:
               echo "::error::None of ${bikes}, ${library} and ${fitness} is set, so nothing would be published to ${platform}"
               exit 1
             fi
-            if [ -n "${!fitness}" ] && { [ -z "${!bikes}" ] || [ -z "${!library}" ]; }; then
-              echo "::error::${fitness} requires both ${bikes} and ${library}"
+            if [ -n "${!fitness}" ] && [ -z "${!bikes}" ]; then
+              echo "::error::${fitness} requires ${bikes}"
               exit 1
             fi
           done
@@ -124,7 +124,7 @@ jobs:
             fi
           done
 
-      # Fitness requires matching Bikes and Fitness Library on both platforms.
+      # Fitness requires matching Bikes. The client offers a verified library installer.
       # Fabric API and GeckoLib resolve by mod id, which is also their slug on both platforms.
       - name: Collect dependencies
         id: dependencies
@@ -149,9 +149,12 @@ jobs:
             bikes_dependency="voxvelo-bikes@$MOD_VERSION(required){curseforge:$CURSEFORGE_BIKES_SLUG}"
             if [ -n "$MODRINTH_BIKES_ID" ]; then bikes_dependency="$bikes_dependency{modrinth:$MODRINTH_BIKES_ID}"; fi
             echo "$bikes_dependency"
-            generic_dependency="voxvelo-fitness-lib@$MOD_VERSION(required){curseforge:$CURSEFORGE_FITNESS_LIB_SLUG}"
-            if [ -n "$MODRINTH_FITNESS_LIB_ID" ]; then generic_dependency="$generic_dependency{modrinth:$MODRINTH_FITNESS_LIB_ID}"; fi
-            echo "$generic_dependency"
+            # Older release jars still have a mandatory library dependency and no setup screen.
+            if unzip -p "${RUNNER_TEMP}/release/voxvelo-fitness-${MOD_VERSION}.jar" fabric.mod.json | jq -e '.depends.voxvelo_fitness_lib' > /dev/null; then
+              generic_dependency="voxvelo-fitness-lib@$MOD_VERSION(required){curseforge:$CURSEFORGE_FITNESS_LIB_SLUG}"
+              if [ -n "$MODRINTH_FITNESS_LIB_ID" ]; then generic_dependency="$generic_dependency{modrinth:$MODRINTH_FITNESS_LIB_ID}"; fi
+              echo "$generic_dependency"
+            fi
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
@@ -174,6 +177,7 @@ jobs:
           dependencies: ${{ steps.dependencies.outputs.bikes }}
 
       - name: Publish Fitness Library
+        continue-on-error: ${{ inputs.mod == 'all' }}
         if: (inputs.mod == 'all' || inputs.mod == 'fitness-lib') && ((inputs.platform != 'curseforge' && vars.MODRINTH_FITNESS_LIB_ID != '') || (inputs.platform != 'modrinth' && vars.CURSEFORGE_FITNESS_LIB_ID != ''))
         uses: Kira-NT/mc-publish@c23376546a97f5ba7984e94445da359459b14419 # v3.3.2
         with:
@@ -192,13 +196,13 @@ jobs:
           dependencies: ${{ steps.dependencies.outputs.generic }}
 
       - name: Publish fitness
-        if: (inputs.mod == 'all' || inputs.mod == 'fitness') && ((inputs.platform != 'curseforge' && vars.MODRINTH_FITNESS_ID != '' && vars.MODRINTH_BIKES_ID != '' && vars.MODRINTH_FITNESS_LIB_ID != '') || (inputs.platform != 'modrinth' && vars.CURSEFORGE_FITNESS_ID != '' && vars.CURSEFORGE_BIKES_ID != '' && vars.CURSEFORGE_FITNESS_LIB_ID != ''))
+        if: (inputs.mod == 'all' || inputs.mod == 'fitness') && ((inputs.platform != 'curseforge' && vars.MODRINTH_FITNESS_ID != '' && vars.MODRINTH_BIKES_ID != '') || (inputs.platform != 'modrinth' && vars.CURSEFORGE_FITNESS_ID != '' && vars.CURSEFORGE_BIKES_ID != ''))
         uses: Kira-NT/mc-publish@c23376546a97f5ba7984e94445da359459b14419 # v3.3.2
         with:
-          modrinth-id: ${{ inputs.platform != 'curseforge' && vars.MODRINTH_BIKES_ID != '' && vars.MODRINTH_FITNESS_LIB_ID != '' && vars.MODRINTH_FITNESS_ID || '' }}
-          modrinth-token: ${{ inputs.platform != 'curseforge' && vars.MODRINTH_FITNESS_ID != '' && vars.MODRINTH_BIKES_ID != '' && vars.MODRINTH_FITNESS_LIB_ID != '' && secrets.MODRINTH_TOKEN || '' }}
-          curseforge-id: ${{ inputs.platform != 'modrinth' && vars.CURSEFORGE_BIKES_ID != '' && vars.CURSEFORGE_FITNESS_LIB_ID != '' && vars.CURSEFORGE_FITNESS_ID || '' }}
-          curseforge-token: ${{ inputs.platform != 'modrinth' && vars.CURSEFORGE_FITNESS_ID != '' && vars.CURSEFORGE_BIKES_ID != '' && vars.CURSEFORGE_FITNESS_LIB_ID != '' && secrets.CURSEFORGE_TOKEN || '' }}
+          modrinth-id: ${{ inputs.platform != 'curseforge' && vars.MODRINTH_BIKES_ID != '' && vars.MODRINTH_FITNESS_ID || '' }}
+          modrinth-token: ${{ inputs.platform != 'curseforge' && vars.MODRINTH_FITNESS_ID != '' && vars.MODRINTH_BIKES_ID != '' && secrets.MODRINTH_TOKEN || '' }}
+          curseforge-id: ${{ inputs.platform != 'modrinth' && vars.CURSEFORGE_BIKES_ID != '' && vars.CURSEFORGE_FITNESS_ID || '' }}
+          curseforge-token: ${{ inputs.platform != 'modrinth' && vars.CURSEFORGE_FITNESS_ID != '' && vars.CURSEFORGE_BIKES_ID != '' && secrets.CURSEFORGE_TOKEN || '' }}
           files: ${{ runner.temp }}/release/voxvelo-fitness-${{ steps.versions.outputs.mod }}.jar
           name: VoxVelo Fitness ${{ steps.versions.outputs.mod }}
           version: ${{ steps.versions.outputs.mod }}

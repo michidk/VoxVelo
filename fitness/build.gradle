@@ -217,3 +217,20 @@ tasks.register('verifyFitnessApi', JavaExec) {
 tasks.named('check') { dependsOn 'verifyFitnessApi' }
 
 tasks.named('check') { dependsOn ':fitness-lib:fitnessExampleJar' }
+
+tasks.register('verifyLibraryInstaller', JavaExec) {
+	dependsOn verificationClasses
+	classpath = sourceSets.verification.runtimeClasspath
+	mainClass = 'dev.michidk.voxvelo.fitness.client.setup.LibraryInstallerChecks'
+	if (providers.gradleProperty('verifyLibraryRelease').isPresent()) {
+		args providers.gradleProperty('verifyLibraryRelease').get()
+	}
+}
+
+tasks.register('verifyTerrainSlope', JavaExec) {
+	dependsOn verificationClasses
+	classpath = sourceSets.verification.runtimeClasspath
+	mainClass = 'dev.michidk.voxvelo.bikes.terrain.TerrainSlopeChecks'
+}
+
+tasks.named('check') { dependsOn 'verifyLibraryInstaller', 'verifyTerrainSlope' }

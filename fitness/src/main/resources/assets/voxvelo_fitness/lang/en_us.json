@@ -1,0 +1,16 @@
+{
+  "voxvelo_fitness.setup.title": "Set up VoxVelo Fitness",
+  "voxvelo_fitness.setup.explanation": "Fitness needs Fitness Library %s for trainers, sensors and ride recording. Keyboard cycling is available without it.",
+  "voxvelo_fitness.setup.consent": "Download and install the matching library from the official VoxVelo GitHub release? It includes native Bluetooth support. Restart Minecraft after installation.",
+  "voxvelo_fitness.setup.wrong_version": "Library %s is installed. Close Minecraft and remove it from the mods folder, then install the matching version using the release page.",
+  "voxvelo_fitness.setup.ready": "Nothing is downloaded until you click Download and install.",
+  "voxvelo_fitness.setup.download": "Download and install library",
+  "voxvelo_fitness.setup.manual": "Open matching GitHub release",
+  "voxvelo_fitness.setup.folder": "Open mods folder",
+  "voxvelo_fitness.setup.quit": "Quit Minecraft",
+  "voxvelo_fitness.setup.downloading": "Downloading and checking the library. Please keep Minecraft open.",
+  "voxvelo_fitness.setup.installed": "Library installed",
+  "voxvelo_fitness.setup.restart": "Installed successfully. Quit and relaunch this instance to enable fitness features.",
+  "voxvelo_fitness.setup.exists": "A library file already exists in the mods folder. Restart Minecraft, or inspect that file before trying again. It has not been overwritten.",
+  "voxvelo_fitness.setup.failed": "Installation failed: %s Try again, or download the matching library from the release page."
+}

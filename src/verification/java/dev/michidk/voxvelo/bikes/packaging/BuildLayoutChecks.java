@@ -55,11 +55,12 @@ public final class BuildLayoutChecks {
 							.equals("=" + c.get("version").getAsString()),
 					"adapter requires matching core");
 			require(
-					a.getAsJsonObject("depends")
+					a.getAsJsonObject("suggests")
 							.get("voxvelo_fitness_lib")
 							.getAsString()
 							.equals("=" + f.get("version").getAsString()),
-					"adapter requires matching fitness");
+					"adapter suggests matching fitness");
+			require(!a.getAsJsonObject("depends").has("voxvelo_fitness_lib"), "missing library can reach setup screen");
 			require(
 					!f.getAsJsonObject("depends").has("voxvelo_bikes")
 							&& !f.getAsJsonObject("depends").has("voxvelo_fitness")

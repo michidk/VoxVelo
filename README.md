@@ -14,7 +14,7 @@ and record your rides as FIT files. VoxVelo combines **VoxVelo Bikes**, **VoxVel
 
 ## What should I install?
 
-> **Temporary installation step:** VoxVelo Fitness Library is awaiting publication. Download [Fitness Library 0.1.2](https://github.com/michidk/VoxVelo/releases/download/v0.1.2/voxvelo-fitness-lib-0.1.2.jar) from GitHub and place it in your instance's `mods/` folder. Use matching versions of Bikes, Fitness, and Fitness Library. [Latest release](https://github.com/michidk/VoxVelo/releases/latest). This notice will be removed once the library is available through the launchers.
+> **Fitness Library setup:** Starting with version 0.1.3, Fitness can launch without Fitness Library. On the title screen, choose **Download and install library** to fetch the exact matching version from the official GitHub release, then quit and relaunch. Downloads only start after your click and are checked against GitHub's SHA-256 digest. Keyboard cycling remains available if you skip setup. Older releases still require [manual installation](https://github.com/michidk/VoxVelo/releases/latest).
 
 Use **Minecraft 26.3**, **Java 25**, and [Fabric Loader](https://fabricmc.net/use/) **0.19.5 or newer**.
 Both setups below also need [Fabric API](https://modrinth.com/mod/fabric-api) for Minecraft 26.3 and
@@ -32,9 +32,9 @@ and put them, Fabric API, and GeckoLib in your instance's `mods/` folder. For th
 - `voxvelo-fitness-lib-<version>.jar`
 - `voxvelo-fitness-<version>.jar`
 
-**Fitness alone is not enough:** it requires both Bikes and Fitness Library, with matching version numbers.
+**Fitness features require matching Bikes and Fitness Library versions.** Fitness can launch without the library and offers its installer on the title screen.
 The library alone does not add bicycles. With a dependency-aware Modrinth launcher, install VoxVelo Fitness
-and confirm that it also installs Bikes, Fabric API, and GeckoLib. While the library is awaiting publication, install it manually as described below.
+and confirm that it also installs Bikes, Fabric API, and GeckoLib. If the library is missing, complete the in-game setup and restart Minecraft.
 
 Once installed, mount a bike and press `F8` to connect your Bluetooth FTMS trainer and optional sensors.
 See [Fitness features](#fitness-features) for device setup, phone steering, resistance, and ride recording.
