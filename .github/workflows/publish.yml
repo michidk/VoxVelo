@@ -12,7 +12,7 @@ name: Publish
 #   CURSEFORGE_BIKES_ID, CURSEFORGE_FITNESS_LIB_ID, CURSEFORGE_FITNESS_ID   (numeric, shown on the project page)
 #   MODRINTH_BIKES_ID, MODRINTH_FITNESS_LIB_ID, MODRINTH_FITNESS_ID
 # Optional repository variables (CurseForge URL slugs of the two dependencies of Fitness; they default to
-# voxvelo-bikes and voxvelo-fitness-lib). Dependencies go by slug because a project that CurseForge has not approved
+# voxvelo-bikes and voxvelo-fitness-library). Dependencies go by slug because a project that CurseForge has not approved
 # yet cannot be looked up by ID, and the dependency would be dropped without a warning:
 #   CURSEFORGE_BIKES_SLUG, CURSEFORGE_FITNESS_LIB_SLUG
 # Repository secrets: CURSEFORGE_TOKEN, MODRINTH_TOKEN
@@ -131,7 +131,7 @@ jobs:
           MODRINTH_BIKES_ID: ${{ vars.MODRINTH_BIKES_ID }}
           MODRINTH_FITNESS_LIB_ID: ${{ vars.MODRINTH_FITNESS_LIB_ID }}
           CURSEFORGE_BIKES_SLUG: ${{ vars.CURSEFORGE_BIKES_SLUG || 'voxvelo-bikes' }}
-          CURSEFORGE_FITNESS_LIB_SLUG: ${{ vars.CURSEFORGE_FITNESS_LIB_SLUG || 'voxvelo-fitness-lib' }}
+          CURSEFORGE_FITNESS_LIB_SLUG: ${{ vars.CURSEFORGE_FITNESS_LIB_SLUG || 'voxvelo-fitness-library' }}
           MOD_VERSION: ${{ steps.versions.outputs.mod }}
         run: |
           {

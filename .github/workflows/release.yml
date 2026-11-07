@@ -8,7 +8,7 @@ name: Release
 #   MODRINTH_BIKES_ID, MODRINTH_FITNESS_ID, CURSEFORGE_BIKES_ID, CURSEFORGE_FITNESS_ID
 #   MODRINTH_FITNESS_LIB_ID, CURSEFORGE_FITNESS_LIB_ID (reusable fitness library)
 # Optional repository variables: CURSEFORGE_BIKES_SLUG, CURSEFORGE_FITNESS_LIB_SLUG (URL slugs of the two projects
-#   that Fitness depends on; default voxvelo-bikes and voxvelo-fitness-lib)
+#   that Fitness depends on; default voxvelo-bikes and voxvelo-fitness-library)
 # Repository secrets: MODRINTH_TOKEN, CURSEFORGE_TOKEN
 #
 # To add a platform to a version that is already released, run the Publish workflow instead of tagging again.
@@ -116,7 +116,7 @@ jobs:
           MODRINTH_BIKES_ID: ${{ vars.MODRINTH_BIKES_ID }}
           CURSEFORGE_BIKES_SLUG: ${{ vars.CURSEFORGE_BIKES_SLUG || 'voxvelo-bikes' }}
           MODRINTH_FITNESS_LIB_ID: ${{ vars.MODRINTH_FITNESS_LIB_ID }}
-          CURSEFORGE_FITNESS_LIB_SLUG: ${{ vars.CURSEFORGE_FITNESS_LIB_SLUG || 'voxvelo-fitness-lib' }}
+          CURSEFORGE_FITNESS_LIB_SLUG: ${{ vars.CURSEFORGE_FITNESS_LIB_SLUG || 'voxvelo-fitness-library' }}
           MOD_VERSION: ${{ steps.versions.outputs.mod }}
         run: |
           {
