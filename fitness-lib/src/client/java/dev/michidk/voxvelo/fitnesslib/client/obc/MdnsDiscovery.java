@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
@@ -36,6 +37,7 @@ public final class MdnsDiscovery {
 	private final List<JmDNS> browsers = new CopyOnWriteArrayList<>();
 	private volatile boolean wanted;
 	private volatile boolean failed;
+	private volatile boolean closed;
 
 	private final ServiceListener listener = new ServiceListener() {
 		@Override
@@ -55,8 +57,8 @@ public final class MdnsDiscovery {
 	};
 
 	/** Starts browsing if it is not already running. Safe to call repeatedly. */
-	public void start() {
-		if (this.wanted) {
+	public synchronized void start() {
+		if (this.closed || this.wanted) {
 			return;
 		}
 		this.wanted = true;
@@ -66,6 +68,7 @@ public final class MdnsDiscovery {
 			}
 			try {
 				for (InetAddress address : localAddresses()) {
+					if (!this.wanted) break;
 					try {
 						JmDNS created = JmDNS.create(address);
 						created.addServiceListener(Obc.MDNS_TYPE, this.listener);
@@ -75,7 +78,7 @@ public final class MdnsDiscovery {
 						FitnessRuntime.LOGGER.warn("Could not browse on {}", address.getHostAddress(), t);
 					}
 				}
-				if (this.browsers.isEmpty()) {
+				if (this.wanted && this.browsers.isEmpty()) {
 					JmDNS created = JmDNS.create();
 					created.addServiceListener(Obc.MDNS_TYPE, this.listener);
 					this.browsers.add(created);
@@ -90,21 +93,16 @@ public final class MdnsDiscovery {
 		});
 	}
 
-	public void stop() {
-		if (!this.wanted) {
+	public synchronized void stop() {
+		if (this.closed || !this.wanted) {
 			return;
 		}
 		this.wanted = false;
 		this.executor.execute(() -> {
 			this.devices.clear();
-			for (JmDNS browser : this.browsers) {
-				try {
-					browser.close();
-				} catch (Throwable t) {
-					FitnessRuntime.LOGGER.debug("Error closing mDNS", t);
-				}
-			}
+			List<JmDNS> closing = new ArrayList<>(this.browsers);
 			this.browsers.clear();
+			closeBrowsers(closing);
 		});
 	}
 
@@ -170,9 +168,42 @@ public final class MdnsDiscovery {
 		));
 	}
 
-	/** Closes the browsers, waiting briefly so their goodbye packets go out before the game exits. */
-	public void shutdown() {
-		this.stop();
+	/** Closes every interface independently, so a slow interface cannot prevent the others from releasing their threads. */
+	static void closeBrowsers(List<? extends AutoCloseable> browsers) {
+		List<CompletableFuture<Void>> closing = new ArrayList<>();
+		for (AutoCloseable browser : browsers) {
+			CompletableFuture<Void> done = new CompletableFuture<>();
+			closing.add(done);
+			Thread.ofVirtual().name("voxvelo-mdns-close").start(() -> {
+				try {
+					browser.close();
+				} catch (Exception e) {
+					FitnessRuntime.LOGGER.debug("Error closing mDNS", e);
+				} finally {
+					done.complete(null);
+				}
+			});
+		}
+		try {
+			CompletableFuture.allOf(closing.toArray(CompletableFuture[]::new)).get(SHUTDOWN_WAIT_MILLIS, TimeUnit.MILLISECONDS);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+		} catch (Exception e) {
+			FitnessRuntime.LOGGER.debug("Network discovery is still closing", e);
+		}
+	}
+
+	/** Always queues cleanup, including when a previous start failed or stop is still pending. */
+	public synchronized void shutdown() {
+		if (this.closed) return;
+		this.closed = true;
+		this.wanted = false;
+		this.executor.execute(() -> {
+			List<JmDNS> closing = new ArrayList<>(this.browsers);
+			this.browsers.clear();
+			this.devices.clear();
+			closeBrowsers(closing);
+		});
 		this.executor.shutdown();
 		try {
 			if (!this.executor.awaitTermination(SHUTDOWN_WAIT_MILLIS, TimeUnit.MILLISECONDS)) {

@@ -10,7 +10,19 @@ import net.minecraft.network.chat.Component;
 
 /** Menu input regression checks without a window or a Bluetooth device. */
 public final class ObcMenuChecks {
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
+		java.util.concurrent.CountDownLatch secondClosed = new java.util.concurrent.CountDownLatch(1);
+		java.util.concurrent.atomic.AtomicBoolean closedConcurrently = new java.util.concurrent.atomic.AtomicBoolean();
+		MdnsDiscovery.closeBrowsers(List.of(
+			() -> closedConcurrently.set(secondClosed.await(1, java.util.concurrent.TimeUnit.SECONDS)),
+			() -> secondClosed.countDown()));
+		require(closedConcurrently.get(), "slow interface must not block closing the next one");
+		require(secondClosed.getCount() == 0, "every network interface is closed");
+		MdnsDiscovery discovery = new MdnsDiscovery();
+		discovery.shutdown();
+		discovery.shutdown();
+		discovery.start();
+		discovery.stop();
 		ObcControls controls = new ObcControls();
 		controls.apply(ObcMessages.parseButtonState(new byte[] {1, 0x11, 1, 0x11, 0, 0x14, 1}));
 		require(controls.consumeMenuPresses().equals(List.of(Obc.BUTTON_DOWN, Obc.BUTTON_SELECT)),

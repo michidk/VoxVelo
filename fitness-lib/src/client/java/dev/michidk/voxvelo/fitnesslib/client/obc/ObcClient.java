@@ -216,9 +216,12 @@ public final class ObcClient extends DeviceClient {
 	}
 
 	public void shutdown() {
-		this.teardown(null);
-		this.pickerDiscovery = false;
-		this.autoDiscovery = false;
-		this.mdns.shutdown();
+		try {
+			this.teardown(null);
+		} finally {
+			this.pickerDiscovery = false;
+			this.autoDiscovery = false;
+			this.mdns.shutdown();
+		}
 	}
 }
