@@ -59,9 +59,13 @@ public final class BicycleFitnessAdapter implements VehicleAdapter, BikeInputSou
 
 	@Override
 	public void applyControls(LocalPlayer player, Entity vehicle, FitnessControls controls) {
+		if (controls.shift() != 0 || controls.gear() != null) {
+			dev.michidk.voxvelo.fitnesslib.client.FitnessRuntime.LOGGER.info(
+				"Applying controller gears to bike: shift={}, requested gear={}", controls.shift(), controls.gear());
+		}
 		input = controls;
 		shifts += controls.shift();
-		gear = controls.gear();
+		if (controls.gear() != null) gear = controls.gear();
 	}
 
 	@Override

@@ -169,12 +169,19 @@ public final class ObcClient extends DeviceClient {
 		int gen = this.begin(device.name(), Component.translatable("voxvelo_fitness_lib.connection.connecting"));
 		if (device.transport() == ObcDevice.Transport.NETWORK) {
 			this.tcpLink = TcpLink.open(device.host(), device.port(), appInfo(),
-				this.dataCallback(gen, button -> this.controls.apply(button.id(), button.state())),
+				this.dataCallback(gen, button -> this.receiveButton(button)),
 				this.callback(gen, () -> this.connected(gen)),
 				this.dataCallback(gen, (@Nullable IOException error) -> this.onTcpClosed(gen, error)));
 		} else {
-			this.connectBluetooth(gen, device.bluetoothAddress(), PROFILE, data -> this.controls.apply(ObcMessages.parseButtonState(data)));
+			this.connectBluetooth(gen, device.bluetoothAddress(), PROFILE, data -> ObcMessages.parseButtonState(data).forEach(this::receiveButton));
 		}
+	}
+
+	private void receiveButton(ObcMessages.ButtonState button) {
+		if (button.id() == Obc.BUTTON_SHIFT_UP || button.id() == Obc.BUTTON_SHIFT_DOWN || button.id() == Obc.BUTTON_GEAR_SET) {
+			FitnessRuntime.LOGGER.info("OpenBikeControl gear input: action={}, state={}", button.id(), button.state());
+		}
+		this.controls.apply(button.id(), button.state());
 	}
 
 	private void onTcpClosed(int gen, @Nullable IOException error) {
