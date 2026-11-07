@@ -190,7 +190,7 @@ public final class ObcClient extends DeviceClient {
 	private static byte[] appInfo() {
 		String version = FabricLoader.getInstance().getModContainer(FitnessRuntime.MOD_ID)
 			.map(container -> container.getMetadata().getVersion().getFriendlyString()).orElse("0");
-		return ObcMessages.encodeAppInfo(FitnessRuntime.MOD_ID, version, Obc.SUPPORTED_BUTTONS);
+		return ObcMessages.encodeAppInfo("VoxVelo", version, Obc.SUPPORTED_BUTTONS);
 	}
 
 	@Override
