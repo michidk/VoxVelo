@@ -1,7 +1,6 @@
 package dev.michidk.voxvelo.fitnesslib.client;
 
 import dev.michidk.voxvelo.fitnesslib.api.SettingsPage;
-import dev.michidk.voxvelo.fitnesslib.client.fitness.FitnessStatus;
 import dev.michidk.voxvelo.fitnesslib.client.ride.RideScreen;
 import dev.michidk.voxvelo.fitnesslib.client.ui.BluetoothScreen;
 import dev.michidk.voxvelo.fitnesslib.client.ui.ObcScreen;
@@ -19,7 +18,7 @@ import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.Nullable;
 
 /**
- * The fitness settings hub: the state of every connection, then one button per settings page. Vehicle mods add their
+ * The fitness settings hub: one button per settings page. Vehicle mods add their
  * own pages through {@link dev.michidk.voxvelo.fitnesslib.api.Fitness#addSettingsPage}.
  */
 public final class FitnessSettingsScreen extends SettingsScreen {
@@ -38,11 +37,6 @@ public final class FitnessSettingsScreen extends SettingsScreen {
 
 	@Override
 	protected void addOptions() {
-		this.rows.addText(() -> FitnessStatus.trainerStatus(this.ctx), STATUS);
-		this.rows.addText(() -> FitnessStatus.powerMeterStatus(this.ctx), STATUS);
-		this.rows.addText(() -> FitnessStatus.heartRateStatus(this.ctx), STATUS);
-		this.rows.addText(() -> FitnessStatus.telemetryLine(this.ctx), STATUS);
-		this.rows.addText(() -> FitnessStatus.obcStatus(this.ctx), STATUS);
 		// Two buttons per row; a lone last one takes the whole row.
 		for (int i = 0; i < PAGES.size(); i += 2) {
 			if (i == PAGES.size() - 1) {

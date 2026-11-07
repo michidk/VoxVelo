@@ -11,7 +11,6 @@ import dev.michidk.voxvelo.fitness.network.RiderStatsPayload;
 import dev.michidk.voxvelo.fitnesslib.api.Fitness;
 import dev.michidk.voxvelo.fitnesslib.api.SettingsPage;
 import dev.michidk.voxvelo.fitnesslib.client.fitness.FitnessKeys;
-import dev.michidk.voxvelo.fitnesslib.client.fitness.FitnessStatus;
 import dev.michidk.voxvelo.fitnesslib.client.ride.RideExport;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
@@ -35,31 +34,6 @@ public final class AvailableFitnessClientExtension implements VoxVeloClientExten
 				BicycleRideExport::canRequestMap, BicycleRideExport::requestMap);
 		FitnessKeys.register();
 
-		core.statusLines()
-				.add(
-						() ->
-								FitnessStatus.trainerStatus(
-										dev.michidk.voxvelo.fitnesslib.client.FitnessRuntime.get()));
-		core.statusLines()
-				.add(
-						() ->
-								FitnessStatus.powerMeterStatus(
-										dev.michidk.voxvelo.fitnesslib.client.FitnessRuntime.get()));
-		core.statusLines()
-				.add(
-						() ->
-								FitnessStatus.heartRateStatus(
-										dev.michidk.voxvelo.fitnesslib.client.FitnessRuntime.get()));
-		core.statusLines()
-				.add(
-						() ->
-								FitnessStatus.telemetryLine(
-										dev.michidk.voxvelo.fitnesslib.client.FitnessRuntime.get()));
-		core.statusLines()
-				.add(
-						() ->
-								FitnessStatus.obcStatus(
-										dev.michidk.voxvelo.fitnesslib.client.FitnessRuntime.get()));
 		// The bicycle pages join the fitness settings, and the bike settings list every fitness page, so both
 		// menus lead to the same pages.
 		Fitness.addSettingsPage("voxvelo_fitness_lib.config.road", RoadScreen::new);
