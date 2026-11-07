@@ -36,18 +36,6 @@ public class ObcScreen extends SettingsScreen {
 	protected void addOptions() {
 
 		this.rows.addText(this::hint, HINT);
-		this.rows.addRow(new ValueSlider(0, 0, WIDTH, 0.1, 3.0, 0.1, this.ctx.config.steeringSensitivity,
-			value -> Component.translatable("voxvelo_fitness_lib.obc.steering_sensitivity", String.format(java.util.Locale.ROOT, "%.1f", value)),
-			value -> this.ctx.config.steeringSensitivity = value).tip("voxvelo_fitness_lib.obc.steering_sensitivity"));
-
-		this.rows.addRow(CycleButton.builder(ObcMode::label, this.ctx.config.obcMode)
-			.withValues(ObcMode.values())
-			.withTooltip(mode -> Tips.of("voxvelo_fitness_lib.obc.mode"))
-			.create(0, 0, WIDTH, 20, Component.translatable("voxvelo_fitness_lib.obc.mode"), (button, value) -> {
-				this.ctx.config.obcMode = value;
-				this.ctx.obc.rescan(this.ctx.config);
-			}));
-
 		this.section("saved");
 		String savedKey = this.ctx.config.obcPreferredKey;
 		List<ObcDevice> discovered = this.ctx.obc.discovered(this.ctx.config);
@@ -57,6 +45,25 @@ public class ObcScreen extends SettingsScreen {
 			this.deviceCard(savedKey, this.ctx.config.obcPreferredName, savedKey.startsWith("ble:") ? ObcMode.BLUETOOTH : ObcMode.NETWORK,
 				discovered.stream().filter(device -> device.key().equals(savedKey)).findFirst().orElse(null), true);
 		}
+		this.rows.addRow(CycleButton.onOffBuilder(this.ctx.config.obcAutoConnect)
+			.withTooltip(value -> Tips.of("voxvelo_fitness_lib.config.auto_connect"))
+			.create(0, 0, WIDTH, 20, Component.translatable("voxvelo_fitness_lib.config.auto_connect"),
+				(button, value) -> this.ctx.config.obcAutoConnect = value));
+
+		this.section("steering" );
+		this.rows.addRow(new ValueSlider(0, 0, WIDTH, 0.1, 3.0, 0.1, this.ctx.config.steeringSensitivity,
+			value -> Component.translatable("voxvelo_fitness_lib.obc.steering_sensitivity", String.format(java.util.Locale.ROOT, "%.1f", value)),
+			value -> this.ctx.config.steeringSensitivity = value).tip("voxvelo_fitness_lib.obc.steering_sensitivity"));
+
+		this.section("discovery" );
+		this.rows.addRow(CycleButton.builder(ObcMode::label, this.ctx.config.obcMode)
+			.withValues(ObcMode.values())
+			.withTooltip(mode -> Tips.of("voxvelo_fitness_lib.obc.mode"))
+			.create(0, 0, WIDTH, 20, Component.translatable("voxvelo_fitness_lib.obc.mode"), (button, value) -> {
+				this.ctx.config.obcMode = value;
+				this.ctx.obc.rescan(this.ctx.config);
+			}));
+
 		this.rows.addRow(Button.builder(label("rescan"), button -> {
 			this.hidden.clear();
 			this.ctx.obc.rescan(this.ctx.config);
@@ -81,10 +88,6 @@ public class ObcScreen extends SettingsScreen {
 			.tooltip(Tips.of("voxvelo_fitness_lib.obc.connect"))
 			.bounds(210, 0, 100, 20).build());
 		this.rows.addText(() -> this.manualError, ERROR);
-		this.rows.addRow(CycleButton.onOffBuilder(this.ctx.config.obcAutoConnect)
-			.withTooltip(value -> Tips.of("voxvelo_fitness_lib.config.auto_connect"))
-			.create(0, 0, WIDTH, 20, Component.translatable("voxvelo_fitness_lib.config.auto_connect"),
-				(button, value) -> this.ctx.config.obcAutoConnect = value));
 		this.signature = this.currentSignature();
 	}
 
