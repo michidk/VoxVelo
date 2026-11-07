@@ -36,7 +36,7 @@ public final class HeartRateHud implements HudElement {
 	public void extractRenderState(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
 		Minecraft mc = Minecraft.getInstance();
 		VehicleTelemetry bike = this.ctx.telemetry();
-if (bike == null) {
+if (!this.ctx.config.heartHudVisibility.visible(bike != null)) {
 			this.reset(null);
 			return;
 		}
@@ -46,7 +46,7 @@ if (bike == null) {
 		TrainerTelemetry telemetry = this.ctx.ftms.freshTelemetry();
 		Integer measured = HeartRatePreference.bpm(this.ctx.heartRate.freshReading(), telemetry);
 		int bpm = measured == null ? 0 : measured;
-		double grade = bike.gradient();
+		double grade = bike == null ? 0 : bike.gradient();
 		long second = System.nanoTime() / 1_000_000_000L;
 		if (second != this.lastSecond) {
 			int elapsed = this.lastSecond < 0 ? 1 : (int) Math.min(SAMPLE_COUNT, second - this.lastSecond);
@@ -58,7 +58,7 @@ if (bike == null) {
 		}
 		// Shown while a heart rate sensor is connected, or the trainer is and relays heart rate.
 		boolean trainerRelays = this.ctx.ftms.isConnected() && telemetry != null && telemetry.heartRate() != null;
-		if (!this.ctx.config.heartRateHudEnabled || !(this.ctx.heartRate.isConnected() || trainerRelays)) {
+		if (!(this.ctx.heartRate.isConnected() || trainerRelays)) {
 			return;
 		}
 

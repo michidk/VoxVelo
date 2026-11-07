@@ -379,3 +379,31 @@ The VoxVelo Bikes jar bundles no third-party code.
 | [JmDNS](https://github.com/jmdns/jmdns) (`org.jmdns:jmdns`) | 3.6.3 | [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0) | OpenBikeControl network discovery |
 
 Minecraft is a trademark of Mojang AB. VoxVelo is not affiliated with Mojang or Microsoft.
+
+### Controller action mappings
+
+OpenBikeControl receives the supported action IDs over both Bluetooth and TCP.
+Minecraft Controls also exposes the corresponding rebindable actions. The OpenBikeControl
+settings page lists their IDs and names for mapping in BikeControl.
+
+| ID | Action |
+| --- | --- |
+| 0x24 | Take ride photo |
+| 0x40 | Cycle camera |
+| 0x44 | Toggle HUD |
+| 0x80 | Toggle recording |
+| 0x81 | Start recording |
+| 0x82 | Stop and save recording |
+| 0x83 | Unstuck bike (requires Bikes and Fitness) |
+| 0x84 | Toggle road following (requires Bikes and Fitness) |
+| 0x85 | Toggle always look ahead (requires Bikes and Fitness) |
+| 0x86 | Open fitness settings |
+
+The protocol advertises numeric action IDs; its current App Information message has no
+field for custom action names. Controllers may display custom IDs until they add
+VoxVelo-specific labels. Manual unstuck works with automatic recovery disabled and
+uses the same collision-checked destination search, with a two-second server cooldown.
+
+Steering response in OpenBikeControl settings defaults to 1.00 (immediate).
+Lower response factors smooth input at the cost of some delay. Always look ahead
+follows the bike heading plus its actual front-wheel steering angle.

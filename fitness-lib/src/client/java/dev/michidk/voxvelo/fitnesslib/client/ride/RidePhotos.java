@@ -17,6 +17,8 @@ public final class RidePhotos {
 	private static CameraType photoCamera;
 	private static boolean previousHud;
 	private static boolean prepared;
+private static boolean requested;
+public static void request() { requested = true; }
 	private static int sequence;
 	private static Object level;
 	private RidePhotos() {}
@@ -33,8 +35,10 @@ public final class RidePhotos {
 			&& !client.isPaused() && client.gui.screen() == null && client.isWindowActive()
 			&& telemetry != null && telemetry.speedMps() * 3.6 >= config.ridePhotoMinSpeedKmh
 			&& runtime.controls().powerWatts() != null && runtime.controls().powerWatts() >= config.ridePhotoMinWatts;
-		if (!SCHEDULE.update(System.nanoTime() / 1_000_000,
-			config.ridePhotosEnabled && runtime.rideRecorder.isRecording(), eligible, config.ridePhotoIntervalSeconds)) return;
+		boolean manual = requested && client.level != null && client.player != null && client.gui.screen() == null;
+requested = false;
+if (!SCHEDULE.update(System.nanoTime() / 1_000_000,
+			config.ridePhotosEnabled && runtime.rideRecorder.isRecording(), eligible, config.ridePhotoIntervalSeconds) && !manual) return;
 		previousCamera = client.options.getCameraType();
 		previousHud = client.gui.hud.isHidden();
 		photoCamera = switch (config.ridePhotoPerspective) {

@@ -88,12 +88,8 @@ public final class FitnessRuntime {
 		Double rawAngle = obc.isConnected() ? obc.controls().steeringAngleDegrees() : null;
 		Double steeringAngle = rawAngle == null ? null : dev.michidk.voxvelo.fitnesslib.client.obc.ObcControls.scaledSteering(
 			rawAngle, config.steeringSensitivity, 63);
-		boolean returning =
-				Math.abs(target) < Math.abs(steering)
-						|| Math.signum(target) != Math.signum(steering);
-		steering +=
-				Math.max(
-						-(returning ? .45 : .3), Math.min(returning ? .45 : .3, target - steering));
+steering = obc.isConnected() ? dev.michidk.voxvelo.fitnesslib.client.obc.ObcControls.smooth(steering, target, config.steeringSmoothing) : 0;
+if (steeringAngle != null) steeringAngle = steering * 63;
 		FitnessControls sampledControls =
 				new FitnessControls(
 						++ticks,

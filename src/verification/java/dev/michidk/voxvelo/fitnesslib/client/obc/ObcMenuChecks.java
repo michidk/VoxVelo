@@ -11,7 +11,11 @@ import net.minecraft.network.chat.Component;
 /** Menu input regression checks without a window or a Bluetooth device. */
 public final class ObcMenuChecks {
 	public static void main(String[] args) throws Exception {
-		java.util.concurrent.CountDownLatch secondClosed = new java.util.concurrent.CountDownLatch(1);
+		for (var visibility : dev.michidk.voxvelo.fitnesslib.client.fitness.HudVisibility.values()) {
+require(visibility.visible(true) == (visibility != dev.michidk.voxvelo.fitnesslib.client.fitness.HudVisibility.NEVER), "mounted HUD visibility");
+require(visibility.visible(false) == (visibility == dev.michidk.voxvelo.fitnesslib.client.fitness.HudVisibility.ALWAYS), "dismounted HUD visibility");
+}
+java.util.concurrent.CountDownLatch secondClosed = new java.util.concurrent.CountDownLatch(1);
 		java.util.concurrent.atomic.AtomicBoolean closedConcurrently = new java.util.concurrent.atomic.AtomicBoolean();
 		MdnsDiscovery.closeBrowsers(List.of(
 			() -> closedConcurrently.set(secondClosed.await(1, java.util.concurrent.TimeUnit.SECONDS)),
@@ -23,7 +27,19 @@ public final class ObcMenuChecks {
 		discovery.shutdown();
 		discovery.start();
 		discovery.stop();
-		ObcControls controls = new ObcControls();
+		require(ObcControls.smooth(0, 1, 1) == 1, "default steering response has no smoothing");
+require(ObcControls.smooth(0, 1, 0.25) == 0.25, "smoothing blends steering toward target");
+require(ObcControls.smooth(0.5, -0.5, 0.5) == 0, "smoothing handles changes of direction");
+ObcControls custom = new ObcControls();
+custom.apply(0x83, 1); custom.apply(0x83, 2);
+require(custom.consumeActionPresses().equals(List.of(0x83)), "held custom action fires only once");
+custom.apply(0x83, 0); custom.apply(0x83, 1); custom.apply(0x83, 0); custom.apply(0x81, 1);
+require(custom.consumeActionPresses().equals(List.of(0x83, 0x81)), "custom actions preserve press order");
+custom.apply(0x82, 1); custom.releaseAll();
+require(custom.consumeActionPresses().isEmpty(), "disconnect discards pending custom actions");
+custom.apply(0x24, 1); custom.apply(0x40, 1); custom.apply(0x44, 1);
+require(custom.consumeActionPresses().equals(List.of(0x24, 0x40, 0x44)), "standard photo camera and HUD actions are supported");
+ObcControls controls = new ObcControls();
 		controls.apply(ObcMessages.parseButtonState(new byte[] {1, 0x11, 1, 0x11, 0, 0x14, 1}));
 		require(controls.consumeMenuPresses().equals(List.of(Obc.BUTTON_DOWN, Obc.BUTTON_SELECT)),
 			"quick press/release survives until the tick and actions retain arrival order");

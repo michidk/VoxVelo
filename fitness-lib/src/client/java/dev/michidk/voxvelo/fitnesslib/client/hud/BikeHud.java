@@ -37,11 +37,15 @@ public final class BikeHud implements HudElement {
 	public void extractRenderState(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
 		Minecraft mc = Minecraft.getInstance();
 		VehicleTelemetry bike = this.ctx.telemetry();
-		if (!this.ctx.config.hudEnabled || bike == null) {
+		if (!this.ctx.config.ridingHudVisibility.visible(bike != null) || mc.player == null) {
 			return;
 		}
 
-		List<Component> lines = new ArrayList<>();
+		if (bike == null) {
+TrainerTelemetry trainer = this.ctx.ftms.freshTelemetry();
+bike = new VehicleTelemetry(mc.player.position(), 0, trainer == null ? 0 : trainer.powerWatts(), trainer == null || trainer.cadenceRpm() == null ? 0 : trainer.cadenceRpm(), 0, 0, 0, 85, 0, "");
+}
+List<Component> lines = new ArrayList<>();
 		double power = bike.powerWatts();
 		TrainerTelemetry telemetry = this.ctx.ftms.freshTelemetry();
 		long cadence = telemetry != null && telemetry.cadenceRpm() != null

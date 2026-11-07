@@ -32,7 +32,7 @@ public final class StatsOverlay implements HudElement {
 	@Override
 	public void extractRenderState(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
 		Minecraft mc = Minecraft.getInstance();
-		if (!this.ctx.config.statsOverlayEnabled || mc.player == null || mc.getConnection() == null) {
+		if (!this.ctx.config.statsOverlayEnabled || !this.ctx.config.statsHudVisibility.visible(dev.michidk.voxvelo.bikes.bike.BikeEntity.riddenBy(mc.player) != null) || mc.player == null || mc.getConnection() == null) {
 			return;
 		}
 

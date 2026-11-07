@@ -34,6 +34,10 @@ public class ObcScreen extends SettingsScreen {
 
 	@Override
 	protected void addOptions() {
+this.rows.addHeader(Component.translatable("voxvelo_fitness_lib.obc.actions"));
+for (var action : dev.michidk.voxvelo.fitnesslib.client.obc.ObcActions.actions()) {
+this.rows.addText(() -> Component.literal(String.format("0x%02X ? ", action.id())).append(action.label()), HINT);
+}
 
 		this.rows.addText(this::hint, HINT);
 		this.section("saved");
@@ -55,7 +59,10 @@ public class ObcScreen extends SettingsScreen {
 			value -> Component.translatable("voxvelo_fitness_lib.obc.steering_sensitivity", String.format(java.util.Locale.ROOT, "%.1f", value)),
 			value -> this.ctx.config.steeringSensitivity = value).tip("voxvelo_fitness_lib.obc.steering_sensitivity"));
 
-		this.section("discovery" );
+		this.rows.addRow(new ValueSlider(0, 0, WIDTH, 0.05, 1.0, 0.05, this.ctx.config.steeringSmoothing,
+value -> Component.translatable("voxvelo_fitness_lib.obc.steering_smoothing", String.format(java.util.Locale.ROOT, "%.2f", value)),
+value -> this.ctx.config.steeringSmoothing = value).tip("voxvelo_fitness_lib.obc.steering_smoothing"));
+this.section("discovery" );
 		this.rows.addRow(CycleButton.builder(ObcMode::label, this.ctx.config.obcMode)
 			.withValues(ObcMode.values())
 			.withTooltip(mode -> Tips.of("voxvelo_fitness_lib.obc.mode"))

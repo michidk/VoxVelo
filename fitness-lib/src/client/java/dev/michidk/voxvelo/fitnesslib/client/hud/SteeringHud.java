@@ -17,14 +17,14 @@ public final class SteeringHud implements HudElement {
 	@Override
 	public void extractRenderState(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
 		Minecraft mc = Minecraft.getInstance();
-		if (!this.ctx.config.steeringHudEnabled || mc.level == null || mc.player == null) return;
+		if (!this.ctx.config.steeringHudVisibility.visible(this.ctx.telemetry() != null) || mc.level == null || mc.player == null) return;
 		Double input = this.ctx.obc.isConnected() ? this.ctx.obc.controls().steeringAngleDegrees() : null;
 		Double wheel = this.ctx.vehicleSteeringAngleDegrees();
 		Component inputText = Component.translatable("voxvelo_fitness_lib.hud.steering_input", angle(input));
 		Component wheelText = Component.translatable("voxvelo_fitness_lib.hud.steering_wheel", angle(wheel));
 		int width = Math.max(124, Math.max(mc.font.width(inputText), mc.font.width(wheelText)) + 12);
-		int x = (graphics.guiWidth() - width) / 2;
-		int y = graphics.guiHeight() - 100;
+		int x = 6;
+		int y = graphics.guiHeight() - 46;
 		graphics.fill(x, y, x + width, y + 40, 0x90000000);
 		graphics.text(mc.font, inputText, x + 6, y + 4, 0xFF55FFFF);
 		graphics.text(mc.font, wheelText, x + 6, y + 14, 0xFFFFD060);

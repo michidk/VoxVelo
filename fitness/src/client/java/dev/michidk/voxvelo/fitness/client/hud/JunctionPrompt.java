@@ -38,7 +38,7 @@ public final class JunctionPrompt implements HudElement {
 		Minecraft mc = Minecraft.getInstance();
 		LocalPlayer player = mc.player;
 		JunctionNavigator.Prompt prompt = this.ctx.roadFollow.prompt();
-		if (!this.ctx.config.junctionHudEnabled || prompt == null || player == null || !(player.getVehicle() instanceof BikeEntity bike) || bike.getRider() != player) {
+		if (!this.ctx.config.junctionHudVisibility.visible(BikeEntity.riddenBy(player) != null) || prompt == null || player == null || !(player.getVehicle() instanceof BikeEntity bike) || bike.getRider() != player) {
 			return;
 		}
 

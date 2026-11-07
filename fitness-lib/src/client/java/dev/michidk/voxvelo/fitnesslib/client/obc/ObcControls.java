@@ -26,7 +26,8 @@ public final class ObcControls {
 	private Double steeringAngle;
 	private int pendingShifts;
 	private int gearSet;
-	private final List<Integer> menuPresses = new ArrayList<>();
+	private final List<Integer> actionPresses = new ArrayList<>();
+private final List<Integer> menuPresses = new ArrayList<>();
 
 	public synchronized void apply(List<ObcMessages.ButtonState> buttons) {
 		for (ObcMessages.ButtonState button : buttons) {
@@ -68,7 +69,7 @@ public final class ObcControls {
 				}
 			}
 			default -> {
-				// Unknown or unsupported action: ignored on purpose.
+				if ((id >= 0x80 && id <= 0x9F || id == 0x24 || id == 0x40 || id == 0x44) && previous == 0 && state != 0 && this.actionPresses.size() < 64) this.actionPresses.add(id);
 			}
 		}
 	}
@@ -83,6 +84,7 @@ public final class ObcControls {
 		this.pendingShifts = 0;
 		this.gearSet = 0;
 		this.menuPresses.clear();
+this.actionPresses.clear();
 	}
 
 	/** Drains in arrival order, including presses released between two game ticks. */
@@ -92,7 +94,10 @@ public final class ObcControls {
 		return presses;
 	}
 
-	/** -1 (left) .. +1 (right). */
+	public synchronized List<Integer> consumeActionPresses() {
+var presses = List.copyOf(this.actionPresses); this.actionPresses.clear(); return presses;
+}
+/** -1 (left) .. +1 (right). */
 	public synchronized double steering() {
 		if (this.steeringAngle != null) return this.steeringAngle / 63.0;
 		return Math.max(-1.0, Math.min(1.0, this.right - this.left));
@@ -101,7 +106,12 @@ public final class ObcControls {
 	/** Calibrated handlebar angle in degrees; null asks the vehicle to use ordinary steering. */
 	public synchronized Double steeringAngleDegrees() { return this.steeringAngle; }
 
-	/** Scales steering without changing its direction, within the bike's supported range. */
+	/** Blends one tick of steering; a factor of one applies the target immediately. */
+public static double smooth(double previous, double target, double factor) {
+double alpha = Double.isFinite(factor) ? Math.clamp(factor, 0.05, 1) : 1;
+return previous + (target - previous) * alpha;
+}
+/** Scales steering without changing its direction, within the bike's supported range. */
 	public static double scaledSteering(double value, double sensitivity, double limit) {
 		double multiplier = Double.isFinite(sensitivity) ? Math.clamp(sensitivity, 0.1, 3.0) : 1.0;
 		return Double.isFinite(value) ? Math.clamp(value * multiplier, -limit, limit) : 0;

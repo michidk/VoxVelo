@@ -61,6 +61,7 @@ public final class FitnessConfig {
 
 	/** Show other riders watts and heart rate on screen, and whether this player shares theirs with the others. */
 	public boolean statsOverlayEnabled = true;
+public HudVisibility statsHudVisibility = HudVisibility.ALWAYS;
 	public boolean shareWatts = true;
 	public boolean shareHeartRate = true;
 
@@ -68,8 +69,13 @@ public final class FitnessConfig {
 	public boolean hudEnabled = true;
 	public boolean heartRateHudEnabled = true;
 	public boolean steeringHudEnabled = false;
+public HudVisibility ridingHudVisibility = HudVisibility.RIDING;
+public HudVisibility heartHudVisibility = HudVisibility.RIDING;
+public HudVisibility steeringHudVisibility = HudVisibility.RIDING;
+public HudVisibility junctionHudVisibility = HudVisibility.RIDING;
 	/** Multiplier for OpenBikeControl steering, with 1 preserving the controller's angle. */
 	public double steeringSensitivity = 1.0;
+public double steeringSmoothing = 1.0;
 	public boolean junctionHudEnabled = true;
 
 	/** Steer the bike along the road by itself. It takes over the steering whenever a road is found ahead. */
@@ -133,7 +139,10 @@ public final class FitnessConfig {
 					if (!json.has("autoConnectBluetooth")) {
 						loaded.autoConnectBluetooth = loaded.autoConnectTrainer && loaded.autoConnectPowerMeter && loaded.autoConnectHeartRate;
 					}
-					loaded.sanitize();
+					if (!json.has("ridingHudVisibility") && !loaded.hudEnabled) loaded.ridingHudVisibility = HudVisibility.NEVER;
+if (!json.has("heartHudVisibility") && !loaded.heartRateHudEnabled) loaded.heartHudVisibility = HudVisibility.NEVER;
+if (!json.has("junctionHudVisibility") && !loaded.junctionHudEnabled) loaded.junctionHudVisibility = HudVisibility.NEVER;
+loaded.sanitize();
 					return loaded;
 				}
 			} catch (Exception e) {
@@ -157,6 +166,12 @@ public final class FitnessConfig {
 
 	/** Keeps hand-edited or older files within sane ranges. */
 	private void sanitize() {
+this.steeringSmoothing = clamp(this.steeringSmoothing, 0.05, 1, 1);
+if (this.statsHudVisibility == null) this.statsHudVisibility = HudVisibility.ALWAYS;
+if (this.ridingHudVisibility == null) this.ridingHudVisibility = HudVisibility.RIDING;
+if (this.heartHudVisibility == null) this.heartHudVisibility = HudVisibility.RIDING;
+if (this.steeringHudVisibility == null) this.steeringHudVisibility = HudVisibility.RIDING;
+if (this.junctionHudVisibility == null) this.junctionHudVisibility = HudVisibility.RIDING;
 		this.ridePhotoIntervalSeconds = Math.max(30, Math.min(3600, this.ridePhotoIntervalSeconds));
 		this.ridePhotoMinWatts = Math.max(0, Math.min(1000, this.ridePhotoMinWatts));
 		this.ridePhotoMinSpeedKmh = clamp(this.ridePhotoMinSpeedKmh, 1, 50, 3);

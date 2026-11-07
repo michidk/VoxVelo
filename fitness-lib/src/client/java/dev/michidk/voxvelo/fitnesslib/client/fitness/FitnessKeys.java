@@ -22,7 +22,10 @@ public static final KeyMapping OPEN_SETTINGS = KeyMappingHelper.registerKeyMappi
 	private FitnessKeys() {
 	}
 
-	public static void register() {
+	public static KeyMapping action(String key) {
+return KeyMappingHelper.registerKeyMapping(new KeyMapping(key, InputConstants.UNKNOWN.getValue(), CATEGORY));
+}
+public static void register() {
 		// Touching the class registers the key mapping.
 	}
 }

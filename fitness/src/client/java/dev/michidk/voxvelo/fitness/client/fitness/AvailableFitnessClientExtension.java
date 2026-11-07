@@ -34,6 +34,9 @@ public final class AvailableFitnessClientExtension implements VoxVeloClientExten
 		RideExport.registerMapExporter(
 				BicycleRideExport::canRequestMap, BicycleRideExport::requestMap);
 		FitnessKeys.register();
+dev.michidk.voxvelo.fitnesslib.client.obc.ObcActions.register(0x83, "key.voxvelo_bikes.unstuck", dev.michidk.voxvelo.bikes.client.input.VoxVeloKeys.UNSTUCK, dev.michidk.voxvelo.bikes.client.network.ManualUnstuck::request);
+dev.michidk.voxvelo.fitnesslib.client.obc.ObcActions.register(0x84, "key.voxvelo_fitness_lib.road_follow", FitnessKeys.action("key.voxvelo_fitness_lib.road_follow"), () -> { ctx.config.roadFollowEnabled = !ctx.config.roadFollowEnabled; ctx.config.save(); });
+dev.michidk.voxvelo.fitnesslib.client.obc.ObcActions.register(0x85, "key.voxvelo_fitness_lib.look_ahead", FitnessKeys.action("key.voxvelo_fitness_lib.look_ahead"), () -> { ctx.config.bikeCameraFollow = !ctx.config.bikeCameraFollow; ctx.config.save(); });
 
 		// The bicycle pages join the fitness settings, and the bike settings list every fitness page, so both
 		// menus lead to the same pages.
