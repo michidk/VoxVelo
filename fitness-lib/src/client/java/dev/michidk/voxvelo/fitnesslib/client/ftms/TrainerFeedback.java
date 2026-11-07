@@ -83,7 +83,9 @@ public final class TrainerFeedback {
 		boolean changed = Math.abs(target.gradePercent() - this.lastSent.gradePercent()) >= GRADE_DEADBAND_PERCENT
 			|| Math.abs(target.crr() - this.lastSent.crr()) >= TrainerLimits.CRR_RESOLUTION;
 		if (due && (changed || shifted || !this.applying || now - this.lastSentAt >= REFRESH_MILLIS)) {
-			control.apply(target);
+			if (shifted) FitnessRuntime.LOGGER.info("Virtual shifting: ratio {}, physical ratio {}, SIM grade {} %, rolling resistance {}",
+gear, this.ctx.config.trainerGearRatio, target.gradePercent(), target.crr());
+control.apply(target);
 			this.lastSent = target;
 			this.lastSentAt = now;
 			this.lastGear = gear;

@@ -446,7 +446,13 @@ public final class ConnectionChecks {
 		client.control().apply(new TrainerSimulation.Target(6.0, 0.004));
 		require(link.commands.equals(List.of(0x00, 0x07, 0x11, 0x11)), "control is kept: only the new parameters are sent, got " + link.commands);
 
-		// A trainer whose answers never reach us (the indication subscription does not take) still gets its resistance:
+		link.simulationResult = 5;
+client.control().apply(new TrainerSimulation.Target(7.0, 0.004));
+int refusedCount = link.commands.size();
+client.control().apply(new TrainerSimulation.Target(8.0, 0.004));
+require(link.commands.size() == refusedCount, "refused SIM command starts retry cooldown instead of claiming success");
+
+// A trainer whose answers never reach us (the indication subscription does not take) still gets its resistance:
 		// after one unanswered command the rest is sent without waiting, and later updates go out at once.
 		Backend silent = new Backend();
 		FtmsClient quiet = new FtmsClient(new BluetoothManager(silent), GAME);
@@ -567,9 +573,12 @@ public final class ConnectionChecks {
 		final Runnable lost;
 		final CompletableFuture<BluetoothConnection> result = new CompletableFuture<>();
 		/** What the trainer reports as its Fitness Machine Feature; set before completing the attempt. */
-		final byte[] features = new byte[8];
+
+final byte[] features = new byte[8];
 		/** Whether the trainer answers control point commands, as a real one does. */
 		boolean respond;
+int simulationResult = 1;
+
 		Attempt(Runnable lost) { this.lost = lost; }
 		Connection complete(String... services) {
 			Connection connection = new Connection(services);
@@ -602,6 +611,7 @@ public final class ConnectionChecks {
 		}
 		final byte[] features = new byte[8];
 		boolean respond;
+int simulationResult = 1;
 		/** First byte (the op code) of every command written to the control point. */
 		final List<Integer> commands = new java.util.concurrent.CopyOnWriteArrayList<>();
 		public CompletableFuture<byte[]> read(String service, String characteristic) {
@@ -613,7 +623,7 @@ public final class ConnectionChecks {
 				// A trainer answers on the control point with response code 0x80, the op code and success; it can only do so
 				// to a client that asked for indications.
 				if (respond && indicating.contains(characteristic)) {
-					handlers.get(characteristic).accept(new byte[] {(byte) 0x80, data[0], 0x01});
+					handlers.get(characteristic).accept(new byte[] {(byte) 0x80, data[0], (byte) ((data[0] & 0xFF) == 0x11 ? simulationResult : 1)});
 				}
 			}
 			return CompletableFuture.completedFuture(null);

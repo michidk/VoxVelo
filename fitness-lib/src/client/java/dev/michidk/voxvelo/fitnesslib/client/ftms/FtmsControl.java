@@ -150,7 +150,8 @@ public final class FtmsControl {
 					return ok;
 				});
 		return ready.thenCompose(ok -> ok
-			? this.connection.write(Ftms.SERVICE, Ftms.CONTROL_POINT, TrainerSimulation.encode(target), true).thenApply(v -> {
+			? this.command(OP_SET_SIMULATION, TrainerSimulation.encode(target)).thenApply(accepted -> {
+if (!accepted) return false;
 				if (!this.announced) {
 					this.announced = true;
 					FitnessRuntime.LOGGER.info("Sent the trainer its first simulation parameters: grade {} %, rolling resistance {}",
@@ -167,9 +168,12 @@ public final class FtmsControl {
 	 * not answer at all although the write was accepted (see {@link #unanswered}). A refusal or a failed write is false.
 	 */
 	private CompletableFuture<Boolean> command(int opCode) {
+return this.command(opCode, new byte[] {(byte) opCode});
+}
+private CompletableFuture<Boolean> command(int opCode, byte[] bytes) {
 		CompletableFuture<Integer> answer = new CompletableFuture<>();
 		this.pending.set(new Pending(opCode, answer));
-		return this.connection.write(Ftms.SERVICE, Ftms.CONTROL_POINT, new byte[] { (byte) opCode }, true)
+		return this.connection.write(Ftms.SERVICE, Ftms.CONTROL_POINT, bytes, true)
 			.thenCompose(written -> this.unanswered ? CompletableFuture.completedFuture(RESULT_SUCCESS)
 				: answer.completeOnTimeout(NO_ANSWER, RESPONSE_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS))
 			.handle((result, error) -> {
