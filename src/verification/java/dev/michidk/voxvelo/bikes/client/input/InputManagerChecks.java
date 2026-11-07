@@ -70,8 +70,8 @@ public final class InputManagerChecks {
 		controller.angle = 0.0;
 		require(manager.compose(null).steeringAngleDegrees() == 0.0, "a centered angle overrides keyboard steering");
 		road.active = true;
-		require(manager.compose(null).steeringAngleDegrees() == null && manager.compose(null).steering() == 0.9,
-			"active road guidance can override the controller angle");
+		require(manager.compose(null).steeringAngleDegrees() == 0.0,
+			"explicit handlebar angle overrides road guidance");
 		road.active = false;
 		controller.active = false;
 		require(manager.compose(null).steeringAngleDegrees() == null, "disconnected angle is ignored");

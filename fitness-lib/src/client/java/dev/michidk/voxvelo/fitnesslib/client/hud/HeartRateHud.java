@@ -65,9 +65,7 @@ if (!this.ctx.config.heartHudVisibility.visible(bike != null)) {
 		Component title = Component.translatable("voxvelo_fitness_lib.hud.heart_title");
 		Component value = Component.translatable("voxvelo_fitness_lib.hud.heart_value", bpm > 0 ? String.valueOf(bpm) : "--");
 		Component history = Component.translatable("voxvelo_fitness_lib.hud.heart_history");
-		Component gradeText = Component.translatable("voxvelo_fitness_lib.hud.heart_grade",
-			Component.translatable("voxvelo_fitness_lib.hud.slope", String.format("%+.1f", grade * 100.0)));
-		int width = Math.max(158, Math.max(mc.font.width(title) + mc.font.width(value) + 18, Math.max(mc.font.width(history), mc.font.width(gradeText) + 6) + 36));
+		int width = Math.max(158, Math.max(mc.font.width(title) + mc.font.width(value) + 18, mc.font.width(history) + 36));
 		int x = graphics.guiWidth() - width - 6;
 		graphics.fill(x, 6, x + width, 80, 0x70000000);
 		graphics.text(mc.font, title, x + 6, 11, 0xFFFFFFFF);
@@ -129,9 +127,6 @@ if (!this.ctx.config.heartHudVisibility.visible(bike != null)) {
 			previous = sample;
 		}
 		graphics.text(mc.font, history, graphX, 69, 0xFFAAAAAA);
-		int gradeX = graphX + graphWidth - mc.font.width(gradeText) - 3;
-		graphics.fill(gradeX - 2, graphY + 2, graphX + graphWidth - 1, graphY + mc.font.lineHeight + 4, 0xA0000000);
-		graphics.text(mc.font, gradeText, gradeX, graphY + 3, 0xFFFFFF55);
 	}
 
 	private void addSample(int bpm, double grade) {

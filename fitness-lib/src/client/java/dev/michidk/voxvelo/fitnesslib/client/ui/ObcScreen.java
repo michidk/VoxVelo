@@ -34,11 +34,6 @@ public class ObcScreen extends SettingsScreen {
 
 	@Override
 	protected void addOptions() {
-this.rows.addHeader(Component.translatable("voxvelo_fitness_lib.obc.actions"));
-for (var action : dev.michidk.voxvelo.fitnesslib.client.obc.ObcActions.actions()) {
-this.rows.addText(() -> Component.literal(String.format("0x%02X ? ", action.id())).append(action.label()), HINT);
-}
-
 		this.rows.addText(this::hint, HINT);
 		this.section("saved");
 		String savedKey = this.ctx.config.obcPreferredKey;
@@ -55,6 +50,9 @@ this.rows.addText(() -> Component.literal(String.format("0x%02X ? ", action.id()
 				(button, value) -> this.ctx.config.obcAutoConnect = value));
 
 		this.section("steering" );
+		this.rows.addRow(new ValueSlider(0, 0, WIDTH, 0, 30, 1, this.ctx.config.steeringDeadzoneDegrees,
+			value -> Component.translatable("voxvelo_fitness_lib.obc.steering_deadzone", String.format(java.util.Locale.ROOT, "%.0f", value)),
+			value -> this.ctx.config.steeringDeadzoneDegrees = value).tip("voxvelo_fitness_lib.obc.steering_deadzone"));
 		this.rows.addRow(new ValueSlider(0, 0, WIDTH, 0.1, 3.0, 0.1, this.ctx.config.steeringSensitivity,
 			value -> Component.translatable("voxvelo_fitness_lib.obc.steering_sensitivity", String.format(java.util.Locale.ROOT, "%.1f", value)),
 			value -> this.ctx.config.steeringSensitivity = value).tip("voxvelo_fitness_lib.obc.steering_sensitivity"));
@@ -99,7 +97,8 @@ this.section("discovery" );
 	}
 
 	/** Why network discovery cannot work, or else how this page works. */
-	private Component hint() {
+	private @Nullable Component hint() {
+		if (this.ctx.obc.isConnected()) return null;
 		if (this.ctx.obc.mdns().failed() && this.ctx.config.obcMode.network()) {
 			return Component.translatable("voxvelo_fitness_lib.obc.network_unavailable").withColor(ERROR & 0xFFFFFF);
 		}

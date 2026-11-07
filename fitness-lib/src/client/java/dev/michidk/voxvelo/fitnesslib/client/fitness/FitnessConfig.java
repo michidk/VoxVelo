@@ -61,7 +61,6 @@ public final class FitnessConfig {
 
 	/** Show other riders watts and heart rate on screen, and whether this player shares theirs with the others. */
 	public boolean statsOverlayEnabled = true;
-public HudVisibility statsHudVisibility = HudVisibility.ALWAYS;
 	public boolean shareWatts = true;
 	public boolean shareHeartRate = true;
 
@@ -69,13 +68,15 @@ public HudVisibility statsHudVisibility = HudVisibility.ALWAYS;
 	public boolean hudEnabled = true;
 	public boolean heartRateHudEnabled = true;
 	public boolean steeringHudEnabled = false;
-public HudVisibility ridingHudVisibility = HudVisibility.RIDING;
-public HudVisibility heartHudVisibility = HudVisibility.RIDING;
-public HudVisibility steeringHudVisibility = HudVisibility.RIDING;
-public HudVisibility junctionHudVisibility = HudVisibility.RIDING;
+	public boolean trainerDebugHudEnabled = false;
+	public HudVisibility ridingHudVisibility = HudVisibility.RIDING;
+	public HudVisibility heartHudVisibility = HudVisibility.RIDING;
+	public HudVisibility steeringHudVisibility = HudVisibility.RIDING;
+	public HudVisibility junctionHudVisibility = HudVisibility.RIDING;
 	/** Multiplier for OpenBikeControl steering, with 1 preserving the controller's angle. */
 	public double steeringSensitivity = 1.0;
-public double steeringSmoothing = 1.0;
+	public double steeringSmoothing = 1.0;
+	public double steeringDeadzoneDegrees = 5.0;
 	public boolean junctionHudEnabled = true;
 
 	/** Steer the bike along the road by itself. It takes over the steering whenever a road is found ahead. */
@@ -108,7 +109,7 @@ public double steeringSmoothing = 1.0;
 	public double ridePhotoMinSpeedKmh = 3;
 	public boolean ridePhotoHideHud = true;
 	/** 0 keeps the current view; 1 rear, 2 front, 3 alternates rear and front. */
-	public int ridePhotoPerspective = 0;
+	public int ridePhotoPerspective = 4;
 	public double rideFitOriginLat = 30.0;
 	public double rideFitOriginLon = -40.0;
 
@@ -166,16 +167,16 @@ loaded.sanitize();
 
 	/** Keeps hand-edited or older files within sane ranges. */
 	private void sanitize() {
-this.steeringSmoothing = clamp(this.steeringSmoothing, 0.05, 1, 1);
-if (this.statsHudVisibility == null) this.statsHudVisibility = HudVisibility.ALWAYS;
-if (this.ridingHudVisibility == null) this.ridingHudVisibility = HudVisibility.RIDING;
-if (this.heartHudVisibility == null) this.heartHudVisibility = HudVisibility.RIDING;
-if (this.steeringHudVisibility == null) this.steeringHudVisibility = HudVisibility.RIDING;
-if (this.junctionHudVisibility == null) this.junctionHudVisibility = HudVisibility.RIDING;
+		this.steeringDeadzoneDegrees = clamp(this.steeringDeadzoneDegrees, 0, 30, 5);
+		this.steeringSmoothing = clamp(this.steeringSmoothing, 0.05, 1, 1);
+		if (this.ridingHudVisibility == null) this.ridingHudVisibility = HudVisibility.RIDING;
+		if (this.heartHudVisibility == null) this.heartHudVisibility = HudVisibility.RIDING;
+		if (this.steeringHudVisibility == null) this.steeringHudVisibility = HudVisibility.RIDING;
+		if (this.junctionHudVisibility == null) this.junctionHudVisibility = HudVisibility.RIDING;
 		this.ridePhotoIntervalSeconds = Math.max(30, Math.min(3600, this.ridePhotoIntervalSeconds));
 		this.ridePhotoMinWatts = Math.max(0, Math.min(1000, this.ridePhotoMinWatts));
 		this.ridePhotoMinSpeedKmh = clamp(this.ridePhotoMinSpeedKmh, 1, 50, 3);
-		this.ridePhotoPerspective = Math.max(0, Math.min(3, this.ridePhotoPerspective));
+		this.ridePhotoPerspective = Math.max(0, Math.min(4, this.ridePhotoPerspective));
 		if (this.bluetoothDevices == null) this.bluetoothDevices = new ArrayList<>();
 		this.bluetoothDevices.removeIf(device -> device == null || device.id() == null || device.id().isBlank() || device.advertisedServices() == null);
 		this.preferredTrainerId = this.preferredTrainerId == null ? "" : this.preferredTrainerId;

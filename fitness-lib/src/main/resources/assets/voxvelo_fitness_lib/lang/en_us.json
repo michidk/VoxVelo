@@ -1,4 +1,9 @@
 {
+	"voxvelo_fitness_lib.trainer.debug": "Trainer debug HUD",
+	"voxvelo_fitness_lib.trainer.debug.tip": "Show trainer SIM targets, Bluetooth writes, FTMS acknowledgements, telemetry and errors at the top left. Off by default.",
+	"voxvelo_fitness_lib.obc.steering_deadzone": "Steering dead zone: %s?",
+	"voxvelo_fitness_lib.obc.steering_deadzone.tip": "Controller angles below this threshold steer straight, before sensitivity is applied. Default: 5?. Set to 0? to disable.",
+ "voxvelo_fitness_lib.photos.view.4": "Detached cinematic",
  "voxvelo_fitness_lib.obc.steering_smoothing": "Steering response: %s",
  "voxvelo_fitness_lib.obc.steering_smoothing.tip": "1.00 applies steering immediately (no smoothing). Lower values blend steering changes over time, reducing jitter but adding response delay.",
  "key.voxvelo_fitness_lib.photo": "Take ride photo",
@@ -198,7 +203,6 @@
 	"voxvelo_fitness_lib.hud.terrain": "Grade %s   Gear %s",
 	"voxvelo_fitness_lib.hud.slope": "%s %%",
 	"voxvelo_fitness_lib.hud.heart_history": "Last 60 seconds",
-	"voxvelo_fitness_lib.hud.heart_grade": "Grade %s",
 	"voxvelo_fitness_lib.hud.heart_title": "Heart rate",
 	"voxvelo_fitness_lib.hud.heart_value": "%s bpm",
 	"voxvelo_fitness_lib.hud.heart": "Heart rate %s bpm",

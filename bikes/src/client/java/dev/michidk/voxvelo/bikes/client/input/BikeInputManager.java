@@ -82,7 +82,7 @@ public final class BikeInputManager {
 			if (source.steeringAngleDegrees().isPresent()) {
 				return new BikeControlState(propulsion, 0, brake, this.gear, source.steeringAngleDegrees().getAsDouble()).sanitized();
 			}
-			if (Math.abs(source.steering().orElse(0)) >= STEERING_IDLE) break;
+
 		}
 		return new BikeControlState(propulsion, this.steering(), brake, this.gear).sanitized();
 	}

@@ -83,13 +83,14 @@ public final class FitnessRuntime {
 		while (FitnessKeys.SHIFT_UP.consumeClick()) shifts++;
 		while (FitnessKeys.SHIFT_DOWN.consumeClick()) shifts--;
 		int gear = obc.controls().consumeGearSet();
-		double target = obc.isConnected() ? dev.michidk.voxvelo.fitnesslib.client.obc.ObcControls.scaledSteering(
-			obc.controls().steering(), config.steeringSensitivity, 1) : 0;
 		Double rawAngle = obc.isConnected() ? obc.controls().steeringAngleDegrees() : null;
-		Double steeringAngle = rawAngle == null ? null : dev.michidk.voxvelo.fitnesslib.client.obc.ObcControls.scaledSteering(
-			rawAngle, config.steeringSensitivity, 63);
-steering = obc.isConnected() ? dev.michidk.voxvelo.fitnesslib.client.obc.ObcControls.smooth(steering, target, config.steeringSmoothing) : 0;
-if (steeringAngle != null) steeringAngle = steering * 63;
+		double angle = rawAngle == null ? obc.controls().steering() * 63 : rawAngle;
+		double centered = dev.michidk.voxvelo.fitnesslib.client.obc.ObcControls.deadzone(angle, config.steeringDeadzoneDegrees);
+		double target = obc.isConnected() ? dev.michidk.voxvelo.fitnesslib.client.obc.ObcControls.scaledSteering(
+			centered, config.steeringSensitivity, 63) / 63 : 0;
+		steering = obc.isConnected() && centered != 0 ? dev.michidk.voxvelo.fitnesslib.client.obc.ObcControls.smooth(
+			steering, target, config.steeringSmoothing) : 0;
+		Double steeringAngle = rawAngle == null ? null : steering * 63;
 		FitnessControls sampledControls =
 				new FitnessControls(
 						++ticks,

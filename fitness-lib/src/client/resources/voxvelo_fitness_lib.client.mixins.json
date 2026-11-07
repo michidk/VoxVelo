@@ -3,6 +3,6 @@
   "minVersion": "0.8",
   "package": "dev.michidk.voxvelo.fitnesslib.client.mixin",
   "compatibilityLevel": "JAVA_25",
-  "client": ["RidePhotoMixin"],
+  "client": ["RidePhotoMixin", "RidePhotoCameraMixin"],
   "injectors": {"defaultRequire": 1}
 }

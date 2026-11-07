@@ -53,9 +53,8 @@ public final class TrainerFeedback {
 			&& control != null;
 
 		if (bike == null || !enabled) {
-			if (this.applying && control != null) {
-				control.neutral();
-			}
+			// Keep asking until the trainer takes it, so a retry cooldown does not leave it on the last hill.
+			if (this.applying && control != null && !control.neutral()) return;
 			this.applying = false;
 			this.hasSmoothed = false;
 			return;
@@ -83,9 +82,10 @@ public final class TrainerFeedback {
 		boolean changed = Math.abs(target.gradePercent() - this.lastSent.gradePercent()) >= GRADE_DEADBAND_PERCENT
 			|| Math.abs(target.crr() - this.lastSent.crr()) >= TrainerLimits.CRR_RESOLUTION;
 		if (due && (changed || shifted || !this.applying || now - this.lastSentAt >= REFRESH_MILLIS)) {
+			// Not queued (initialising, unsupported or in a retry cooldown): try again next tick with fresh values.
+			if (!control.apply(target)) return;
 			if (shifted) FitnessRuntime.LOGGER.info("Virtual shifting: ratio {}, physical ratio {}, SIM grade {} %, rolling resistance {}",
-gear, this.ctx.config.trainerGearRatio, target.gradePercent(), target.crr());
-control.apply(target);
+				gear, this.ctx.config.trainerGearRatio, target.gradePercent(), target.crr());
 			this.lastSent = target;
 			this.lastSentAt = now;
 			this.lastGear = gear;
@@ -108,9 +108,10 @@ control.apply(target);
 		}
 	}
 
-public void neutral() {
-FtmsControl control = ctx.ftms.control();
-if (applying && control != null) control.neutral();
-applying = false; hasSmoothed = false;
-}
+	public void neutral() {
+		FtmsControl control = this.ctx.ftms.control();
+		if (this.applying && control != null) control.neutral();
+		this.applying = false;
+		this.hasSmoothed = false;
+	}
 }

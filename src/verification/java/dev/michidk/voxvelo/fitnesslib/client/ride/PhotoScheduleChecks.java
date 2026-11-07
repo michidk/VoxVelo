@@ -7,7 +7,7 @@ public final class PhotoScheduleChecks {
 		var defaults = gson.fromJson("{}", dev.michidk.voxvelo.fitnesslib.client.fitness.FitnessConfig.class);
 		require(defaults.ridePhotosEnabled && defaults.ridePhotoIntervalSeconds == 300
 			&& defaults.ridePhotoMinWatts == 50 && defaults.ridePhotoMinSpeedKmh == 3
-			&& defaults.ridePhotoPerspective == 0, "older settings receive safe photo defaults");
+			&& defaults.ridePhotoPerspective == 4, "older settings receive safe photo defaults");
 		defaults.ridePhotosEnabled = false;
 		defaults.ridePhotoPerspective = 3;
 		var saved = gson.fromJson(gson.toJson(defaults), defaults.getClass());

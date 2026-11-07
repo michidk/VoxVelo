@@ -431,6 +431,7 @@ public final class ConnectionChecks {
 
 	/** Resistance reaches the trainer: the replies are asked for as indications, then control is taken and the grade sent. */
 	private static void controlPoint() {
+		require(!new FitnessConfig().trainerDebugHudEnabled, "trainer debug HUD is off by default");
 		Backend backend = new Backend();
 		FtmsClient client = new FtmsClient(new BluetoothManager(backend), GAME);
 		BluetoothDevice device = new BluetoothDevice("trainer", "Trainer", -40, Set.of(Ftms.SERVICE));
@@ -446,14 +447,19 @@ public final class ConnectionChecks {
 		client.control().apply(new TrainerSimulation.Target(6.0, 0.004));
 		require(link.commands.equals(List.of(0x00, 0x07, 0x11, 0x11)), "control is kept: only the new parameters are sent, got " + link.commands);
 
+		require(client.control().diagnostics().writes() == 2 && client.control().diagnostics().acknowledgements() == 2, "count actual writes and accepted SIM commands");
+		require(client.control().diagnostics().written().gradePercent() == 6 && client.control().diagnostics().acknowledged().gradePercent() == 6, "diagnostics show written and accepted targets");
+		require(client.control().diagnostics().packet().equals("11 00 00 58 02 28 33"), "diagnostics show exact SIM payload");
 		link.simulationResult = 5;
 client.control().apply(new TrainerSimulation.Target(7.0, 0.004));
+require(client.control().diagnostics().written().gradePercent() == 7, "refused target still records transport write");
+require(client.control().diagnostics().acknowledged().gradePercent() == 6, "refused target does not replace last accepted load");
+require(!client.control().diagnostics().controlling() && client.control().diagnostics().error().contains("Control not permitted"), "control refusal is visible");
 int refusedCount = link.commands.size();
 client.control().apply(new TrainerSimulation.Target(8.0, 0.004));
 require(link.commands.size() == refusedCount, "refused SIM command starts retry cooldown instead of claiming success");
 
-// A trainer whose answers never reach us (the indication subscription does not take) still gets its resistance:
-		// after one unanswered command the rest is sent without waiting, and later updates go out at once.
+// A successful Bluetooth write is not an FTMS acknowledgement.
 		Backend silent = new Backend();
 		FtmsClient quiet = new FtmsClient(new BluetoothManager(silent), GAME);
 		quiet.connect(device);
@@ -461,24 +467,35 @@ require(link.commands.size() == refusedCount, "refused SIM command starts retry 
 		silent.last().features[5] = 0x20;
 		Connection mute = silent.last().complete(Ftms.SERVICE);
 		quiet.control().apply(new TrainerSimulation.Target(4.0, 0.004));
-		awaitCommands(mute, 3);
-		require(mute.commands.equals(List.of(0x00, 0x07, 0x11)), "an unanswered trainer still gets start and the grade, got " + mute.commands);
+		// A response to another opcode must not unlock the pending request.
+		mute.emit(Ftms.CONTROL_POINT, new byte[] {(byte) 0x80, 0x07, 0x01});
+		long deadline = System.currentTimeMillis() + 4000;
+		while (quiet.control().diagnostics().retryAt() == 0 && System.currentTimeMillis() < deadline) {
+			try { Thread.sleep(10); } catch (InterruptedException error) { throw new AssertionError(error); }
+		}
+		require(mute.commands.equals(List.of(0x00)), "no start or SIM without acknowledged control");
+		require(quiet.control().diagnostics().acknowledged() == null && !quiet.control().diagnostics().controlling(), "timeout never claims trainer accepted resistance");
+		require(quiet.control().diagnostics().error().contains("No acknowledgement"), "timeout exposed in HUD diagnostics");
 		quiet.control().apply(new TrainerSimulation.Target(-3.0, 0.004));
-		awaitCommands(mute, 4);
-		require(mute.commands.equals(List.of(0x00, 0x07, 0x11, 0x11)), "updates go out without waiting for answers, got " + mute.commands);
+		require(mute.commands.size() == 1, "timeout retry delay also gates queued updates");
 
-		// Answers to some other command do not stand in for the one being waited for.
-		Backend mixed = new Backend();
-		FtmsClient confused = new FtmsClient(new BluetoothManager(mixed), GAME);
-		confused.connect(device);
-		mixed.discover(device);
-		mixed.last().features[5] = 0x20;
-		Connection wrong = mixed.last().complete(Ftms.SERVICE);
-		wrong.indicating.add(Ftms.CONTROL_POINT);
-		wrong.handlers.get(Ftms.CONTROL_POINT).accept(new byte[] {(byte) 0x80, 0x07, 0x01});
-		confused.control().apply(new TrainerSimulation.Target(2.0, 0.004));
-		awaitCommands(wrong, 3);
-		require(wrong.commands.equals(List.of(0x00, 0x07, 0x11)), "a stray answer is not mistaken for the awaited one, got " + wrong.commands);
+		Backend noSimReply = new Backend();
+		FtmsClient stalled = new FtmsClient(new BluetoothManager(noSimReply), GAME);
+		stalled.connect(device);
+		noSimReply.discover(device);
+		noSimReply.last().features[5] = 0x20;
+		noSimReply.last().respond = true;
+		Connection stalledLink = noSimReply.last().complete(Ftms.SERVICE);
+		stalledLink.simulationResult = -1;
+		stalled.control().apply(new TrainerSimulation.Target(5.0, 0.004));
+		stalled.control().apply(new TrainerSimulation.Target(8.0, 0.004));
+		deadline = System.currentTimeMillis() + 4000;
+		while (stalled.control().diagnostics().retryAt() == 0 && System.currentTimeMillis() < deadline) {
+			try { Thread.sleep(10); } catch (InterruptedException error) { throw new AssertionError(error); }
+		}
+		require(stalledLink.commands.equals(List.of(0x00, 0x07, 0x11)), "queued SIM cannot bypass cooldown after timeout");
+		require(stalled.control().diagnostics().writes() == 1 && stalled.control().diagnostics().acknowledgements() == 0, "written but unacknowledged SIM is visible");
+
 	}
 
 	/** Waits for control commands that go out after a timeout on another thread. */
@@ -622,7 +639,7 @@ int simulationResult = 1;
 				commands.add(data[0] & 0xFF);
 				// A trainer answers on the control point with response code 0x80, the op code and success; it can only do so
 				// to a client that asked for indications.
-				if (respond && indicating.contains(characteristic)) {
+				if (respond && indicating.contains(characteristic) && ((data[0] & 0xFF) != 0x11 || simulationResult >= 0)) {
 					handlers.get(characteristic).accept(new byte[] {(byte) 0x80, data[0], (byte) ((data[0] & 0xFF) == 0x11 ? simulationResult : 1)});
 				}
 			}

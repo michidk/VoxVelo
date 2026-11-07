@@ -29,7 +29,7 @@ public final class PhotoSettingsScreen extends SettingsScreen {
 		this.rows.addRow(new ValueSlider(0, 0, width, 1, 50, 1, this.config.ridePhotoMinSpeedKmh,
 			value -> Component.translatable(KEY + "speed", value.intValue()), value -> this.config.ridePhotoMinSpeedKmh = value).tip(KEY + "speed"));
 		this.rows.addRow(CycleButton.<Integer>builder(value -> Component.translatable(KEY + "view." + value), this.config.ridePhotoPerspective)
-			.withValues(0, 1, 2, 3)
+			.withValues(0, 1, 2, 3, 4)
 			.withTooltip(value -> Tips.of(KEY + "view"))
 			.create(0, 0, width, 20, Component.translatable(KEY + "view"), (button, value) -> this.config.ridePhotoPerspective = value));
 		this.rows.addText(() -> Component.translatable(KEY + "view_warning"), HINT);

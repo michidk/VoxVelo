@@ -35,6 +35,8 @@ var client = net.minecraft.client.Minecraft.getInstance(); client.options.setCam
 });
 dev.michidk.voxvelo.fitnesslib.client.obc.ObcActions.register(0x44, "key.voxvelo_fitness_lib.hud", FitnessKeys.action("key.voxvelo_fitness_lib.hud"), () -> net.minecraft.client.Minecraft.getInstance().gui.hud.toggle());
 		HudElementRegistry.attachElementAfter(VanillaHudElements.HOTBAR,
+			Identifier.fromNamespaceAndPath(FitnessRuntime.MOD_ID, "trainer_debug"), new dev.michidk.voxvelo.fitnesslib.client.hud.TrainerDebugHud(runtime));
+		HudElementRegistry.attachElementAfter(VanillaHudElements.HOTBAR,
 			Identifier.fromNamespaceAndPath(FitnessRuntime.MOD_ID, "steering_hud"), new SteeringHud(runtime));
 		HudElementRegistry.attachElementAfter(
 				VanillaHudElements.HOTBAR,

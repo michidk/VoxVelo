@@ -30,6 +30,11 @@ java.util.concurrent.CountDownLatch secondClosed = new java.util.concurrent.Coun
 		require(ObcControls.smooth(0, 1, 1) == 1, "default steering response has no smoothing");
 require(ObcControls.smooth(0, 1, 0.25) == 0.25, "smoothing blends steering toward target");
 require(ObcControls.smooth(0.5, -0.5, 0.5) == 0, "smoothing handles changes of direction");
+require(new dev.michidk.voxvelo.fitnesslib.client.fitness.FitnessConfig().steeringDeadzoneDegrees == 5, "default dead zone is five degrees");
+require(ObcControls.deadzone(4.99, 5) == 0 && ObcControls.deadzone(-4.99, 5) == 0, "dead zone centers both directions");
+require(ObcControls.deadzone(5, 5) == 5 && ObcControls.deadzone(-6, 5) == -6, "angles outside dead zone retain magnitude");
+require(ObcControls.deadzone(1, 0) == 1, "zero disables dead zone");
+require(ObcControls.deadzone(Double.NaN, 5) == 0, "invalid input steers straight");
 ObcControls custom = new ObcControls();
 custom.apply(0x83, 1); custom.apply(0x83, 2);
 require(custom.consumeActionPresses().equals(List.of(0x83)), "held custom action fires only once");

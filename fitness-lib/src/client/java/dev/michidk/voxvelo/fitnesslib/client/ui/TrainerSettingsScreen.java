@@ -20,6 +20,10 @@ public class TrainerSettingsScreen extends SettingsScreen {
 
 	@Override
 	protected void addOptions() {
+		this.rows.addRow(CycleButton.onOffBuilder(this.ctx.config.trainerDebugHudEnabled)
+			.withTooltip(value -> Tips.of("voxvelo_fitness_lib.trainer.debug"))
+			.create(0, 0, WIDTH, 20, Component.translatable("voxvelo_fitness_lib.trainer.debug"),
+				(button, value) -> this.ctx.config.trainerDebugHudEnabled = value));
 		this.rows.addText(() -> FitnessStatus.trainerStatus(this.ctx), STATUS);
 		this.rows.addText((graphics, font, left, top) -> {});
 		this.rows.addText((graphics, font, left, top) ->

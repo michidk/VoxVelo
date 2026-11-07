@@ -27,10 +27,11 @@ public class StatsScreen extends SettingsScreen {
 			this.visibility(0, "voxvelo_fitness_lib.rider.hud", this.ctx.config.ridingHudVisibility, value -> this.ctx.config.ridingHudVisibility = value),
 			this.visibility(RIGHT, "voxvelo_fitness_lib.rider.heart_graph", this.ctx.config.heartHudVisibility, value -> this.ctx.config.heartHudVisibility = value));
 		this.rows.addRow(
-			this.visibility(0, "voxvelo_fitness_lib.rider.stats", this.ctx.config.statsOverlayEnabled ? this.ctx.config.statsHudVisibility : HudVisibility.NEVER, value -> { this.ctx.config.statsHudVisibility = value; this.ctx.config.statsOverlayEnabled = value != HudVisibility.NEVER; }),
+			this.toggle(0, "voxvelo_fitness_lib.rider.stats", this.ctx.config.statsOverlayEnabled, value -> this.ctx.config.statsOverlayEnabled = value),
 			this.visibility(RIGHT, "voxvelo_fitness_lib.rider.junction_hud", this.ctx.config.junctionHudVisibility, value -> this.ctx.config.junctionHudVisibility = value));
 		this.rows.addRow(this.visibility(0, "voxvelo_fitness_lib.rider.steering_hud", this.ctx.config.steeringHudVisibility,
-			value -> this.ctx.config.steeringHudVisibility = value));
+			value -> this.ctx.config.steeringHudVisibility = value),
+			this.toggle(RIGHT, "voxvelo_fitness_lib.trainer.debug", this.ctx.config.trainerDebugHudEnabled, value -> this.ctx.config.trainerDebugHudEnabled = value));
 		this.rows.addHeader(Component.translatable("voxvelo_fitness_lib.stats.section.sharing"));
 		this.rows.addRow(
 			this.toggle(0, "voxvelo_fitness_lib.rider.share_watts", this.ctx.config.shareWatts, value -> this.ctx.config.shareWatts = value),
@@ -38,10 +39,11 @@ public class StatsScreen extends SettingsScreen {
 	}
 
 	private AbstractWidget visibility(int x, String key, HudVisibility value, Consumer<HudVisibility> change) {
-return CycleButton.builder(HudVisibility::label, value).withValues(HudVisibility.values()).withTooltip(mode -> Tips.of(key))
-.create(x, 0, SettingsList.HALF, 20, Component.translatable(key), (button, mode) -> change.accept(mode));
-}
-private AbstractWidget toggle(int x, String key, boolean enabled, Consumer<Boolean> change) {
+		return CycleButton.builder(HudVisibility::label, value).withValues(HudVisibility.values()).withTooltip(mode -> Tips.of(key))
+			.create(x, 0, SettingsList.HALF, 20, Component.translatable(key), (button, mode) -> change.accept(mode));
+	}
+
+	private AbstractWidget toggle(int x, String key, boolean enabled, Consumer<Boolean> change) {
 		return CycleButton.onOffBuilder(enabled)
 			.withTooltip(value -> Tips.of(key))
 			.create(x, 0, SettingsList.HALF, 20, Component.translatable(key), (button, value) -> change.accept(value));

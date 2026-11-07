@@ -12,6 +12,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class RidePhotoMixin {
 	@Inject(method = "extract", at = @At("HEAD"))
 	private void voxvelo$preparePhoto(CallbackInfo ci) { RidePhotos.prepare(); }
-	@Inject(method = "render", at = @At("RETURN"))
+	@Inject(method = "extract", at = @At("RETURN"))
+private void voxvelo$restoreView(CallbackInfo ci) { RidePhotos.restoreExtractedView(); }
+@Inject(method = "render", at = @At("RETURN"))
 	private void voxvelo$capturePhoto(CallbackInfo ci) { RidePhotos.capture(); }
 }

@@ -111,6 +111,11 @@ public static double smooth(double previous, double target, double factor) {
 double alpha = Double.isFinite(factor) ? Math.clamp(factor, 0.05, 1) : 1;
 return previous + (target - previous) * alpha;
 }
+	/** Treats angles below the configured threshold as straight. */
+public static double deadzone(double angle, double degrees) {
+double threshold = Double.isFinite(degrees) ? Math.clamp(degrees, 0, 30) : 5;
+return Double.isFinite(angle) && Math.abs(angle) >= threshold ? angle : 0;
+}
 /** Scales steering without changing its direction, within the bike's supported range. */
 	public static double scaledSteering(double value, double sensitivity, double limit) {
 		double multiplier = Double.isFinite(sensitivity) ? Math.clamp(sensitivity, 0.1, 3.0) : 1.0;

@@ -4,11 +4,13 @@ import dev.michidk.voxvelo.fitnesslib.client.FitnessRuntime;
 import dev.michidk.voxvelo.fitnesslib.client.bluetooth.BluetoothConnection;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.HexFormat;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import org.jspecify.annotations.Nullable;
 
 /**
  * The Fitness Machine Control Point of one connected trainer: takes control, then sends simulation
@@ -50,12 +52,30 @@ public final class FtmsControl {
 	/** Unsupported until the trainer's features have been read. */
 	private volatile Support support = Support.UNSUPPORTED;
 	private volatile boolean controlling;
-	/**
-	 * Set once the trainer's answers cannot be relied on: it did not answer a command although the write itself went
-	 * through, or the answers could not be subscribed to. Commands are then sent without waiting for an answer, so the
-	 * trainer still gets its resistance; without this, one lost answer would stop everything.
-	 */
-	private volatile boolean unanswered;
+	private volatile boolean indicationsReady;
+	private volatile String status = "Initialising";
+	private volatile String response = "No response yet";
+	private volatile String lastError = "";
+	private volatile String packet = "";
+	private volatile TrainerSimulation.Target requested;
+	private volatile TrainerSimulation.Target written;
+	private volatile TrainerSimulation.Target acknowledged;
+	private volatile long writtenAt;
+	private volatile long acknowledgedAt;
+	private volatile int writes;
+	private volatile int acknowledgements;
+
+	/** Transport writes and FTMS acknowledgements are deliberately separate. */
+	public record Diagnostics(String status, String response, String error, String packet,
+		TrainerSimulation.@Nullable Target requested, TrainerSimulation.@Nullable Target written,
+		TrainerSimulation.@Nullable Target acknowledged, long writtenAt, long acknowledgedAt,
+		int writes, int acknowledgements, boolean controlling, boolean indicationsReady, long retryAt) {}
+
+	public Diagnostics diagnostics() {
+		return new Diagnostics(this.status, this.response, this.lastError, this.packet, this.requested, this.written,
+			this.acknowledged, this.writtenAt, this.acknowledgedAt, this.writes, this.acknowledgements,
+			this.controlling, this.indicationsReady, this.retryNotBefore);
+	}
 	/** Whether the log already says that simulation parameters reached the trainer. */
 	private volatile boolean announced;
 	/** Whether a failed command was logged already; a trainer that keeps refusing would otherwise log every few seconds. */
@@ -72,17 +92,21 @@ public final class FtmsControl {
 
 	/**
 	 * Listens for control point responses, then reads which features the trainer offers. Fire and forget. The two
-	 * steps run one after the other (platform Bluetooth stacks dislike overlapping GATT operations). If the answers
-	 * cannot be subscribed to, control still works: commands are then sent without waiting for them.
+	 * steps run one after the other (platform Bluetooth stacks dislike overlapping GATT operations). Without the
+	 * indication subscription no control command is sent: a successful GATT write alone does not mean the trainer
+	 * accepted anything.
 	 */
 	public void initialise() {
 		// The Control Point is write plus indicate by definition, so ask for indications outright.
 		this.connection.indicate(Ftms.SERVICE, Ftms.CONTROL_POINT, this::onIndication)
 			.handle((ignored, error) -> {
 				if (error != null) {
-					this.unanswered = true;
-					FitnessRuntime.LOGGER.info("Could not listen for the trainer's control answers ({}); control commands will be sent without waiting for them",
-						cause(error));
+					this.indicationsReady = false;
+					this.status = "Indication subscription failed";
+					this.lastError = cause(error).toString();
+					FitnessRuntime.LOGGER.info("Could not subscribe to trainer control answers: {}", cause(error));
+				} else {
+					this.indicationsReady = true;
 				}
 				return null;
 			})
@@ -91,34 +115,40 @@ public final class FtmsControl {
 				if (error != null) {
 					FitnessRuntime.LOGGER.info("Trainer control point not available: {}", cause(error));
 					this.support = Support.UNSUPPORTED;
+					this.status = "Feature read failed";
+					this.lastError = cause(error).toString();
 					return;
 				}
 				if (data == null || data.length < TARGET_SETTING_FEATURES_OFFSET + Integer.BYTES) {
+					this.status = "Invalid feature response";
 					this.support = Support.UNSUPPORTED;
 					return;
 				}
 				long targets = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN).getInt(TARGET_SETTING_FEATURES_OFFSET) & 0xFFFFFFFFL;
 				this.support = (targets >> FEATURE_SIMULATION_BIT & 1L) != 0 ? Support.SUPPORTED : Support.UNSUPPORTED;
+				if (this.indicationsReady) this.status = this.support == Support.SUPPORTED ? "Ready (SIM supported)" : "SIM unsupported";
 				FitnessRuntime.LOGGER.info("Trainer resistance control: {}", this.support);
 			});
 	}
 
-	/** Asks the trainer to simulate this target. Safe to call every tick; a no-op unless supported. */
-	public void apply(TrainerSimulation.Target target) {
-		if (this.support != Support.SUPPORTED || System.currentTimeMillis() < this.retryNotBefore) {
-			return;
+	/** Queues a target when ready; false means unsupported, initialising or waiting to retry. */
+	public boolean apply(TrainerSimulation.Target target) {
+		this.requested = target;
+		if (!this.indicationsReady || this.support != Support.SUPPORTED || System.currentTimeMillis() < this.retryNotBefore) {
+			return false;
 		}
 		this.queued.set(target);
 		this.pump();
+		return true;
 	}
 
-	/** Puts the trainer back to a flat road. Call when the player stops riding. */
-	public void neutral() {
-		this.apply(TrainerSimulation.Target.NEUTRAL);
+	/** Puts the trainer back to a flat road. Call when the player stops riding; false means it was not queued. */
+	public boolean neutral() {
+		return this.apply(TrainerSimulation.Target.NEUTRAL);
 	}
 
 	private void pump() {
-		if (!this.busy.compareAndSet(false, true)) {
+		if (System.currentTimeMillis() < this.retryNotBefore || !this.busy.compareAndSet(false, true)) {
 			return;
 		}
 		TrainerSimulation.Target next = this.queued.getAndSet(null);
@@ -130,6 +160,7 @@ public final class FtmsControl {
 			if (error != null || !Boolean.TRUE.equals(ok)) {
 				this.controlling = false;
 				this.retryNotBefore = System.currentTimeMillis() + RETRY_AFTER_FAILURE_MILLIS;
+				this.queued.set(null);
 				this.logFailure("Trainer simulation command failed, trying again in {} s: {}", RETRY_AFTER_FAILURE_MILLIS / 1000,
 					error == null ? "not accepted" : cause(error));
 			}
@@ -151,10 +182,15 @@ public final class FtmsControl {
 				});
 		return ready.thenCompose(ok -> ok
 			? this.command(OP_SET_SIMULATION, TrainerSimulation.encode(target)).thenApply(accepted -> {
-if (!accepted) return false;
+				if (!accepted) return false;
+				this.acknowledged = this.written;
+				this.acknowledgedAt = System.currentTimeMillis();
+				this.acknowledgements++;
+				this.status = "SIM acknowledged";
+				this.lastError = "";
 				if (!this.announced) {
 					this.announced = true;
-					FitnessRuntime.LOGGER.info("Sent the trainer its first simulation parameters: grade {} %, rolling resistance {}",
+					FitnessRuntime.LOGGER.info("Trainer acknowledged its first simulation parameters: grade {} %, rolling resistance {}",
 						String.format(Locale.ROOT, "%.2f", target.gradePercent()), String.format(Locale.ROOT, "%.4f", target.crr()));
 				}
 				this.failureLogged = false;
@@ -163,36 +199,57 @@ if (!accepted) return false;
 			: CompletableFuture.completedFuture(false));
 	}
 
-	/**
-	 * Writes a one-byte command and completes with whether it went through: the trainer answered with success, or it did
-	 * not answer at all although the write was accepted (see {@link #unanswered}). A refusal or a failed write is false.
-	 */
+	/** Waits for the matching FTMS response; transport acceptance alone is not success. */
 	private CompletableFuture<Boolean> command(int opCode) {
-return this.command(opCode, new byte[] {(byte) opCode});
-}
-private CompletableFuture<Boolean> command(int opCode, byte[] bytes) {
+		return this.command(opCode, new byte[] {(byte) opCode});
+	}
+
+	private CompletableFuture<Boolean> command(int opCode, byte[] bytes) {
 		CompletableFuture<Integer> answer = new CompletableFuture<>();
-		this.pending.set(new Pending(opCode, answer));
+		Pending request = new Pending(opCode, answer);
+		this.pending.set(request);
+		this.packet = HexFormat.ofDelimiter(" ").withUpperCase().formatHex(bytes);
+		this.status = String.format(Locale.ROOT, "Writing 0x%02X", opCode);
 		return this.connection.write(Ftms.SERVICE, Ftms.CONTROL_POINT, bytes, true)
-			.thenCompose(written -> this.unanswered ? CompletableFuture.completedFuture(RESULT_SUCCESS)
-				: answer.completeOnTimeout(NO_ANSWER, RESPONSE_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS))
-			.handle((result, error) -> {
-				if (error != null) {
-					this.logFailure("Trainer control command 0x{} could not be written: {}", Integer.toHexString(opCode), cause(error));
-					return false;
+			.thenCompose(ignored -> {
+				this.status = String.format(Locale.ROOT, "Waiting for 0x%02X response", opCode);
+				if (opCode == OP_SET_SIMULATION) {
+					this.written = new TrainerSimulation.Target(
+						(short) ((bytes[3] & 0xFF) | (bytes[4] & 0xFF) << 8) / 100.0,
+						(bytes[5] & 0xFF) * TrainerLimits.CRR_RESOLUTION);
+					this.writtenAt = System.currentTimeMillis();
+					this.writes++;
 				}
-				if (result == NO_ANSWER) {
-					this.unanswered = true;
-					FitnessRuntime.LOGGER.info("The trainer did not answer control command 0x{}; sending control commands without waiting for answers from now on",
-						Integer.toHexString(opCode));
+				return answer.completeOnTimeout(NO_ANSWER, RESPONSE_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+			})
+			.handle((result, error) -> {
+				this.pending.compareAndSet(request, null);
+				if (error != null) {
+					this.status = "Bluetooth write failed";
+					this.lastError = cause(error).toString();
+				} else if (result == NO_ANSWER) {
+					this.status = "FTMS response timed out";
+					this.lastError = String.format(Locale.ROOT, "No acknowledgement for 0x%02X; acceptance unknown", opCode);
+				} else if (result != RESULT_SUCCESS) {
+					this.status = "Trainer refused command";
+					this.lastError = String.format(Locale.ROOT, "0x%02X: %s (0x%02X)", opCode, resultName(result), result);
+				} else {
 					return true;
 				}
-				if (result != RESULT_SUCCESS) {
-					this.logFailure("Trainer refused control command 0x{} (result 0x{})", Integer.toHexString(opCode), Integer.toHexString(result));
-					return false;
-				}
-				return true;
+				this.logFailure("Trainer control failed: {}", this.lastError);
+				return false;
 			});
+	}
+
+	private static String resultName(int result) {
+		return switch (result) {
+			case 1 -> "Success";
+			case 2 -> "Opcode unsupported";
+			case 3 -> "Invalid parameter";
+			case 4 -> "Operation failed";
+			case 5 -> "Control not permitted";
+			default -> "Unknown result";
+		};
 	}
 
 	/** The first failure since the last success is logged as information, repeats only at debug level. */
@@ -215,6 +272,7 @@ private CompletableFuture<Boolean> command(int opCode, byte[] bytes) {
 		}
 		int requestOpCode = data[1] & 0xFF;
 		int result = data[2] & 0xFF;
+		this.response = String.format(Locale.ROOT, "80 %02X %02X: %s", requestOpCode, result, resultName(result));
 		if (result == RESULT_CONTROL_NOT_PERMITTED) {
 			// Lost control (for example another app took over): ask again with the next command.
 			this.controlling = false;

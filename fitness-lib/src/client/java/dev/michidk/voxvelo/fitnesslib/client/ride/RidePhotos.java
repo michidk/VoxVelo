@@ -17,6 +17,7 @@ public final class RidePhotos {
 	private static CameraType photoCamera;
 	private static boolean previousHud;
 	private static boolean prepared;
+private static boolean settingsRestored;
 private static boolean requested;
 public static void request() { requested = true; }
 	private static int sequence;
@@ -41,15 +42,18 @@ if (!SCHEDULE.update(System.nanoTime() / 1_000_000,
 			config.ridePhotosEnabled && runtime.rideRecorder.isRecording(), eligible, config.ridePhotoIntervalSeconds) && !manual) return;
 		previousCamera = client.options.getCameraType();
 		previousHud = client.gui.hud.isHidden();
-		photoCamera = switch (config.ridePhotoPerspective) {
+		sequence++;
+photoCamera = switch (config.ridePhotoPerspective) {
 			case 1 -> CameraType.THIRD_PERSON_BACK;
 			case 2 -> CameraType.THIRD_PERSON_FRONT;
-			case 3 -> (++sequence % 2 == 0 ? CameraType.THIRD_PERSON_BACK : CameraType.THIRD_PERSON_FRONT);
+			case 4 -> CameraType.THIRD_PERSON_BACK;
+case 3 -> (sequence % 2 == 0 ? CameraType.THIRD_PERSON_BACK : CameraType.THIRD_PERSON_FRONT);
 			default -> previousCamera;
 		};
 		client.options.setCameraType(photoCamera);
 		if (config.ridePhotoHideHud && !previousHud) client.gui.hud.toggle();
-		prepared = true;
+		settingsRestored = false;
+prepared = true;
 	}
 
 	/** Reads back the frame; PNG encoding and disk writes run on the IO pool. */
@@ -90,9 +94,17 @@ if (!SCHEDULE.update(System.nanoTime() / 1_000_000,
 	}
 
 	/** Also recovers the settings if a prepared frame was skipped instead of rendered. */
-	private static void restore(Minecraft client) {
-		client.options.setCameraType(previousCamera);
-		if (client.gui.hud.isHidden() != previousHud) client.gui.hud.toggle();
+	public static void restoreExtractedView() {
+if (!prepared || settingsRestored) return;
+Minecraft client = Minecraft.getInstance();
+client.options.setCameraType(previousCamera);
+if (client.gui.hud.isHidden() != previousHud) client.gui.hud.toggle();
+settingsRestored = true;
+}
+public static boolean detachedPhoto() { return prepared && !settingsRestored && FitnessRuntime.get().config.ridePhotoPerspective == 4; }
+public static int shotSequence() { return sequence; }
+private static void restore(Minecraft client) {
+		restoreExtractedView();
 		prepared = false;
 	}
 }

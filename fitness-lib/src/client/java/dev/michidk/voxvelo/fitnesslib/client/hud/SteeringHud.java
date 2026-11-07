@@ -18,21 +18,20 @@ public final class SteeringHud implements HudElement {
 	public void extractRenderState(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
 		Minecraft mc = Minecraft.getInstance();
 		if (!this.ctx.config.steeringHudVisibility.visible(this.ctx.telemetry() != null) || mc.level == null || mc.player == null) return;
-		Double input = this.ctx.obc.isConnected() ? this.ctx.obc.controls().steeringAngleDegrees() : null;
+
 		Double wheel = this.ctx.vehicleSteeringAngleDegrees();
-		Component inputText = Component.translatable("voxvelo_fitness_lib.hud.steering_input", angle(input));
+
 		Component wheelText = Component.translatable("voxvelo_fitness_lib.hud.steering_wheel", angle(wheel));
-		int width = Math.max(124, Math.max(mc.font.width(inputText), mc.font.width(wheelText)) + 12);
+		int width = Math.max(124, mc.font.width(wheelText) + 12);
 		int x = 6;
-		int y = graphics.guiHeight() - 46;
-		graphics.fill(x, y, x + width, y + 40, 0x90000000);
-		graphics.text(mc.font, inputText, x + 6, y + 4, 0xFF55FFFF);
-		graphics.text(mc.font, wheelText, x + 6, y + 14, 0xFFFFD060);
+		int y = graphics.guiHeight() - 34;
+		graphics.fill(x, y, x + width, y + 28, 0x90000000);
+
+		graphics.text(mc.font, wheelText, x + 6, y + 4, 0xFFFFD060);
 		int left = x + 8, right = x + width - 8, center = (left + right) / 2;
-		graphics.fill(left, y + 31, right, y + 32, 0xFF707070);
-		graphics.fill(center, y + 27, center + 1, y + 37, 0xFFAAAAAA);
-		marker(graphics, input, left, right, y + 27, 0xFF55FFFF);
-		marker(graphics, wheel, left, right, y + 33, 0xFFFFD060);
+		graphics.fill(left, y + 21, right, y + 22, 0xFF707070);
+		graphics.fill(center, y + 17, center + 1, y + 27, 0xFFAAAAAA);
+		marker(graphics, wheel, left, right, y + 19, 0xFFFFD060);
 	}
 
 	private static String angle(Double value) {
