@@ -25,6 +25,7 @@ import net.minecraft.network.chat.Component;
  */
 public final class AvailableFitnessClientExtension implements VoxVeloClientExtension {
 	private FitnessContext ctx;
+	private final dev.michidk.voxvelo.fitness.client.ride.MountRecording mountRecording = new dev.michidk.voxvelo.fitness.client.ride.MountRecording();
 
 	@Override
 	public void init(ClientContext core) {
@@ -63,12 +64,29 @@ public final class AvailableFitnessClientExtension implements VoxVeloClientExten
 	@Override
 	public void tick(Minecraft client) {
 		FitnessContext ctx = this.ctx;
+		if (client.level == null || client.player == null) {
+			this.mountRecording.reset();
+		} else if (!client.isPaused() && this.mountRecording.shouldStart(
+				dev.michidk.voxvelo.bikes.bike.BikeEntity.riddenBy(client.player),
+				ctx.config.rideAutoRecordOnMount, ctx.rideRecorder.isRecording())) {
+			var runtime = dev.michidk.voxvelo.fitnesslib.client.FitnessRuntime.get();
+			runtime.saveRide();
+			var previous = ctx.rideRecorder.lastRide();
+			if (previous != null && !previous.isEmpty() && !ctx.rideRecorder.lastRideSaved()) {
+				client.player.sendOverlayMessage(Component.translatable("voxvelo_fitness_lib.ride.auto_mount_failed"));
+			} else {
+				ctx.rideRecorder.start();
+				client.player.sendOverlayMessage(Component.translatable("voxvelo_fitness_lib.ride.started",
+					FitnessKeys.TOGGLE_RECORDING.getTranslatedKeyMessage()));
+			}
+		}
 		if (client.level != null) ctx.vitalsSender.tick();
 		toggleStatsOnKey(client);
 	}
 
 	@Override
 	public void onJoin() {
+		this.mountRecording.reset();
 		this.ctx.riderStats.clear();
 		this.ctx.vitalsSender.reset();
 	}

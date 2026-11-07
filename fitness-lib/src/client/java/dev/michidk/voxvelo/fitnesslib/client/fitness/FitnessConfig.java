@@ -93,6 +93,8 @@ public final class FitnessConfig {
 	 * ocean in the mid Atlantic, so a ride is clearly virtual and never lands on somebody's real street.
 	 */
 	public boolean rideFitPosition = true;
+	/** The bicycle adapter may start a recording on mounting; manual recording remains the default. */
+	public boolean rideAutoRecordOnMount = false;
 	/** Automatic photos count active riding time, with measured power and movement required. */
 	public boolean ridePhotosEnabled = true;
 	public int ridePhotoIntervalSeconds = 300;

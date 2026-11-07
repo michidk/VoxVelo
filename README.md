@@ -314,6 +314,11 @@ bike takes the widest way. Slow down for tight junctions.
 Press `R` to start and stop a ride. The summary shows distance, times, speed, power, normalized power, cadence,
 heart rate, work and climbing. In `B` > *Ride Recording...*:
 
+- **Record automatically on bike entry** is off by default. Enable it to start recording when mounting a bike.
+  Dismounting pauses sampling; remounting continues an active recording. After stopping manually, recording stays
+  stopped until the next mount. A previous unsaved ride is exported before a new recording starts; if saving fails,
+  automatic recording is skipped so the previous ride stays available.
+
 - **Export .FIT** saves the ride to `.minecraft/voxvelo_fitness_lib/rides/` for Strava, Garmin Connect, intervals.icu or
   TrainingPeaks. With *GPS in FIT* on, the route is placed on the globe (in the mid Atlantic by default, set by
   `rideFitOriginLat`/`rideFitOriginLon`) so websites draw it.

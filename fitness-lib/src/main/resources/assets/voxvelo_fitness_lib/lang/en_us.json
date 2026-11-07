@@ -1,4 +1,7 @@
 {
+  "voxvelo_fitness_lib.ride.auto_mount": "Record automatically on bike entry",
+  "voxvelo_fitness_lib.ride.auto_mount.tip": "Start recording when mounting a VoxVelo bike. Off by default. Dismounts pause sampling. Stop with the recording key; it stays stopped until the next mount. Previous unsaved rides are exported first.",
+  "voxvelo_fitness_lib.ride.auto_mount_failed": "Could not save your previous ride. Automatic recording was skipped; export it from Ride Recording and mount again.",
   "voxvelo_fitness_lib.photos.title": "Ride photos",
   "voxvelo_fitness_lib.photos.title.tip": "Take automatic photos while riding with measured power.",
   "voxvelo_fitness_lib.photos.hint": "Photos count only active riding time. No photos while stopped, in menus or unfocused.",

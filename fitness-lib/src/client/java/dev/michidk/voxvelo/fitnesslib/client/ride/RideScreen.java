@@ -49,6 +49,10 @@ public class RideScreen extends SettingsScreen {
 		}
 
 		this.rows.addText(this::status, STATUS);
+		this.rows.addRow(CycleButton.onOffBuilder(this.ctx.config.rideAutoRecordOnMount)
+			.withTooltip(value -> Tips.of("voxvelo_fitness_lib.ride.auto_mount"))
+			.create(0, 0, WIDTH, 20, Component.translatable("voxvelo_fitness_lib.ride.auto_mount"),
+				(button, value) -> this.ctx.config.rideAutoRecordOnMount = value));
 		Component toggle = Component.translatable(recorder.isRecording() ? "voxvelo_fitness_lib.ride.stop" : "voxvelo_fitness_lib.ride.start");
 		this.rows.addRow(Button.builder(toggle, button -> this.toggleRecording())
 			.tooltip(Tips.of(recorder.isRecording() ? "voxvelo_fitness_lib.ride.stop" : "voxvelo_fitness_lib.ride.start"))
