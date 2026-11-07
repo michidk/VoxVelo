@@ -20,7 +20,8 @@ public final class HeartRateHud implements HudElement {
 	private static final int GRAPH_HEIGHT = 36;
 	/** The grade profile fills half the graph at this grade, or at the steepest grade shown when that is steeper. */
 	private static final double MIN_GRADE_SCALE = 0.05;
-	private static final int GRADE_AREA = 0x40FFFF55;
+	private static final int GRADE_AREA = 0x204C6470;
+private static final int HEART_RED = 0xFFFF5266;
 	private final FitnessRuntime ctx;
 	private final int[] history = new int[SAMPLE_COUNT];
 	private final double[] gradeHistory = new double[SAMPLE_COUNT];
@@ -36,7 +37,7 @@ public final class HeartRateHud implements HudElement {
 	public void extractRenderState(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
 		Minecraft mc = Minecraft.getInstance();
 		VehicleTelemetry bike = this.ctx.telemetry();
-if (bike == null) {
+		if (bike == null) {
 			this.reset(null);
 			return;
 		}
@@ -67,11 +68,14 @@ if (bike == null) {
 		Component history = Component.translatable("voxvelo_fitness_lib.hud.heart_history");
 		Component gradeText = Component.translatable("voxvelo_fitness_lib.hud.heart_grade",
 			Component.translatable("voxvelo_fitness_lib.hud.slope", String.format("%+.1f", grade * 100.0)));
-		int width = Math.max(158, Math.max(mc.font.width(title) + mc.font.width(value) + 18, mc.font.width(history) + mc.font.width(gradeText) + 44));
+		int width = Math.max(158, Math.max(mc.font.width(title) + mc.font.width(value) + 32, mc.font.width(history) + mc.font.width(gradeText) + 44));
 		int x = graphics.guiWidth() - width - 6;
-		graphics.fill(x, 6, x + width, 80, 0x70000000);
-		graphics.text(mc.font, title, x + 6, 11, 0xFFFFFFFF);
-		graphics.text(mc.font, value, x + width - mc.font.width(value) - 6, 11, bpm > 0 ? 0xFFFF7777 : 0xFFAAAAAA);
+		graphics.fill(x, 6, x + width, 80, 0xCE10151C);
+		graphics.fill(x, 6, x + 2, 80, HEART_RED);
+		graphics.fill(x + 2, 6, x + width, 7, 0x607A3540);
+		drawHeart(graphics, x + 7, 12);
+		graphics.text(mc.font, title, x + 19, 11, HEART_RED);
+		graphics.text(mc.font, value, x + width - mc.font.width(value) - 6, 11, bpm > 0 ? HEART_RED : 0xFFB88088);
 
 		int min = 250;
 		int max = 30;
@@ -88,11 +92,11 @@ if (bike == null) {
 		int graphX = x + 30;
 		int graphY = 27;
 		int graphWidth = width - 36;
-		graphics.text(mc.font, Component.literal(String.valueOf(high)), x + 5, graphY - 3, 0xFFAAAAAA);
-		graphics.text(mc.font, Component.literal(String.valueOf(low)), x + 5, graphY + GRAPH_HEIGHT - 6, 0xFFAAAAAA);
+		graphics.text(mc.font, Component.literal(String.valueOf(high)), x + 5, graphY - 3, 0xFF94A1AD);
+		graphics.text(mc.font, Component.literal(String.valueOf(low)), x + 5, graphY + GRAPH_HEIGHT - 6, 0xFF94A1AD);
 		for (int i = 0; i <= 2; i++) {
 			int y = graphY + i * GRAPH_HEIGHT / 2;
-			graphics.fill(graphX, y, graphX + graphWidth, y + 1, 0x55444444);
+			graphics.fill(graphX, y, graphX + graphWidth, y + 1, 0x304B5966);
 		}
 		double gradeScale = MIN_GRADE_SCALE;
 		for (double sample : this.gradeHistory) {
@@ -118,18 +122,30 @@ if (bike == null) {
 					for (int px = previousX; px <= pointX; px++) {
 						int y = previousY + (pointY - previousY) * (px - previousX) / (pointX - previousX);
 						int nextY = previousY + (pointY - previousY) * Math.min(pointX - previousX, px - previousX + 1) / (pointX - previousX);
-						graphics.fill(px, Math.min(y, nextY), px + 1, Math.max(y, nextY) + 1, 0xFFFF7777);
+						graphics.fill(px, y, px + 1, graphY + GRAPH_HEIGHT, 0x28FF5266);
+						graphics.fill(px, Math.min(y, nextY), px + 1, Math.min(graphY + GRAPH_HEIGHT + 1, Math.max(y, nextY) + 2), HEART_RED);
 					}
 				} else {
-					graphics.fill(pointX, pointY, pointX + 1, pointY + 1, 0xFFFF7777);
+					graphics.fill(pointX, pointY, pointX + 2, pointY + 2, HEART_RED);
 				}
 				previousX = pointX;
 				previousY = pointY;
 			}
 			previous = sample;
 		}
-		graphics.text(mc.font, history, graphX, 69, 0xFFAAAAAA);
-		graphics.text(mc.font, gradeText, x + width - mc.font.width(gradeText) - 6, 69, 0xFFFFFF55);
+		graphics.text(mc.font, history, graphX, 69, 0xFF94A1AD);
+		graphics.text(mc.font, gradeText, x + width - mc.font.width(gradeText) - 6, 69, 0xFF94A1AD);
+	}
+
+	/** Small pixel heart stays crisp at every Minecraft GUI scale. */
+	private static void drawHeart(GuiGraphicsExtractor graphics, int x, int y) {
+		graphics.fill(x + 1, y, x + 4, y + 2, HEART_RED);
+		graphics.fill(x + 6, y, x + 9, y + 2, HEART_RED);
+		graphics.fill(x, y + 2, x + 10, y + 4, HEART_RED);
+		graphics.fill(x + 1, y + 4, x + 9, y + 5, HEART_RED);
+		graphics.fill(x + 2, y + 5, x + 8, y + 6, HEART_RED);
+		graphics.fill(x + 3, y + 6, x + 7, y + 7, HEART_RED);
+		graphics.fill(x + 4, y + 7, x + 6, y + 8, HEART_RED);
 	}
 
 	private void addSample(int bpm, double grade) {
