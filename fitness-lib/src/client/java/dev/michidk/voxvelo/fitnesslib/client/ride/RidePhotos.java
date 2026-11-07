@@ -33,7 +33,8 @@ public final class RidePhotos {
 			&& !client.isPaused() && client.gui.screen() == null && client.isWindowActive()
 			&& telemetry != null && telemetry.speedMps() * 3.6 >= config.ridePhotoMinSpeedKmh
 			&& runtime.controls().powerWatts() != null && runtime.controls().powerWatts() >= config.ridePhotoMinWatts;
-		if (!SCHEDULE.update(System.nanoTime() / 1_000_000, config.ridePhotosEnabled, eligible, config.ridePhotoIntervalSeconds)) return;
+		if (!SCHEDULE.update(System.nanoTime() / 1_000_000,
+			config.ridePhotosEnabled && runtime.rideRecorder.isRecording(), eligible, config.ridePhotoIntervalSeconds)) return;
 		previousCamera = client.options.getCameraType();
 		previousHud = client.gui.hud.isHidden();
 		photoCamera = switch (config.ridePhotoPerspective) {

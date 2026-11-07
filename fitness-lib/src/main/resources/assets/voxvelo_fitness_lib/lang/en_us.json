@@ -6,7 +6,7 @@
   "voxvelo_fitness_lib.photos.title.tip": "Take automatic photos while riding with measured power.",
   "voxvelo_fitness_lib.photos.hint": "Photos count only active riding time. No photos while stopped, in menus or unfocused.",
   "voxvelo_fitness_lib.photos.enabled": "Automatic ride photos",
-  "voxvelo_fitness_lib.photos.enabled.tip": "Save PNG photos and timestamped ride data locally. Does not require ride recording or upload anything.",
+  "voxvelo_fitness_lib.photos.enabled.tip": "Save PNG photos and timestamped ride data locally only during an active ride recording. Stopping recording resets the photo timer. Nothing is uploaded.",
   "voxvelo_fitness_lib.photos.interval": "Active time between photos: %s s",
   "voxvelo_fitness_lib.photos.interval.tip": "Only time above both thresholds counts. Stops pause the timer.",
   "voxvelo_fitness_lib.photos.watts": "Minimum measured power: %s W",

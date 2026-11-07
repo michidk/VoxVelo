@@ -331,7 +331,8 @@ automatically.
 
 Open `F8` > **Ride photos** to configure automatic screenshots. By default, a photo is taken after every five
 minutes of active riding, requiring at least 50 W of fresh trainer or power meter data and a speed of 3 km/h.
-Stops, menus, pausing and an unfocused game pause the timer. Photos work without starting a ride recording.
+Photos only work during an active ride recording. Stops, menus, pausing and an unfocused game pause the timer.
+Stopping recording resets the photo timer, so each new recording starts with a full interval.
 
 You can turn photos off, adjust the interval (30 seconds to one hour), power and speed thresholds, and choose
 the current view, behind the rider, facing the rider, or alternating front/rear views. Alternate perspectives
