@@ -56,6 +56,17 @@ public final class ConnectionChecks {
 		require(config.preferredPowerMeterId.equals("pedals"), "fallback preserves manual preference");
 		roster.attempt("pedals").connect(); backend.last().complete(CyclingPower.SERVICE);
 		require(power.isConnected() && roster.selectedId(BluetoothDevices.Capability.POWER).equals("pedals"), "preferred power source wins when it returns");
+		Connection preferredLink = (Connection) backend.last().result.join();
+		preferredLink.subscriptionFailure = new IllegalStateException("Power subscription failed");
+		power.connect(preferred);
+		require(roster.attempt("pedals").isConnected() && !power.isConnected(), "capability can fail while physical connection remains open");
+		roster.tick();
+		require(power.isConnected() && roster.selectedId(BluetoothDevices.Capability.POWER).equals("trainer"), "failed power capability falls back despite open physical connection");
+		require(config.preferredPowerMeterId.equals("pedals"), "service failure does not erase preferred source");
+		preferredLink.subscriptionFailure = null;
+		roster.select(roster.attempt("pedals"), BluetoothDevices.Capability.POWER);
+		roster.tick();
+		require(power.isConnected() && roster.selectedId(BluetoothDevices.Capability.POWER).equals("pedals"), "manual retry restores preferred source");
 	}
 
 	private static void refreshIncompleteServices() {
@@ -573,6 +584,7 @@ public final class ConnectionChecks {
 		Set<String> services;
 		Set<String> refreshedServices;
 		int refreshes;
+		RuntimeException subscriptionFailure;
 		final Map<String, Consumer<byte[]>> handlers = new HashMap<>();
 		/** Characteristics subscribed to as indications rather than notifications. */
 		final Set<String> indicating = new HashSet<>();
@@ -607,6 +619,7 @@ public final class ConnectionChecks {
 			return CompletableFuture.completedFuture(null);
 		}
 		public CompletableFuture<Void> subscribe(String service, String characteristic, Consumer<byte[]> handler) {
+			if (this.subscriptionFailure != null) return CompletableFuture.failedFuture(this.subscriptionFailure);
 			handlers.put(characteristic, handler);
 			return CompletableFuture.completedFuture(null);
 		}

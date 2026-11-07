@@ -94,6 +94,7 @@ public final class BluetoothDevices {
 	private final Map<String, Device> devices = new LinkedHashMap<>();
 	private final Set<String> hidden = new HashSet<>();
 	private final Map<Capability, String> activeSources = new java.util.EnumMap<>(Capability.class);
+	private final Map<Capability, Map<String, Long>> failedSources = new java.util.EnumMap<>(Capability.class);
 
 	public BluetoothDevices(BluetoothManager bluetooth, Executor gameThread, FitnessConfig config,
 		BleServiceClient trainer, BleServiceClient power, BleServiceClient heart) {
@@ -135,9 +136,14 @@ public final class BluetoothDevices {
 		String preferred = this.preferredId(capability);
 		if (preferred.isEmpty()) return "";
 		Device chosen = this.devices.get(preferred);
-		if (chosen != null && chosen.isConnected()) return preferred;
-		return this.devices.values().stream().filter(device -> device.isConnected() && device.capabilities().contains(capability))
+		if (chosen != null && this.sourceAvailable(chosen, capability)) return preferred;
+		return this.devices.values().stream().filter(device -> this.sourceAvailable(device, capability))
 			.map(device -> device.descriptor.id()).findFirst().orElse(preferred);
+	}
+
+	private boolean sourceAvailable(Device device, Capability capability) {
+		return device.isConnected() && device.capabilities().contains(capability)
+			&& this.failedSources.getOrDefault(capability, Map.of()).getOrDefault(device.descriptor.id(), 0L) <= System.currentTimeMillis();
 	}
 
 	/** The manual choice is retained while another connected sensor temporarily supplies its data. */
@@ -154,6 +160,8 @@ public final class BluetoothDevices {
 	/** Selecting a source replaces only that capability; other devices keep their physical connections. */
 	public void select(Device device, Capability capability) {
 		if (!device.capabilities().contains(capability)) return;
+		boolean wasSelected = this.selected(device, capability);
+		this.failedSources.computeIfAbsent(capability, ignored -> new java.util.HashMap<>()).remove(device.descriptor.id());
 		if (!device.isConnected()) {
 			this.client(capability).disconnect();
 			this.store(capability, device.descriptor.id(), device.descriptor.displayName());
@@ -161,7 +169,7 @@ public final class BluetoothDevices {
 			device.connect();
 			return;
 		}
-		boolean clear = device.descriptor.id().equals(this.preferredId(capability));
+		boolean clear = wasSelected && device.descriptor.id().equals(this.preferredId(capability));
 		if (clear && this.client(capability).state() == ConnectionState.DISCONNECTED && this.client(capability).message() != null) {
 			this.client(capability).connect(device.descriptor);
 			return;
@@ -222,8 +230,13 @@ public final class BluetoothDevices {
 
 	private void updateSources() {
 		for (Capability capability : Capability.values()) {
+			String active = this.activeSources.getOrDefault(capability, "");
+			if (!active.isEmpty() && this.client(capability).state() == ConnectionState.DISCONNECTED && this.client(capability).message() != null) {
+				this.failedSources.computeIfAbsent(capability, ignored -> new java.util.HashMap<>())
+					.put(active, System.currentTimeMillis() + 30_000);
+			}
 			Device device = this.devices.get(this.selectedId(capability));
-			String target = device != null && device.isConnected() ? device.descriptor.id() : "";
+			String target = device != null && this.sourceAvailable(device, capability) ? device.descriptor.id() : "";
 			String previous = this.activeSources.put(capability, target);
 			if (!target.equals(previous)) {
 				this.client(capability).disconnect();

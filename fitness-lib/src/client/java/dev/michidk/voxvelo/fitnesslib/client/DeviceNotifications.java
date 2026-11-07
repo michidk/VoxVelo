@@ -26,8 +26,10 @@ final class DeviceNotifications {
 			String current = service.isConnected() ? runtime.bluetoothDevices.selectedId(capability) : "";
 			String previous = this.sources.put(capability, current);
 			if (visible && !current.isEmpty() && !current.equals(previous)) {
+				boolean fallback = !current.equals(runtime.bluetoothDevices.preferredId(capability));
 				SystemToast.addOrUpdate(client.gui.toastManager(), this.sourceTokens.computeIfAbsent(capability, ignored -> new SystemToast.SystemToastId()),
-					Component.translatable("voxvelo_fitness_lib.notification.source", Component.translatable("voxvelo_fitness_lib.bluetooth.role." + capability.key)),
+					Component.translatable(fallback ? "voxvelo_fitness_lib.notification.fallback" : "voxvelo_fitness_lib.notification.source",
+						Component.translatable("voxvelo_fitness_lib.bluetooth.role." + capability.key)),
 					Component.literal(service.deviceName()));
 			}
 		}
