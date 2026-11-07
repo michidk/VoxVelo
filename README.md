@@ -270,6 +270,20 @@ change the rolling resistance. *Trainer Settings...* has:
 
 If climbs feel too hard or too easy on your trainer, adjust *Intensity*.
 
+For troubleshooting, enable **Trainer debug HUD** in **Trainer Settings** or **HUD & Rider Stats**.
+It is off by default and appears at the top left. It shows requested SIM grade and rolling resistance,
+the last Bluetooth write, the last trainer-accepted target, command/reply bytes, errors, retry timing,
+gear ratios and trainer telemetry. A Bluetooth write alone does not confirm that the trainer accepted
+a command. Missing or refused FTMS responses are reported and retried instead of being treated as success.
+An accepted SIM command confirms protocol acceptance, not a measured change in pedal resistance.
+
+The control sequence is FTMS Request Control (0x00), Start/Resume (0x07), then Indoor Bike Simulation
+Parameters (0x11), with matching control-point indications (0x80). SIM sends grade, rolling resistance
+and aerodynamic coefficients; it does not set an ERG wattage target. The generic sequence and packet
+layout were cross-checked against [QDomyos-Zwift's FTMS implementation](https://github.com/cagnulein/qdomyos-zwift/blob/master/src/devices/ftmsbike/ftmsbike.cpp).
+Its [Wahoo implementation](https://github.com/cagnulein/qdomyos-zwift/blob/master/src/devices/wahookickrsnapbike/wahookickrsnapbike.cpp)
+also uses proprietary simulation and gearing commands; those are separate from the generic FTMS path used here.
+
 ### OpenBikeControl
 
 [OpenBikeControl](https://github.com/OpenBikeControl/openbikecontrol-protocol) devices such as the
@@ -380,30 +394,80 @@ The VoxVelo Bikes jar bundles no third-party code.
 
 Minecraft is a trademark of Mojang AB. VoxVelo is not affiliated with Mojang or Microsoft.
 
-### Controller action mappings
+## Controller action mappings
 
 OpenBikeControl receives the supported action IDs over both Bluetooth and TCP.
 Minecraft Controls also exposes the corresponding rebindable actions. The OpenBikeControl
-settings page lists their IDs and names for mapping in BikeControl.
+settings page lists their IDs and names as a reference. In BikeControl, choose a named
+standard action where available. **Custom recording and unstuck actions may not appear
+in its picker:** advertising their IDs does not add named options to that app. They
+require a controller that can send custom IDs or a VoxVelo-specific mapping in the
+controller app. Change Camera does not start recording.
 
-| ID | Action |
-| --- | --- |
-| 0x24 | Take ride photo |
-| 0x40 | Cycle camera |
-| 0x44 | Toggle HUD |
-| 0x80 | Toggle recording |
-| 0x81 | Start recording |
-| 0x82 | Stop and save recording |
-| 0x83 | Unstuck bike (requires Bikes and Fitness) |
-| 0x84 | Toggle road following (requires Bikes and Fitness) |
-| 0x85 | Toggle always look ahead (requires Bikes and Fitness) |
-| 0x86 | Open fitness settings |
+### Standard actions
+
+| Controller action | Hex ID | Decimal ID | In-game behavior |
+| --- | --- | --- | --- |
+| Shift Up | 0x01 | 1 | Increase virtual gear once per press |
+| Shift Down | 0x02 | 2 | Decrease virtual gear once per press |
+| Gear Set | 0x03 | 3 | Select gear directly; state = gear + 1; states 0 and 1 do nothing |
+| Up | 0x10 | 16 | Navigate up in menus |
+| Down | 0x11 | 17 | Navigate down in menus |
+| Left | 0x12 | 18 | Navigate left in menus |
+| Right | 0x13 | 19 | Navigate right in menus |
+| Select / Confirm | 0x14 | 20 | Activate the focused menu control |
+| Back / Cancel | 0x15 | 21 | Go back in menus |
+| Menu | 0x16 | 22 | Open the Minecraft pause menu during gameplay |
+| Steer Left | 0x18 | 24 | Steer left when no handlebar angle is available |
+| Steer Right | 0x19 | 25 | Steer right when no handlebar angle is available |
+| Brake | 0x1A | 26 | Apply brakes; state 1 is full braking |
+| Steering Angle | 0x1B | 27 | Set front-wheel angle, adjusted by sensitivity and smoothing |
+| Screenshot | 0x24 | 36 | Take a ride photo using the photo settings |
+| Camera View / Change Camera | 0x40 | 64 | Cycle first person and the two third-person views |
+| HUD Toggle | 0x44 | 68 | Show or hide Minecraft's HUD |
+
+Left and Right navigate menus; they are not steering actions. An explicit handlebar
+angle takes priority over Road Following and digital steering. Angle states 2–254
+encode `(state - 128) × 0.5°`, positive right. State 128 is straight ahead, 0 means
+unavailable, and 1 and 255 do nothing.
+
+### VoxVelo custom actions
+
+These use the app-specific protocol range. They are not aliases for standard Pause,
+Resume, Lap, or Camera View actions.
+
+| Hex ID | Decimal ID | Minecraft key binding / action | Behavior |
+| --- | --- | --- | --- |
+| 0x80 | 128 | Toggle ride recording (default R) | Start, or stop and save the active recording |
+| 0x81 | 129 | Start ride recording | Start only if not already recording |
+| 0x82 | 130 | Stop and save ride recording | Stop and save only if recording |
+| 0x83 | 131 | Unstuck bike | Recover the ridden bike to a safe nearby position |
+| 0x84 | 132 | Toggle road following | Enable or disable road guidance |
+| 0x85 | 133 | Toggle always look ahead | Enable or disable alignment with the bike heading |
+| 0x86 | 134 | Open Fitness Settings (default F8) | Open the Fitness settings menu |
+
+Assign keyboard buttons in **Options → Controls → Key Binds**. New custom actions
+are unbound by default, except Toggle recording and Fitness settings. Photo, camera,
+and HUD actions also have rebindable entries. Unstuck, Road Following, and Always look
+ahead require Bikes and the Fitness adapter. The other custom actions belong to
+Fitness Library. Only actions registered by installed modules are advertised.
+
+Photo, camera, HUD, and custom actions run during gameplay with no menu open. One-shot
+actions fire once per press: send state 1 on press and state 0 on release before
+pressing again. Held updates do not repeat them, and disconnect clears pending presses.
+For example, Start recording is `[0x01, 0x81, 0x01]`, then `[0x01, 0x81, 0x00]` on release.
 
 The protocol advertises numeric action IDs; its current App Information message has no
 field for custom action names. Controllers may display custom IDs until they add
 VoxVelo-specific labels. Manual unstuck works with automatic recovery disabled and
 uses the same collision-checked destination search, with a two-second server cooldown.
+It does not require pedaling. The server accepts requests only for the sender's ridden
+bike; if no safe destination exists, it reports that instead of teleporting.
 
 Steering response in OpenBikeControl settings defaults to 1.00 (immediate).
 Lower response factors smooth input at the cost of some delay. Always look ahead
-follows the bike heading plus its actual front-wheel steering angle.
+follows the bike heading, independent of the front-wheel angle and the direction the
+player faced when mounting.
+
+See the [OpenBikeControl protocol](https://github.com/OpenBikeControl/openbikecontrol-protocol/blob/main/PROTOCOL.md)
+for the wire format. Actions absent from these tables are not implemented.
