@@ -71,6 +71,8 @@ public final class FitnessConfig {
 
 	/** Steer the bike along the road by itself. It takes over the steering whenever a road is found ahead. */
 	public boolean roadFollowEnabled = false;
+	/** Keep the bicycle camera level and facing along the bike when the Fitness adapter is installed. */
+	public boolean bikeCameraFollow = true;
 	/** Blocks that count as road for the road-follow steering source: block ids, or tags written as #namespace:tag. */
 	public List<String> roadBlocks = new ArrayList<>(DEFAULT_ROAD_BLOCKS);
 	/** Widest road the follower will centre on, in blocks each side of the bike. Wider areas count as open ground. */

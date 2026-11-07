@@ -1,4 +1,6 @@
 {
+	"voxvelo_fitness.camera.follow": "Always look ahead",
+	"voxvelo_fitness.camera.follow.tip": "Keep your camera level and facing the bike's heading while riding. Turn off to look around freely. Only affects riding a VoxVelo bike.",
   "voxvelo_fitness.setup.title": "Set up VoxVelo Fitness",
   "voxvelo_fitness.setup.explanation": "Fitness needs Fitness Library %s for trainers, sensors and ride recording. Keyboard cycling is available without it.",
   "voxvelo_fitness.setup.consent": "Download and install the matching library from the official VoxVelo GitHub release? It includes native Bluetooth support. Restart Minecraft after installation.",

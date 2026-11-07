@@ -15,6 +15,9 @@
 	"license": "MIT",
 	"icon": "assets/voxvelo_fitness/icon.png",
 	"environment": "*",
+	"mixins": [
+		{"config": "voxvelo_fitness.client.mixins.json", "environment": "client"}
+	],
 	"entrypoints": {
 		"voxvelo_bikes-extension": [
 			"dev.michidk.voxvelo.fitness.fitness.FitnessExtension"

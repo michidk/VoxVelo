@@ -82,9 +82,14 @@ public final class BuildLayoutChecks {
 				}
 			}
 			require(
-					a.getAsJsonObject("entrypoints").has("voxvelo_bikes-client-extension")
-							&& !a.has("mixins"),
+					a.getAsJsonObject("entrypoints").has("voxvelo_bikes-client-extension"),
 					"adapter uses core hooks");
+			JsonObject cameraMixin = a.getAsJsonArray("mixins").get(0).getAsJsonObject();
+			require(cameraMixin.get("environment").getAsString().equals("client"),
+					"camera mixin only loads on clients");
+			JsonObject cameraConfig = json(adapter, cameraMixin.get("config").getAsString());
+			require(cameraConfig.getAsJsonArray("client").get(0).getAsString().equals("BikeCameraMixin"),
+					"fitness camera mixin is packaged and registered");
 			require(
 					f.getAsJsonObject("entrypoints").has("client"),
 					"generic fitness starts without core");

@@ -44,6 +44,10 @@ public class RoadScreen extends SettingsScreen {
 	@Override
 	protected void addOptions() {
 		this.rows.addText(() -> Component.translatable("voxvelo_fitness_lib.road.hint"), HINT);
+		this.rows.addRow(CycleButton.onOffBuilder(this.ctx.config.bikeCameraFollow)
+			.withTooltip(value -> Tips.of("voxvelo_fitness.camera.follow"))
+			.create(0, 0, WIDTH, 20, Component.translatable("voxvelo_fitness.camera.follow"),
+				(button, value) -> this.ctx.config.bikeCameraFollow = value));
 
 		this.rows.addHeader(Component.translatable("voxvelo_fitness_lib.road.section.following"));
 		this.rows.addRow(CycleButton.onOffBuilder(this.ctx.config.roadFollowEnabled)
