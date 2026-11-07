@@ -37,6 +37,7 @@ final class BikeMotion {
 	private final BikeEntity bike;
 	private double speed;
 	private double steering;
+	private double steeringAngle;
 	private double gradient;
 
 	BikeMotion(BikeEntity bike) {
@@ -48,7 +49,7 @@ final class BikeMotion {
 	}
 
 	double steering() {
-		return this.steering;
+		return this.steeringAngle / Math.toRadians(63);
 	}
 
 	double gradient() {
@@ -59,11 +60,14 @@ final class BikeMotion {
 	void seed(double speed, double steering, double gradient) {
 		this.speed = speed;
 		this.steering = steering;
+		this.steeringAngle = steering * Math.toRadians(63);
 		this.gradient = gradient;
 	}
 
 	Step step(BikeControlState input, BikePhysics.Params params, RiderSettings.Settings rider, BikeEntityHits hits) {
 		this.steering = BikePhysics.smoothSteering(this.steering, input.steering());
+		this.steeringAngle = input.steeringAngleDegrees() == null ? this.steering * BikePhysics.maxSteerAngle(this.speed, params)
+			: Math.toRadians(input.steeringAngleDegrees());
 
 		// Gravity follows the slope under the wheels. It is read from the terrain along the heading, so it also works
 		// at a standstill, over stairs and when rolling downhill, instead of being inferred from how far the bike moved.
@@ -88,7 +92,7 @@ final class BikeMotion {
 		this.speed = BikeSpeedBoost.apply(this.speed, boost);
 		this.speed = RiderSettings.capSpeed(this.speed, rider);
 
-		double yawRate = BikePhysics.yawRate(this.speed, this.steering, params);
+		double yawRate = BikePhysics.yawRateForAngle(this.speed, this.steeringAngle, params);
 		this.bike.setYRot(this.bike.getYRot() + (float) Math.toDegrees(yawRate * DT));
 		this.bike.setXRot(0.0F);
 

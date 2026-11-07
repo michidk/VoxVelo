@@ -67,6 +67,7 @@ public final class FitnessConfig {
 	/** The riding panel with power, cadence, speed, grade and gear. */
 	public boolean hudEnabled = true;
 	public boolean heartRateHudEnabled = true;
+	public boolean steeringHudEnabled = false;
 	public boolean junctionHudEnabled = true;
 
 	/** Steer the bike along the road by itself. It takes over the steering whenever a road is found ahead. */

@@ -12,11 +12,17 @@ public record FitnessControls(
 		double steering,
 		double brake,
 		int shift,
-		Integer gear) {
+		Integer gear,
+		Double steeringAngleDegrees) {
+	public FitnessControls(long tick, Double powerWatts, Double cadenceRpm, Integer heartRateBpm,
+		double steering, double brake, int shift, Integer gear) {
+		this(tick, powerWatts, cadenceRpm, heartRateBpm, steering, brake, shift, gear, null);
+	}
 	public static final FitnessControls NONE =
 			new FitnessControls(0, null, null, null, 0, 0, 0, null);
 
 	public FitnessControls {
+		steeringAngleDegrees = finite(steeringAngleDegrees, -63, 63);
 		powerWatts = finite(powerWatts, 0, 3000);
 		cadenceRpm = finite(cadenceRpm, 0, 254);
 		heartRateBpm =

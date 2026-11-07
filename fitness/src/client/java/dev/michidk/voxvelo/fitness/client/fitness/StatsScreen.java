@@ -28,6 +28,8 @@ public class StatsScreen extends SettingsScreen {
 		this.rows.addRow(
 			this.toggle(0, "voxvelo_fitness_lib.rider.stats", this.ctx.config.statsOverlayEnabled, value -> this.ctx.config.statsOverlayEnabled = value),
 			this.toggle(RIGHT, "voxvelo_fitness_lib.rider.junction_hud", this.ctx.config.junctionHudEnabled, value -> this.ctx.config.junctionHudEnabled = value));
+		this.rows.addRow(this.toggle(0, "voxvelo_fitness_lib.rider.steering_hud", this.ctx.config.steeringHudEnabled,
+			value -> this.ctx.config.steeringHudEnabled = value));
 		this.rows.addHeader(Component.translatable("voxvelo_fitness_lib.stats.section.sharing"));
 		this.rows.addRow(
 			this.toggle(0, "voxvelo_fitness_lib.rider.share_watts", this.ctx.config.shareWatts, value -> this.ctx.config.shareWatts = value),

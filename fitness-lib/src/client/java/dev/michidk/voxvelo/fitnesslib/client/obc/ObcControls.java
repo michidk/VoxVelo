@@ -23,6 +23,7 @@ public final class ObcControls {
 	private double left;
 	private double right;
 	private double brake;
+	private Double steeringAngle;
 	private int pendingShifts;
 	private int gearSet;
 	private final List<Integer> menuPresses = new ArrayList<>();
@@ -37,6 +38,10 @@ public final class ObcControls {
 		int previous = this.lastState[id];
 		this.lastState[id] = state;
 		switch (id) {
+			case Obc.BUTTON_STEERING_ANGLE -> {
+				if (state == 0) this.steeringAngle = null;
+				else if (state >= 2 && state <= 254) this.steeringAngle = (state - 128) * 0.5;
+			}
 			case Obc.BUTTON_UP, Obc.BUTTON_DOWN, Obc.BUTTON_LEFT, Obc.BUTTON_RIGHT,
 				Obc.BUTTON_SELECT, Obc.BUTTON_BACK, Obc.BUTTON_MENU -> {
 				if (previous == 0 && state != 0 && this.menuPresses.size() < 64) {
@@ -74,6 +79,7 @@ public final class ObcControls {
 		this.left = 0.0;
 		this.right = 0.0;
 		this.brake = 0.0;
+		this.steeringAngle = null;
 		this.pendingShifts = 0;
 		this.gearSet = 0;
 		this.menuPresses.clear();
@@ -88,8 +94,12 @@ public final class ObcControls {
 
 	/** -1 (left) .. +1 (right). */
 	public synchronized double steering() {
+		if (this.steeringAngle != null) return this.steeringAngle / 63.0;
 		return Math.max(-1.0, Math.min(1.0, this.right - this.left));
 	}
+
+	/** Calibrated handlebar angle in degrees; null asks the vehicle to use ordinary steering. */
+	public synchronized Double steeringAngleDegrees() { return this.steeringAngle; }
 
 	public synchronized double brake() {
 		return this.brake;

@@ -137,8 +137,12 @@ public final class BikePhysics {
 	 * At a standstill the bike can still pivot slowly so tight spaces remain practical.
 	 */
 	public static double yawRate(double speed, double steering, Params p) {
+		return yawRateForAngle(speed, steering * maxSteerAngle(speed, p), p);
+	}
+
+	/** Turns from an actual front wheel angle, positive right, while retaining the lateral acceleration limit. */
+	public static double yawRateForAngle(double speed, double angle, Params p) {
 		double effectiveSpeed = Math.max(speed, 1.2);
-		double angle = steering * maxSteerAngle(speed, p);
 		double rate = effectiveSpeed * Math.tan(angle) / p.wheelBase();
 		double limit = p.maxLateralAccel() / effectiveSpeed;
 		rate = Math.max(-limit, Math.min(limit, rate));

@@ -7,7 +7,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import dev.michidk.voxvelo.bikes.bike.BikeComponents;
 import dev.michidk.voxvelo.bikes.bike.BikeEntity;
-import dev.michidk.voxvelo.bikes.bike.BikePhysics;
 import dev.michidk.voxvelo.bikes.bike.BikeRig;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
@@ -33,7 +32,7 @@ public class BikeGeoRenderer extends GeoEntityRenderer<BikeEntity, EntityRenderS
 		state.addGeckolibData(BikeDataTickets.FRAME_COLOR, bike.getFrameColor());
 		state.addGeckolibData(BikeDataTickets.COMPONENTS, bike.getComponentMask());
 		state.addGeckolibData(BikeDataTickets.SETUP, bike.getSetup());
-		float steer = bike.getSteering() * (float) BikePhysics.maxSteerAngle(bike.getSpeed(), bike.params());
+		float steer = bike.getSteering() * (float) Math.toRadians(63);
 		state.addGeckolibData(BikeDataTickets.BIKE_TYPE, bike.getBikeType());
 		state.addGeckolibData(BikeDataTickets.WHEEL_ANGLE, bike.getWheelAngle(partialTick));
 		state.addGeckolibData(BikeDataTickets.STEER_ANGLE, steer);

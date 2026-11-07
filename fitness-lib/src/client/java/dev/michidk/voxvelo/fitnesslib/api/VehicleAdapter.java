@@ -15,6 +15,9 @@ public interface VehicleAdapter {
 
 	VehicleTelemetry sample(LocalPlayer player, Entity vehicle);
 
+	/** Actual front-wheel angle in degrees, positive right; null when the vehicle does not expose it. */
+	default Double steeringAngleDegrees(LocalPlayer player, Entity vehicle) { return null; }
+
 	/** Called once per tick for the selected adapter, with edge-triggered shifts. */
 	default void applyControls(LocalPlayer player, Entity vehicle, FitnessControls controls) {}
 

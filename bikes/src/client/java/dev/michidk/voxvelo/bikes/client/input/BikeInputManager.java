@@ -76,6 +76,14 @@ public final class BikeInputManager {
 		}
 		this.gear = clampGear(this.gear + shifts);
 
+		for (int i = this.sources.size() - 1; i >= 0; i--) {
+			BikeInputSource source = this.sources.get(i);
+			if (!source.isActive() || !source.supports(ControlChannel.STEERING)) continue;
+			if (source.steeringAngleDegrees().isPresent()) {
+				return new BikeControlState(propulsion, 0, brake, this.gear, source.steeringAngleDegrees().getAsDouble()).sanitized();
+			}
+			if (Math.abs(source.steering().orElse(0)) >= STEERING_IDLE) break;
+		}
 		return new BikeControlState(propulsion, this.steering(), brake, this.gear).sanitized();
 	}
 

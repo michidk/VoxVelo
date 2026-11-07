@@ -307,7 +307,7 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 		if (!this.canRide()) {
 			return new BikeControlState(0.0, 0.0, 1.0, input.gear());
 		}
-		return this.hasPart(BikeComponents.PEDALS) ? input : new BikeControlState(0.0, input.steering(), input.brake(), input.gear());
+		return this.hasPart(BikeComponents.PEDALS) ? input : new BikeControlState(0.0, input.steering(), input.brake(), input.gear(), input.steeringAngleDegrees());
 	}
 
 	/** Called on the server with the rider client's report of the bike it simulates. Values are validated there. */

@@ -25,10 +25,11 @@ public final class Obc {
 	public static final int BUTTON_STEER_LEFT = 0x18;
 	public static final int BUTTON_STEER_RIGHT = 0x19;
 	public static final int BUTTON_BRAKE = 0x1A;
+	public static final int BUTTON_STEERING_ANGLE = 0x1B;
 
 	/** The actions this mod consumes; sent to the device in the App Information message. */
 	public static final int[] SUPPORTED_BUTTONS = {
-		BUTTON_SHIFT_UP, BUTTON_SHIFT_DOWN, BUTTON_GEAR_SET, BUTTON_STEER_LEFT, BUTTON_STEER_RIGHT, BUTTON_BRAKE,
+		BUTTON_SHIFT_UP, BUTTON_SHIFT_DOWN, BUTTON_GEAR_SET, BUTTON_STEER_LEFT, BUTTON_STEER_RIGHT, BUTTON_BRAKE, BUTTON_STEERING_ANGLE,
 		BUTTON_UP, BUTTON_DOWN, BUTTON_LEFT, BUTTON_RIGHT, BUTTON_SELECT, BUTTON_BACK, BUTTON_MENU
 	};
 

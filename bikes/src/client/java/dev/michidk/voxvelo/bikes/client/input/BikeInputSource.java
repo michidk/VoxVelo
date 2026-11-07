@@ -32,6 +32,9 @@ public interface BikeInputSource {
 	/** Normalized steering -1..+1, if this source provides steering. */
 	OptionalDouble steering();
 
+	/** Calibrated front-wheel angle; when present, takes precedence over normalized steering. */
+	default OptionalDouble steeringAngleDegrees() { return OptionalDouble.empty(); }
+
 	/** Normalized brake 0..1, if this source provides braking. */
 	OptionalDouble brake();
 

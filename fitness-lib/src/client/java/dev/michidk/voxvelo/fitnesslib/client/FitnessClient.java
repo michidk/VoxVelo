@@ -3,6 +3,7 @@ package dev.michidk.voxvelo.fitnesslib.client;
 import dev.michidk.voxvelo.fitnesslib.client.fitness.FitnessKeys;
 import dev.michidk.voxvelo.fitnesslib.client.hud.BikeHud;
 import dev.michidk.voxvelo.fitnesslib.client.hud.HeartRateHud;
+import dev.michidk.voxvelo.fitnesslib.client.hud.SteeringHud;
 import dev.michidk.voxvelo.fitnesslib.client.ride.RideScreen;
 
 import net.fabricmc.api.ClientModInitializer;
@@ -18,7 +19,10 @@ public final class FitnessClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		FitnessRuntime runtime = FitnessRuntime.get();
+		DeviceNotifications notifications = new DeviceNotifications();
 		FitnessKeys.register();
+		HudElementRegistry.attachElementAfter(VanillaHudElements.HOTBAR,
+			Identifier.fromNamespaceAndPath(FitnessRuntime.MOD_ID, "steering_hud"), new SteeringHud(runtime));
 		HudElementRegistry.attachElementAfter(
 				VanillaHudElements.HOTBAR,
 				Identifier.fromNamespaceAndPath(FitnessRuntime.MOD_ID, "ride_hud"),
@@ -30,6 +34,7 @@ public final class FitnessClient implements ClientModInitializer {
 		ClientTickEvents.END_CLIENT_TICK.register(
 				client -> {
 					runtime.tick(client);
+					notifications.tick(client, runtime);
 					boolean settings = false;
 					while (FitnessKeys.OPEN_SETTINGS.consumeClick()) settings = true;
 					if (settings && client.gui.screen() == null)

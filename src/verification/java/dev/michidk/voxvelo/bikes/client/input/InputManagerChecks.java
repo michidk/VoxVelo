@@ -64,6 +64,19 @@ public final class InputManagerChecks {
 		require(manager.compose(null).steering() == -0.5, "a disconnected controller is ignored");
 
 		// Gears: every connected source counts, and an absolute gear is applied.
+		controller.active = true;
+		controller.angle = 12.5;
+		require(manager.compose(null).steeringAngleDegrees() == 12.5, "controller angle reaches bike controls unchanged");
+		controller.angle = 0.0;
+		require(manager.compose(null).steeringAngleDegrees() == 0.0, "a centered angle overrides keyboard steering");
+		road.active = true;
+		require(manager.compose(null).steeringAngleDegrees() == null && manager.compose(null).steering() == 0.9,
+			"active road guidance can override the controller angle");
+		road.active = false;
+		controller.active = false;
+		require(manager.compose(null).steeringAngleDegrees() == null, "disconnected angle is ignored");
+		controller.angle = null;
+
 		manager.onMount(6);
 		keyboard.shifts = 1;
 		controller.active = true;
@@ -95,6 +108,7 @@ public final class InputManagerChecks {
 		boolean active;
 		double propulsion;
 		double steering;
+		Double angle;
 		double brake;
 		int shifts;
 		int setGear;
@@ -123,6 +137,7 @@ public final class InputManagerChecks {
 		@Override public void reset() { }
 		@Override public OptionalDouble propulsion() { return OptionalDouble.of(this.propulsion); }
 		@Override public OptionalDouble steering() { return OptionalDouble.of(this.steering); }
+		@Override public OptionalDouble steeringAngleDegrees() { return this.angle == null ? OptionalDouble.empty() : OptionalDouble.of(this.angle); }
 		@Override public OptionalDouble brake() { return OptionalDouble.of(this.brake); }
 		@Override public int consumeGearShift() {
 			int value = this.shifts;

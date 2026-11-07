@@ -9,7 +9,10 @@ package dev.michidk.voxvelo.bikes.bike;
  * @param brake      0.0 = released, 1.0 = full brake
  * @param gear       current gear, {@link #MIN_GEAR}..{@link #MAX_GEAR}
  */
-public record BikeControlState(double propulsion, double steering, double brake, int gear) {
+public record BikeControlState(double propulsion, double steering, double brake, int gear, Double steeringAngleDegrees) {
+	public BikeControlState(double propulsion, double steering, double brake, int gear) {
+		this(propulsion, steering, brake, gear, null);
+	}
 	public static final double MAX_POWER_WATTS = 2000.0;
 	public static final int MIN_GEAR = 1;
 	public static final int MAX_GEAR = 12;
@@ -23,7 +26,8 @@ public record BikeControlState(double propulsion, double steering, double brake,
 			clamp(propulsion, 0.0, MAX_POWER_WATTS),
 			clamp(steering, -1.0, 1.0),
 			clamp(brake, 0.0, 1.0),
-			Math.max(MIN_GEAR, Math.min(MAX_GEAR, gear))
+			Math.max(MIN_GEAR, Math.min(MAX_GEAR, gear)),
+			steeringAngleDegrees == null || !Double.isFinite(steeringAngleDegrees) ? null : clamp(steeringAngleDegrees, -63, 63)
 		);
 	}
 

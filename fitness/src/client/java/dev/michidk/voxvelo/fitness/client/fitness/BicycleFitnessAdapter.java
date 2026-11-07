@@ -65,6 +65,11 @@ public final class BicycleFitnessAdapter implements VehicleAdapter, BikeInputSou
 	}
 
 	@Override
+	public Double steeringAngleDegrees(LocalPlayer player, Entity vehicle) {
+		return ((BikeEntity) vehicle).getSteering() * 63.0;
+	}
+
+	@Override
 	public void deactivate() {
 		reset();
 	}
@@ -96,6 +101,11 @@ public final class BicycleFitnessAdapter implements VehicleAdapter, BikeInputSou
 	@Override
 	public OptionalDouble steering() {
 		return OptionalDouble.of(input.steering());
+	}
+
+	@Override
+	public OptionalDouble steeringAngleDegrees() {
+		return input.steeringAngleDegrees() == null ? OptionalDouble.empty() : OptionalDouble.of(input.steeringAngleDegrees());
 	}
 
 	@Override

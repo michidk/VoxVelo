@@ -34,10 +34,12 @@ public final class FitnessRuntime {
 	public final VehicleRegistry vehicles = new VehicleRegistry();
 	private FitnessControls controls = FitnessControls.NONE;
 	private VehicleTelemetry telemetry;
+	private Double vehicleSteeringAngle;
 	private final VehicleBinding binding =
 			new VehicleBinding(
 					() -> {
 						telemetry = null;
+						vehicleSteeringAngle = null;
 						controls = FitnessControls.NONE;
 						steering = 0;
 						rideRecorder.interrupt();
@@ -60,6 +62,8 @@ public final class FitnessRuntime {
 	public VehicleTelemetry telemetry() {
 		return telemetry;
 	}
+
+	public Double vehicleSteeringAngleDegrees() { return vehicleSteeringAngle; }
 
 	public Object vehicleIdentity() {
 		return binding.identity();
@@ -95,7 +99,8 @@ public final class FitnessRuntime {
 						steering,
 						obc.isConnected() ? obc.controls().brake() : 0,
 						shifts,
-						gear > 0 ? gear : null);
+						gear > 0 ? gear : null,
+						obc.isConnected() ? obc.controls().steeringAngleDegrees() : null);
 		Entity nextVehicle =
 				client.player == null || client.level == null || client.isPaused()
 						? null
@@ -108,6 +113,7 @@ public final class FitnessRuntime {
 			controls = sampledControls;
 			if (next != null) {
 				next.applyControls(client.player, nextVehicle, controls);
+				vehicleSteeringAngle = next.steeringAngleDegrees(client.player, nextVehicle);
 				telemetry =
 						java.util.Objects.requireNonNull(next.sample(client.player, nextVehicle));
 			}
@@ -150,10 +156,18 @@ public final class FitnessRuntime {
 	}
 
 	public void shutdown() {
-		trainerFeedback.shutdown();
-		finishRide();
-		config.save();
-		obc.shutdown();
-		bluetooth.shutdown();
+		LOGGER.info("Stopping fitness services");
+		try {
+			trainerFeedback.shutdown();
+			finishRide();
+			config.save();
+		} finally {
+			try {
+				obc.shutdown();
+			} finally {
+				bluetooth.shutdown();
+			}
+		}
+		LOGGER.info("Fitness services stopped");
 	}
 }
