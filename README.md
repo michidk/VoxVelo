@@ -1,7 +1,8 @@
 # VoxVelo
 
-VoxVelo is a family of three mods: **VoxVelo Bikes**, **VoxVelo Fitness Library**, and **VoxVelo Fitness**.
-Each mod has its own module, ID, namespace, jar and release project.
+Turn Minecraft into an indoor cycling workout: pedal a smart trainer, feel the hills, steer with your phone,
+and record your rides as FIT files. VoxVelo combines **VoxVelo Bikes**, **VoxVelo Fitness Library**, and
+**VoxVelo Fitness**. You can also install Bikes alone for keyboard riding without fitness features.
 
 <p align="center">
   <img src=".github/images/icon_bikes.png" alt="VoxVelo Bikes icon" width="144">
@@ -11,9 +12,35 @@ Each mod has its own module, ID, namespace, jar and release project.
   <img src=".github/images/icon_fitness.png" alt="VoxVelo Fitness icon" width="144">
 </p>
 
-Rideable, fully multiplayer bicycles for Minecraft (Fabric). Ride with the keyboard and mouse, or install the
-fitness add-on and pedal a real smart trainer (Bluetooth FTMS), steer with OpenBikeControl devices such as the
-BikeControl phone app, and record your rides as FIT files.
+## What should I install?
+
+Use **Minecraft 26.3**, **Java 25**, and [Fabric Loader](https://fabricmc.net/use/) **0.19.5 or newer**.
+Both setups below also need [Fabric API](https://modrinth.com/mod/fabric-api) for Minecraft 26.3 and
+[GeckoLib](https://modrinth.com/mod/geckolib) **5.5.7**.
+
+| I want to… | Install these VoxVelo mods |
+| --- | --- |
+| **Work out with a smart trainer**, use fitness sensors, or record rides | **All three:** [VoxVelo Bikes](https://modrinth.com/project/voxvelo-bikes), [VoxVelo Fitness Library](https://modrinth.com/project/voxvelo-fitness-lib), and [VoxVelo Fitness](https://modrinth.com/project/voxvelo-fitness) |
+| **Just ride bikes with a keyboard and mouse**, without fitness features | **[VoxVelo Bikes](https://modrinth.com/project/voxvelo-bikes) only** |
+
+For manual installation, download the JARs from the same [GitHub release](https://github.com/michidk/VoxVelo/releases)
+and put them, Fabric API, and GeckoLib in your instance's `mods/` folder. For the fitness setup, that means:
+
+- `voxvelo-bikes-<version>.jar`
+- `voxvelo-fitness-lib-<version>.jar`
+- `voxvelo-fitness-<version>.jar`
+
+**Fitness alone is not enough:** it requires both Bikes and Fitness Library, with matching version numbers.
+The library alone does not add bicycles. With a dependency-aware Modrinth launcher, install VoxVelo Fitness
+and confirm that it also installs Bikes, Fitness Library, Fabric API, and GeckoLib.
+
+Once installed, mount a bike and press `F8` to connect your Bluetooth FTMS trainer and optional sensors.
+See [Fitness features](#fitness-features) for device setup, phone steering, resistance, and ride recording.
+
+**Servers:** install Bikes, Fabric API, and GeckoLib for bicycle gameplay. Add Fitness and Fitness Library
+for multiplayer rider stats and ride maps. Fitness devices connect to the player's client, not the server.
+
+Downloads and changelogs are on [GitHub Releases](https://github.com/michidk/VoxVelo/releases).
 
 ## Screenshots
 
@@ -75,17 +102,6 @@ resolve them.
 
 Developers: the vehicle integration API is `dev.michidk.voxvelo.fitnesslib.api`; see the optional
 [boat example](examples/fitness-boat/src/main/java/dev/michidk/example/BoatFitness.java).
-
-## Installation
-
-1. Install [Fabric Loader](https://fabricmc.net/use/) 0.19.5 or newer for Minecraft 26.3 and [Fabric API](https://modrinth.com/mod/fabric-api).
-2. For bicycles, install [GeckoLib](https://modrinth.com/mod/geckolib) 5.5.7 and `voxvelo-bikes-<version>.jar`.
-3. For bicycle fitness, also install `voxvelo-fitness-lib-<version>.jar` and `voxvelo-fitness-<version>.jar`.
-4. Put the jars in your `mods/` folder. Download matching versions from the [releases](https://github.com/michidk/VoxVelo/releases).
-
-**Servers:** VoxVelo Bikes supports keyboard and fitness riders. Install all three jars for server rider stats and ride
-maps. The library is safe on a dedicated server: its device services have only a client entrypoint. Other vehicles
-need their own mod's multiplayer support; the fitness API does not prescribe a network protocol.
 
 ## Quick start
 
