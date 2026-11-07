@@ -93,6 +93,16 @@ public final class FitnessConfig {
 	 * ocean in the mid Atlantic, so a ride is clearly virtual and never lands on somebody's real street.
 	 */
 	public boolean rideFitPosition = true;
+	/** The bicycle adapter may start a recording on mounting; manual recording remains the default. */
+	public boolean rideAutoRecordOnMount = false;
+	/** Automatic photos count active riding time, with measured power and movement required. */
+	public boolean ridePhotosEnabled = true;
+	public int ridePhotoIntervalSeconds = 300;
+	public int ridePhotoMinWatts = 50;
+	public double ridePhotoMinSpeedKmh = 3;
+	public boolean ridePhotoHideHud = true;
+	/** 0 keeps the current view; 1 rear, 2 front, 3 alternates rear and front. */
+	public int ridePhotoPerspective = 0;
 	public double rideFitOriginLat = 30.0;
 	public double rideFitOriginLon = -40.0;
 
@@ -147,6 +157,10 @@ public final class FitnessConfig {
 
 	/** Keeps hand-edited or older files within sane ranges. */
 	private void sanitize() {
+		this.ridePhotoIntervalSeconds = Math.max(30, Math.min(3600, this.ridePhotoIntervalSeconds));
+		this.ridePhotoMinWatts = Math.max(0, Math.min(1000, this.ridePhotoMinWatts));
+		this.ridePhotoMinSpeedKmh = clamp(this.ridePhotoMinSpeedKmh, 1, 50, 3);
+		this.ridePhotoPerspective = Math.max(0, Math.min(3, this.ridePhotoPerspective));
 		if (this.bluetoothDevices == null) this.bluetoothDevices = new ArrayList<>();
 		this.bluetoothDevices.removeIf(device -> device == null || device.id() == null || device.id().isBlank() || device.advertisedServices() == null);
 		this.preferredTrainerId = this.preferredTrainerId == null ? "" : this.preferredTrainerId;

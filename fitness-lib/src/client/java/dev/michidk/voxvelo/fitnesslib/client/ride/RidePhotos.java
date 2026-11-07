@@ -1,0 +1,93 @@
+package dev.michidk.voxvelo.fitnesslib.client.ride;
+
+import com.google.gson.JsonObject;
+import dev.michidk.voxvelo.fitnesslib.client.FitnessRuntime;
+import java.nio.file.Files;
+import java.time.Instant;
+import java.util.UUID;
+import net.minecraft.client.CameraType;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.Screenshot;
+import net.minecraft.util.Util;
+
+/** Captures a rendered frame and restores the camera and HUD immediately afterward. */
+public final class RidePhotos {
+	private static final PhotoSchedule SCHEDULE = new PhotoSchedule();
+	private static CameraType previousCamera;
+	private static CameraType photoCamera;
+	private static boolean previousHud;
+	private static boolean prepared;
+	private static int sequence;
+	private static Object level;
+	private RidePhotos() {}
+
+	/** Selects the camera before extracting the frame; alternate views appear for one frame. */
+	public static void prepare() {
+		Minecraft client = Minecraft.getInstance();
+		if (prepared) restore(client);
+		FitnessRuntime runtime = FitnessRuntime.get();
+		var config = runtime.config;
+		var telemetry = runtime.telemetry();
+		if (level != client.level) { SCHEDULE.reset(); level = client.level; }
+		boolean eligible = client.level != null && client.player != null && client.player.getVehicle() != null
+			&& !client.isPaused() && client.gui.screen() == null && client.isWindowActive()
+			&& telemetry != null && telemetry.speedMps() * 3.6 >= config.ridePhotoMinSpeedKmh
+			&& runtime.controls().powerWatts() != null && runtime.controls().powerWatts() >= config.ridePhotoMinWatts;
+		if (!SCHEDULE.update(System.nanoTime() / 1_000_000, config.ridePhotosEnabled, eligible, config.ridePhotoIntervalSeconds)) return;
+		previousCamera = client.options.getCameraType();
+		previousHud = client.gui.hud.isHidden();
+		photoCamera = switch (config.ridePhotoPerspective) {
+			case 1 -> CameraType.THIRD_PERSON_BACK;
+			case 2 -> CameraType.THIRD_PERSON_FRONT;
+			case 3 -> (++sequence % 2 == 0 ? CameraType.THIRD_PERSON_BACK : CameraType.THIRD_PERSON_FRONT);
+			default -> previousCamera;
+		};
+		client.options.setCameraType(photoCamera);
+		if (config.ridePhotoHideHud && !previousHud) client.gui.hud.toggle();
+		prepared = true;
+	}
+
+	/** Reads back the frame; PNG encoding and disk writes run on the IO pool. */
+	public static void capture() {
+		if (!prepared) return;
+		Minecraft client = Minecraft.getInstance();
+		try {
+			Instant timestamp = Instant.now();
+			var telemetry = FitnessRuntime.get().telemetry();
+			Double measuredWatts = FitnessRuntime.get().controls().powerWatts();
+			String perspective = photoCamera.name();
+			String dimension = client.level.dimension().identifier().toString();
+			var directory = RideExport.ridesDirectory().resolve("photos");
+			String name = "ride_" + timestamp.toEpochMilli() + "_" + UUID.randomUUID();
+			Screenshot.takeScreenshot(client.gameRenderer.mainRenderTarget(), image -> Util.ioPool().execute(() -> {
+				try (image) {
+					Files.createDirectories(directory);
+					image.writeToFile(directory.resolve(name + ".png"));
+					var metadata = new JsonObject();
+					metadata.addProperty("timestamp", timestamp.toString());
+					metadata.addProperty("perspective", perspective);
+					metadata.addProperty("dimension", dimension);
+					metadata.addProperty("measuredWatts", measuredWatts);
+					if (telemetry != null) {
+						metadata.addProperty("watts", telemetry.powerWatts());
+						metadata.addProperty("speedKmh", telemetry.speedMps() * 3.6);
+						metadata.addProperty("x", telemetry.position().x);
+						metadata.addProperty("y", telemetry.position().y);
+						metadata.addProperty("z", telemetry.position().z);
+					}
+					Files.writeString(directory.resolve(name + ".json"), metadata.toString());
+				} catch (Exception failure) { FitnessRuntime.LOGGER.warn("Could not save ride photo", failure); }
+			}));
+		} catch (Exception failure) { FitnessRuntime.LOGGER.warn("Could not capture ride photo", failure); }
+		finally {
+			restore(client);
+		}
+	}
+
+	/** Also recovers the settings if a prepared frame was skipped instead of rendered. */
+	private static void restore(Minecraft client) {
+		client.options.setCameraType(previousCamera);
+		if (client.gui.hud.isHidden() != previousHud) client.gui.hud.toggle();
+		prepared = false;
+	}
+}

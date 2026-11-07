@@ -234,3 +234,17 @@ tasks.register('verifyTerrainSlope', JavaExec) {
 }
 
 tasks.named('check') { dependsOn 'verifyLibraryInstaller', 'verifyTerrainSlope' }
+
+tasks.register('verifyRidePhotos', JavaExec) {
+	dependsOn verificationClasses
+	classpath = sourceSets.verification.runtimeClasspath
+	mainClass = 'dev.michidk.voxvelo.fitnesslib.client.ride.PhotoScheduleChecks'
+}
+tasks.named('check') { dependsOn 'verifyRidePhotos' }
+
+tasks.register('verifyMountRecording', JavaExec) {
+	dependsOn verificationClasses
+	classpath = sourceSets.verification.runtimeClasspath
+	mainClass = 'dev.michidk.voxvelo.fitness.client.ride.MountRecordingChecks'
+}
+tasks.named('check') { dependsOn 'verifyMountRecording' }

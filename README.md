@@ -314,6 +314,11 @@ bike takes the widest way. Slow down for tight junctions.
 Press `R` to start and stop a ride. The summary shows distance, times, speed, power, normalized power, cadence,
 heart rate, work and climbing. In `B` > *Ride Recording...*:
 
+- **Record automatically on bike entry** is off by default. Enable it to start recording when mounting a bike.
+  Dismounting pauses sampling; remounting continues an active recording. After stopping manually, recording stays
+  stopped until the next mount. A previous unsaved ride is exported before a new recording starts; if saving fails,
+  automatic recording is skipped so the previous ride stays available.
+
 - **Export .FIT** saves the ride to `.minecraft/voxvelo_fitness_lib/rides/` for Strava, Garmin Connect, intervals.icu or
   TrainingPeaks. With *GPS in FIT* on, the route is placed on the globe (in the mid Atlantic by default, set by
   `rideFitOriginLat`/`rideFitOriginLon`) so websites draw it.
@@ -321,6 +326,21 @@ heart rate, work and climbing. In `B` > *Ride Recording...*:
 
 Starting a new recording discards the previous ride, so export it first. Leaving the world saves an unexported ride
 automatically.
+
+### Automatic ride photos
+
+Open `F8` > **Ride photos** to configure automatic screenshots. By default, a photo is taken after every five
+minutes of active riding, requiring at least 50 W of fresh trainer or power meter data and a speed of 3 km/h.
+Stops, menus, pausing and an unfocused game pause the timer. Photos work without starting a ride recording.
+
+You can turn photos off, adjust the interval (30 seconds to one hour), power and speed thresholds, and choose
+the current view, behind the rider, facing the rider, or alternating front/rear views. Alternate perspectives
+briefly appear on screen for the captured frame; the camera and HUD are restored afterward. Keeping the current
+view is the default. Hiding the HUD in photos is separately configurable.
+
+PNG photos and matching JSON files containing capture time, dimension, position, power and speed are saved in
+`.minecraft/voxvelo_fitness_lib/rides/photos/`. Use **Open photo folder** to find them. These are local files for
+attaching to an activity later; uploading photos to Strava is not implemented.
 
 ## Configuration
 

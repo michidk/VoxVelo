@@ -20,6 +20,7 @@
 			"dev.michidk.voxvelo.fitnesslib.client.FitnessClient"
 		]
 	},
+	"mixins": [{"config": "voxvelo_fitness_lib.client.mixins.json", "environment": "client"}],
 	"depends": {
 		"fabricloader": ">=0.19.5",
 		"minecraft": "~26.3",
