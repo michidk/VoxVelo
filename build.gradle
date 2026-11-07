@@ -1,6 +1,6 @@
 plugins {
 	id 'base'
-	id 'com.diffplug.spotless' version '8.10.4'
+	id 'com.diffplug.spotless' version '8.11.0'
 }
 
 // The root coordinates verification; only the three subprojects produce mod jars.
