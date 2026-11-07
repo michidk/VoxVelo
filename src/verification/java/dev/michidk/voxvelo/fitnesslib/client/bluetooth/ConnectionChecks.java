@@ -75,6 +75,12 @@ public final class ConnectionChecks {
 
 	/** Calibrated angle overrides digital fallback, keeps its sign, and clears when unavailable. */
 	private static void steeringAngles() {
+		require(new FitnessConfig().steeringSensitivity == 1.0, "default sensitivity preserves controller steering");
+		require(ObcControls.scaledSteering(20, 0.5, 63) == 10, "lower sensitivity reduces angle");
+		require(ObcControls.scaledSteering(-20, 2, 63) == -40, "higher sensitivity increases angle and preserves direction");
+		require(ObcControls.scaledSteering(40, 3, 63) == 63, "scaled angle stays within wheel limits");
+		require(ObcControls.scaledSteering(0.8, 2, 1) == 1, "button steering is bounded after scaling");
+		require(ObcControls.scaledSteering(20, Double.NaN, 63) == 20, "invalid saved sensitivity falls back to one");
 		ObcControls controls = new ObcControls();
 		controls.apply(Obc.BUTTON_STEER_LEFT, 1);
 		controls.apply(Obc.BUTTON_STEERING_ANGLE, 148);

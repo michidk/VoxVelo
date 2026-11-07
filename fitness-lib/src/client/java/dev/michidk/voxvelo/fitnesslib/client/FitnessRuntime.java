@@ -83,7 +83,11 @@ public final class FitnessRuntime {
 		while (FitnessKeys.SHIFT_UP.consumeClick()) shifts++;
 		while (FitnessKeys.SHIFT_DOWN.consumeClick()) shifts--;
 		int gear = obc.controls().consumeGearSet();
-		double target = obc.isConnected() ? obc.controls().steering() : 0;
+		double target = obc.isConnected() ? dev.michidk.voxvelo.fitnesslib.client.obc.ObcControls.scaledSteering(
+			obc.controls().steering(), config.steeringSensitivity, 1) : 0;
+		Double rawAngle = obc.isConnected() ? obc.controls().steeringAngleDegrees() : null;
+		Double steeringAngle = rawAngle == null ? null : dev.michidk.voxvelo.fitnesslib.client.obc.ObcControls.scaledSteering(
+			rawAngle, config.steeringSensitivity, 63);
 		boolean returning =
 				Math.abs(target) < Math.abs(steering)
 						|| Math.signum(target) != Math.signum(steering);
@@ -100,7 +104,7 @@ public final class FitnessRuntime {
 						obc.isConnected() ? obc.controls().brake() : 0,
 						shifts,
 						gear > 0 ? gear : null,
-						obc.isConnected() ? obc.controls().steeringAngleDegrees() : null);
+						steeringAngle);
 		Entity nextVehicle =
 				client.player == null || client.level == null || client.isPaused()
 						? null

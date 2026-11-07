@@ -101,6 +101,12 @@ public final class ObcControls {
 	/** Calibrated handlebar angle in degrees; null asks the vehicle to use ordinary steering. */
 	public synchronized Double steeringAngleDegrees() { return this.steeringAngle; }
 
+	/** Scales steering without changing its direction, within the bike's supported range. */
+	public static double scaledSteering(double value, double sensitivity, double limit) {
+		double multiplier = Double.isFinite(sensitivity) ? Math.clamp(sensitivity, 0.1, 3.0) : 1.0;
+		return Double.isFinite(value) ? Math.clamp(value * multiplier, -limit, limit) : 0;
+	}
+
 	public synchronized double brake() {
 		return this.brake;
 	}

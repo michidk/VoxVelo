@@ -68,6 +68,8 @@ public final class FitnessConfig {
 	public boolean hudEnabled = true;
 	public boolean heartRateHudEnabled = true;
 	public boolean steeringHudEnabled = false;
+	/** Multiplier for OpenBikeControl steering, with 1 preserving the controller's angle. */
+	public double steeringSensitivity = 1.0;
 	public boolean junctionHudEnabled = true;
 
 	/** Steer the bike along the road by itself. It takes over the steering whenever a road is found ahead. */

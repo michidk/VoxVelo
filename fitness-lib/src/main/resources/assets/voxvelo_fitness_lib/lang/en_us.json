@@ -52,6 +52,8 @@
 	"voxvelo_fitness_lib.connection.pairing_failed": "Could not pair. Enable pairing mode and retry, or pair in system Bluetooth settings.",
 	"voxvelo_fitness_lib.bluetooth.retry.tip": "Click this badge to retry the connection.",
 	"voxvelo_fitness_lib.bluetooth.connected_pending": "Connected · sensor data unavailable",
+	"voxvelo_fitness_lib.obc.steering_sensitivity": "Steering sensitivity: %s×",
+	"voxvelo_fitness_lib.obc.steering_sensitivity.tip": "Multiply controller steering by 0.1× to 3.0×. Default: 1.0×. Lower values turn less; higher values turn more. The front-wheel angle is limited to 63° each way.",
 	"voxvelo_fitness_lib.bluetooth.stop_searching": "Stop Searching",
 	"voxvelo_fitness_lib.notification.source": "%s source selected",
 	"voxvelo_fitness_lib.notification.connected": "Device connected",

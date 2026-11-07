@@ -36,6 +36,9 @@ public class ObcScreen extends SettingsScreen {
 	protected void addOptions() {
 
 		this.rows.addText(this::hint, HINT);
+		this.rows.addRow(new ValueSlider(0, 0, WIDTH, 0.1, 3.0, 0.1, this.ctx.config.steeringSensitivity,
+			value -> Component.translatable("voxvelo_fitness_lib.obc.steering_sensitivity", String.format(java.util.Locale.ROOT, "%.1f", value)),
+			value -> this.ctx.config.steeringSensitivity = value).tip("voxvelo_fitness_lib.obc.steering_sensitivity"));
 
 		this.rows.addRow(CycleButton.builder(ObcMode::label, this.ctx.config.obcMode)
 			.withValues(ObcMode.values())
