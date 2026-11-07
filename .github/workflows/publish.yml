@@ -162,6 +162,8 @@ jobs:
         if: (inputs.mod == 'all' || inputs.mod == 'bikes') && ((inputs.platform != 'curseforge' && vars.MODRINTH_BIKES_ID != '') || (inputs.platform != 'modrinth' && vars.CURSEFORGE_BIKES_ID != ''))
         uses: Kira-NT/mc-publish@c23376546a97f5ba7984e94445da359459b14419 # v3.3.2
         with:
+          # Avoid the v3 unfeature endpoint; legacy project tokens can still upload releases.
+          modrinth-unfeature-mode: none
           modrinth-id: ${{ inputs.platform != 'curseforge' && vars.MODRINTH_BIKES_ID || '' }}
           modrinth-token: ${{ inputs.platform != 'curseforge' && vars.MODRINTH_BIKES_ID != '' && secrets.MODRINTH_TOKEN || '' }}
           curseforge-id: ${{ inputs.platform != 'modrinth' && vars.CURSEFORGE_BIKES_ID || '' }}
@@ -181,6 +183,8 @@ jobs:
         if: (inputs.mod == 'all' || inputs.mod == 'fitness-lib') && ((inputs.platform != 'curseforge' && vars.MODRINTH_FITNESS_LIB_ID != '') || (inputs.platform != 'modrinth' && vars.CURSEFORGE_FITNESS_LIB_ID != ''))
         uses: Kira-NT/mc-publish@c23376546a97f5ba7984e94445da359459b14419 # v3.3.2
         with:
+          # Avoid the v3 unfeature endpoint; legacy project tokens can still upload releases.
+          modrinth-unfeature-mode: none
           modrinth-id: ${{ inputs.platform != 'curseforge' && vars.MODRINTH_FITNESS_LIB_ID || '' }}
           modrinth-token: ${{ inputs.platform != 'curseforge' && vars.MODRINTH_FITNESS_LIB_ID != '' && secrets.MODRINTH_TOKEN || '' }}
           curseforge-id: ${{ inputs.platform != 'modrinth' && vars.CURSEFORGE_FITNESS_LIB_ID || '' }}
@@ -199,6 +203,8 @@ jobs:
         if: (inputs.mod == 'all' || inputs.mod == 'fitness') && ((inputs.platform != 'curseforge' && vars.MODRINTH_FITNESS_ID != '' && vars.MODRINTH_BIKES_ID != '') || (inputs.platform != 'modrinth' && vars.CURSEFORGE_FITNESS_ID != '' && vars.CURSEFORGE_BIKES_ID != ''))
         uses: Kira-NT/mc-publish@c23376546a97f5ba7984e94445da359459b14419 # v3.3.2
         with:
+          # Avoid the v3 unfeature endpoint; legacy project tokens can still upload releases.
+          modrinth-unfeature-mode: none
           modrinth-id: ${{ inputs.platform != 'curseforge' && vars.MODRINTH_BIKES_ID != '' && vars.MODRINTH_FITNESS_ID || '' }}
           modrinth-token: ${{ inputs.platform != 'curseforge' && vars.MODRINTH_FITNESS_ID != '' && vars.MODRINTH_BIKES_ID != '' && secrets.MODRINTH_TOKEN || '' }}
           curseforge-id: ${{ inputs.platform != 'modrinth' && vars.CURSEFORGE_BIKES_ID != '' && vars.CURSEFORGE_FITNESS_ID || '' }}

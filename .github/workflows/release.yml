@@ -140,6 +140,8 @@ jobs:
         if: vars.MODRINTH_BIKES_ID != '' || vars.CURSEFORGE_BIKES_ID != ''
         uses: Kira-NT/mc-publish@c23376546a97f5ba7984e94445da359459b14419 # v3.3.2
         with:
+          # Avoid the v3 unfeature endpoint; legacy project tokens can still upload releases.
+          modrinth-unfeature-mode: none
           modrinth-id: ${{ vars.MODRINTH_BIKES_ID }}
           modrinth-token: ${{ vars.MODRINTH_BIKES_ID != '' && secrets.MODRINTH_TOKEN || '' }}
           curseforge-id: ${{ vars.CURSEFORGE_BIKES_ID }}
@@ -160,6 +162,8 @@ jobs:
         if: vars.MODRINTH_FITNESS_LIB_ID != '' || vars.CURSEFORGE_FITNESS_LIB_ID != ''
         uses: Kira-NT/mc-publish@c23376546a97f5ba7984e94445da359459b14419 # v3.3.2
         with:
+          # Avoid the v3 unfeature endpoint; legacy project tokens can still upload releases.
+          modrinth-unfeature-mode: none
           modrinth-id: ${{ vars.MODRINTH_FITNESS_LIB_ID }}
           modrinth-token: ${{ vars.MODRINTH_FITNESS_LIB_ID != '' && secrets.MODRINTH_TOKEN || '' }}
           curseforge-id: ${{ vars.CURSEFORGE_FITNESS_LIB_ID }}
@@ -178,6 +182,8 @@ jobs:
         if: (vars.MODRINTH_FITNESS_ID != '' && vars.MODRINTH_BIKES_ID != '') || (vars.CURSEFORGE_FITNESS_ID != '' && vars.CURSEFORGE_BIKES_ID != '')
         uses: Kira-NT/mc-publish@c23376546a97f5ba7984e94445da359459b14419 # v3.3.2
         with:
+          # Avoid the v3 unfeature endpoint; legacy project tokens can still upload releases.
+          modrinth-unfeature-mode: none
           modrinth-id: ${{ vars.MODRINTH_BIKES_ID != '' && vars.MODRINTH_FITNESS_ID || '' }}
           modrinth-token: ${{ vars.MODRINTH_FITNESS_ID != '' && vars.MODRINTH_BIKES_ID != '' && secrets.MODRINTH_TOKEN || '' }}
           curseforge-id: ${{ vars.CURSEFORGE_BIKES_ID != '' && vars.CURSEFORGE_FITNESS_ID || '' }}
