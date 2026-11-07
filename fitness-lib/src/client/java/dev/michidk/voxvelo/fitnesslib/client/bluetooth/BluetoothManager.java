@@ -52,6 +52,10 @@ public final class BluetoothManager {
 		return this.backend.isScanning();
 	}
 
+	public boolean isPairing(String deviceId) {
+		return this.backend.isPairing(deviceId);
+	}
+
 	/** Starts (or extends) a scan that stops itself after the given time. */
 	public void scan(long durationMillis) {
 		long deadline = System.currentTimeMillis() + durationMillis;

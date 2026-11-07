@@ -22,6 +22,8 @@ import java.util.function.Supplier;
  */
 final class SharedConnections {
 	private static final long OPERATION_TIMEOUT_MILLIS = 15_000;
+	/** A subscription can initiate system pairing, which needs time for the user to respond. */
+	private static final long SUBSCRIBE_TIMEOUT_MILLIS = 65_000;
 	private static final long CLOSE_WAIT_MILLIS = 5_000;
 
 	private final BluetoothBackend backend;
@@ -154,6 +156,10 @@ final class SharedConnections {
 
 		/** Runs the operation after every earlier one has finished, whether those worked or not. */
 		synchronized <T> CompletableFuture<T> serial(Supplier<CompletableFuture<T>> operation) {
+			return this.serial(operation, OPERATION_TIMEOUT_MILLIS);
+		}
+
+		synchronized <T> CompletableFuture<T> serial(Supplier<CompletableFuture<T>> operation, long timeoutMillis) {
 			CompletableFuture<T> result = new CompletableFuture<>();
 			CompletableFuture<?> previous = this.tail;
 			this.tail = result.handle((value, error) -> null);
@@ -170,7 +176,7 @@ final class SharedConnections {
 					result.completeExceptionally(t);
 				}
 			});
-			return result.orTimeout(OPERATION_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+			return result.orTimeout(timeoutMillis, TimeUnit.MILLISECONDS);
 		}
 	}
 
@@ -212,7 +218,7 @@ final class SharedConnections {
 
 		@Override
 		public CompletableFuture<Void> subscribe(String serviceUuid, String characteristicUuid, Consumer<byte[]> handler) {
-			return this.link.serial(() -> this.connection.subscribe(serviceUuid, characteristicUuid, handler));
+			return this.link.serial(() -> this.connection.subscribe(serviceUuid, characteristicUuid, handler), SUBSCRIBE_TIMEOUT_MILLIS);
 		}
 
 		@Override

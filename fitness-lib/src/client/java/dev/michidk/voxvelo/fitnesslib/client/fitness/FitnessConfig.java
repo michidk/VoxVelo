@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import dev.michidk.voxvelo.fitnesslib.client.FitnessRuntime;
+import dev.michidk.voxvelo.fitnesslib.client.bluetooth.BluetoothDevice;
 import dev.michidk.voxvelo.fitnesslib.client.ftms.TrainerLimits;
 import dev.michidk.voxvelo.fitnesslib.client.obc.ObcMode;
 import java.io.IOException;
@@ -40,6 +41,9 @@ public final class FitnessConfig {
 	public String preferredHeartRateId = "";
 	public String preferredHeartRateName = "";
 	public boolean autoConnectHeartRate = true;
+	/** Saved physical devices, including devices not currently selected for a capability. */
+	public List<BluetoothDevice> bluetoothDevices = new ArrayList<>();
+	public boolean autoConnectBluetooth = true;
 
 	/** Which OpenBikeControl transports are used. */
 	public ObcMode obcMode = ObcMode.BOTH;
@@ -111,6 +115,9 @@ public final class FitnessConfig {
 				JsonObject json = JsonParser.parseString(Files.readString(file)).getAsJsonObject();
 				FitnessConfig loaded = GSON.fromJson(json, FitnessConfig.class);
 				if (loaded != null) {
+					if (!json.has("autoConnectBluetooth")) {
+						loaded.autoConnectBluetooth = loaded.autoConnectTrainer && loaded.autoConnectPowerMeter && loaded.autoConnectHeartRate;
+					}
 					loaded.sanitize();
 					return loaded;
 				}
@@ -135,6 +142,8 @@ public final class FitnessConfig {
 
 	/** Keeps hand-edited or older files within sane ranges. */
 	private void sanitize() {
+		if (this.bluetoothDevices == null) this.bluetoothDevices = new ArrayList<>();
+		this.bluetoothDevices.removeIf(device -> device == null || device.id() == null || device.id().isBlank() || device.advertisedServices() == null);
 		this.preferredTrainerId = this.preferredTrainerId == null ? "" : this.preferredTrainerId;
 		this.preferredTrainerName = this.preferredTrainerName == null ? "" : this.preferredTrainerName;
 		this.preferredPowerMeterId = this.preferredPowerMeterId == null ? "" : this.preferredPowerMeterId;

@@ -40,6 +40,7 @@ final class BtleplugNative {
 	private static final int DEVICE = 2;
 	private static final int DISCONNECTED = 3;
 	private static final int NOTIFICATION = 4;
+	private static final int PAIRING = 5;
 
 	private static final ValueLayout.OfLong REQUEST = ValueLayout.JAVA_LONG;
 	private static final ValueLayout.OfInt STATUS = ValueLayout.JAVA_INT;
@@ -48,6 +49,8 @@ final class BtleplugNative {
 
 	/** Receives events from Bluetooth threads. Implementations must not throw. */
 	interface Events {
+		void pairing(String deviceId, boolean active);
+
 		void device(BluetoothDevice device);
 
 		void disconnected(String deviceId);
@@ -255,6 +258,10 @@ final class BtleplugNative {
 			ByteBuffer buffer = ByteBuffer.wrap(length == 0 ? new byte[0] : payload.reinterpret(length).toArray(ValueLayout.JAVA_BYTE))
 				.order(ByteOrder.LITTLE_ENDIAN);
 			switch (kind) {
+				case PAIRING -> {
+					Events listener = this.events;
+					if (listener != null) listener.pairing(string(buffer), buffer.get() != 0);
+				}
 				case RESULT -> {
 					CompletableFuture<ByteBuffer> future = this.pending.remove(request);
 					if (future == null) {

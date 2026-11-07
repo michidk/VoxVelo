@@ -693,6 +693,7 @@ dependencies = [
  "futures",
  "tokio",
  "uuid",
+ "windows",
 ]
 
 [[package]]

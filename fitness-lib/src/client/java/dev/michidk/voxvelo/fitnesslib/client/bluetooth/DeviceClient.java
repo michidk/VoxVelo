@@ -39,6 +39,7 @@ public abstract class DeviceClient {
 
 	private ConnectionState state = ConnectionState.DISCONNECTED;
 	private String deviceName = "";
+	private String pairingDeviceId = "";
 	private @Nullable Component message;
 	private @Nullable BluetoothConnection connection;
 	/** Incremented on every attempt and teardown, so late callbacks of an older attempt are recognised. */
@@ -71,8 +72,13 @@ public abstract class DeviceClient {
 
 	/** What the current attempt is doing or why the last one ended, for the UI. Null when there is nothing to say. */
 	public @Nullable Component message() {
+		if (this.bluetooth.isPairing(this.pairingDeviceId) && (this.state != ConnectionState.DISCONNECTED || this.connection != null)) {
+			return Component.translatable("voxvelo_fitness_lib.connection.pairing");
+		}
 		return this.message;
 	}
+
+	protected final void pairingDevice(String deviceId) { this.pairingDeviceId = deviceId; }
 
 	/** Disconnects on the player request and suppresses auto-reconnect until the next manual connect. */
 	public void disconnect() {
@@ -83,6 +89,11 @@ public abstract class DeviceClient {
 	/** The open Bluetooth link, if this client made one. */
 	protected final @Nullable BluetoothConnection connection() {
 		return this.connection;
+	}
+
+	/** Retains a device connection independently of any selected service. */
+	protected final void retainConnection(BluetoothConnection connection) {
+		this.connection = connection;
 	}
 
 	protected final void setMessage(@Nullable Component message) {
@@ -167,6 +178,11 @@ public abstract class DeviceClient {
 	protected final void fail(int gen, Throwable error) {
 		if (this.isCurrent(gen)) {
 			FitnessRuntime.LOGGER.info("Connecting to the {} failed: {}", this.logName, logText(error));
+			String detail = unwrap(error).getMessage();
+			if (detail != null && (detail.startsWith("PAIRING_") || detail.toLowerCase(java.util.Locale.ROOT).contains("0x80650005"))) {
+				// Authentication needs the player's attention; do not repeat pairing ceremonies in the background.
+				this.userDisconnected = true;
+			}
 			this.teardown(describe(error));
 		}
 	}
@@ -197,6 +213,7 @@ public abstract class DeviceClient {
 	 * subscribes to the characteristic and reports CONNECTED once data can flow. {@code onData} runs on the game thread.
 	 */
 	protected final void connectBluetooth(int gen, String deviceId, BleProfile profile, Consumer<byte[]> onData) {
+		this.pairingDevice(deviceId);
 		if (!this.bluetooth.isAvailable()) {
 			String reason = this.bluetooth.unavailableReason();
 			FitnessRuntime.LOGGER.info("Cannot connect to the {}: {}", this.logName, reason);
@@ -271,6 +288,14 @@ public abstract class DeviceClient {
 		}
 		if (cause instanceof UnknownHostException) {
 			return Component.translatable("voxvelo_fitness_lib.connection.unknown_host");
+		}
+		String nativeMessage = cause.getMessage() == null ? "" : cause.getMessage();
+		if (nativeMessage.startsWith("PAIRING_STALE:")) return Component.translatable("voxvelo_fitness_lib.connection.pairing_stale");
+		if (nativeMessage.startsWith("PAIRING_TIMEOUT:")) return Component.translatable("voxvelo_fitness_lib.connection.pairing_timeout");
+		if (nativeMessage.startsWith("PAIRING_REJECTED:")) return Component.translatable("voxvelo_fitness_lib.connection.pairing_rejected");
+		if (nativeMessage.startsWith("PAIRING_FAILED:")) return Component.translatable("voxvelo_fitness_lib.connection.pairing_failed");
+		if (nativeMessage.toLowerCase(java.util.Locale.ROOT).contains("0x80650005")) {
+			return Component.translatable("voxvelo_fitness_lib.connection.authentication");
 		}
 		return Component.translatable("voxvelo_fitness_lib.connection.failed");
 	}

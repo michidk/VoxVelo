@@ -28,7 +28,103 @@ public final class ConnectionChecks {
 		sharedDevice();
 		shutdownClosesLinks();
 		deviceLists();
+		deviceRoster();
+		pairingLifecycle();
 		System.out.println("Trainer, heart rate sensor, game thread, shared device, OpenBikeControl and device list checks passed.");
+	}
+
+	/** Pairing is visible while pending, failures wait for a manual retry, and messages explain recovery. */
+	private static void pairingLifecycle() {
+		Backend backend = new Backend();
+		BluetoothManager manager = new BluetoothManager(backend);
+		HeartRateClient heart = new HeartRateClient(manager, GAME);
+		BluetoothDevice device = new BluetoothDevice("secure", "Secure strap", -40, Set.of(HeartRate.SERVICE));
+		FitnessConfig config = new FitnessConfig();
+		config.preferredHeartRateId = device.id();
+		heart.connect(device);
+		backend.discover(device);
+		backend.pairing.add(device.id());
+		require(says(heart.message(), "voxvelo_fitness_lib.connection.pairing"), "pairing status reaches the UI during connection");
+		backend.pairing.clear();
+		backend.last().result.completeExceptionally(new IllegalStateException("PAIRING_TIMEOUT: timed out"));
+		require(says(heart.message(), "voxvelo_fitness_lib.connection.pairing_timeout"), "pairing timeout gives actionable feedback");
+		int attempts = backend.attempts.size();
+		heart.tick(config);
+		require(backend.attempts.size() == attempts, "pairing failures do not repeatedly trigger ceremonies in the background");
+		heart.connect(device);
+		Connection link = backend.last().complete(HeartRate.SERVICE);
+		require(heart.isConnected() && heart.message() == null, "manual retry can connect after pairing failure");
+		link.emit(HeartRate.MEASUREMENT, new byte[] {0, 85});
+		require(heart.freshReading() != null && heart.freshReading().beatsPerMinute() == 85, "heart rate flows after retry");
+		heart.disconnect();
+		for (String reason : List.of("stale", "rejected", "failed")) {
+			require(says(DeviceClient.describe(new IllegalStateException("PAIRING_" + reason.toUpperCase(Locale.ROOT) + ": detail")),
+				"voxvelo_fitness_lib.connection.pairing_" + reason), "native pairing reason is translated: " + reason);
+		}
+	}
+
+	/** Devices remain connected while their capability selection moves; forgetting and discovery stay separate. */
+	private static void deviceRoster() {
+		Backend backend = new Backend();
+		BluetoothManager manager = new BluetoothManager(backend);
+		FitnessConfig config = new FitnessConfig();
+		FtmsClient trainer = new FtmsClient(manager, GAME);
+		PowerMeterClient power = new PowerMeterClient(manager, GAME);
+		HeartRateClient heart = new HeartRateClient(manager, GAME);
+		BluetoothDevices roster = new BluetoothDevices(manager, GAME, config, trainer, power, heart, () -> {});
+		BluetoothDevice first = new BluetoothDevice("first", "First strap", -40, Set.of(HeartRate.SERVICE));
+		BluetoothDevice second = new BluetoothDevice("second", "Second strap", -50, Set.of(HeartRate.SERVICE));
+		roster.scan();
+		backend.discover(first);
+		backend.discover(second);
+		require(roster.nearby().size() == 2, "scan initially shows both devices");
+		roster.connect(first);
+		require(roster.nearby().equals(List.of(second)), "connecting device moves out of nearby immediately");
+		Connection firstLink = backend.last().complete(HeartRate.SERVICE);
+		BluetoothDevices.Device firstDevice = roster.saved().getFirst();
+		require(firstDevice.isConnected() && heart.isConnected(), "first device connects and supplies its unused capability");
+		roster.connect(second);
+		Connection secondLink = backend.last().complete(HeartRate.SERVICE);
+		BluetoothDevices.Device secondDevice = roster.saved().getLast();
+		require(roster.selected(firstDevice, BluetoothDevices.Capability.HEART), "second connection preserves existing selection");
+		roster.select(secondDevice, BluetoothDevices.Capability.HEART);
+		require(!roster.selected(firstDevice, BluetoothDevices.Capability.HEART) && roster.selected(secondDevice, BluetoothDevices.Capability.HEART),
+			"selecting a capability unchecks the other device");
+		require(firstLink.connected && secondLink.connected, "switching sources leaves both physical links connected");
+		secondLink.emit(HeartRate.MEASUREMENT, new byte[] {0, 90});
+		require(heart.freshReading() != null && heart.freshReading().beatsPerMinute() == 90, "data comes from newly selected source");
+		roster.select(secondDevice, BluetoothDevices.Capability.HEART);
+		require(config.preferredHeartRateId.isEmpty() && secondLink.connected && !heart.isConnected(), "deselecting keeps the physical link");
+		roster.disconnect(secondDevice);
+		roster.tick();
+		require(!secondLink.connected && roster.nearby().isEmpty(), "manual disconnect stays saved and suppresses reconnect");
+		secondDevice.connect();
+		backend.last().complete(HeartRate.SERVICE);
+		require(config.preferredHeartRateId.isEmpty(), "reconnecting respects an explicitly deselected capability");
+		roster.select(firstDevice, BluetoothDevices.Capability.HEART);
+		roster.forget(firstDevice);
+		backend.discover(first);
+		require(!firstLink.connected && config.preferredHeartRateId.isEmpty(), "forget releases link and selection");
+		require(roster.saved().size() == 1 && config.bluetoothDevices.size() == 1 && roster.nearby().isEmpty(), "forgotten device disappears despite cached advertisements");
+		roster.scan();
+		require(roster.nearby().equals(List.of(first)), "explicit rescan can rediscover a forgotten device");
+		Queue<Runnable> game = new ArrayDeque<>();
+		BluetoothDevices delayed = new BluetoothDevices(manager, game::add, new FitnessConfig(), trainer, power, heart, () -> {});
+		delayed.connect(first);
+		runAll(game);
+		Attempt late = backend.last();
+		delayed.forget(delayed.saved().getFirst());
+		Connection orphan = late.complete(HeartRate.SERVICE);
+		runAll(game);
+		require(!orphan.connected && delayed.saved().isEmpty(), "forget during connection closes a late result");
+		FitnessConfig legacy = new FitnessConfig();
+		legacy.preferredHeartRateId = "combo";
+		legacy.preferredHeartRateName = "Combo";
+		legacy.preferredPowerMeterId = "combo";
+		BluetoothDevices migrated = new BluetoothDevices(manager, GAME, legacy, trainer, power, heart, () -> {});
+		require(migrated.saved().size() == 1 && migrated.saved().getFirst().capabilities().size() == 2, "legacy role preferences migrate into a single device");
+		require(says(DeviceClient.describe(new IllegalStateException("HRESULT(0x80650005)")), "voxvelo_fitness_lib.connection.authentication"),
+			"authentication failures explain how to pair");
 	}
 
 	/** Bluetooth callbacks wait for the game thread, and a teardown before they get there leaves nothing open. */
@@ -330,6 +426,8 @@ public final class ConnectionChecks {
 	}
 
 	private static final class Backend implements BluetoothBackend {
+		final Set<String> pairing = new HashSet<>();
+		public boolean isPairing(String id) { return pairing.contains(id); }
 		final List<Attempt> attempts = new ArrayList<>();
 		Consumer<BluetoothDevice> discovery;
 		boolean scanning;

@@ -27,6 +27,7 @@ public final class FitnessRuntime {
 			new PowerMeterClient(bluetooth, DeviceClient.GAME_THREAD);
 	public final HeartRateClient heartRate =
 			new HeartRateClient(bluetooth, DeviceClient.GAME_THREAD);
+	public final BluetoothDevices bluetoothDevices = new BluetoothDevices(bluetooth, DeviceClient.GAME_THREAD, config, ftms, powerMeter, heartRate);
 	public final ObcClient obc = new ObcClient(bluetooth, DeviceClient.GAME_THREAD);
 	public final TrainerFeedback trainerFeedback = new TrainerFeedback(this);
 	public final RideRecorder rideRecorder = new RideRecorder(this);
@@ -67,9 +68,7 @@ public final class FitnessRuntime {
 	public void tick(Minecraft client) {
 		bluetooth.tick();
 		if (client.level != null) {
-			ftms.tick(config);
-			powerMeter.tick(config);
-			heartRate.tick(config);
+			bluetoothDevices.tick();
 			obc.tick(config);
 		}
 		ObcMenuNavigation.tick(client, obc);

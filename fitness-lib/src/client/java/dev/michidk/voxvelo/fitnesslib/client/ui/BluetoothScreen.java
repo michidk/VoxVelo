@@ -1,300 +1,190 @@
 package dev.michidk.voxvelo.fitnesslib.client.ui;
 
 import dev.michidk.voxvelo.fitnesslib.client.FitnessRuntime;
-import dev.michidk.voxvelo.fitnesslib.client.bluetooth.BleServiceClient;
 import dev.michidk.voxvelo.fitnesslib.client.bluetooth.BluetoothDevice;
+import dev.michidk.voxvelo.fitnesslib.client.bluetooth.BluetoothDevices;
+import dev.michidk.voxvelo.fitnesslib.client.bluetooth.BluetoothDevices.Capability;
+import dev.michidk.voxvelo.fitnesslib.client.bluetooth.BluetoothDevices.Device;
 import dev.michidk.voxvelo.fitnesslib.client.bluetooth.ConnectionState;
-import dev.michidk.voxvelo.fitnesslib.client.fitness.FitnessConfig;
-import dev.michidk.voxvelo.fitnesslib.client.fitness.FitnessStatus;
-import dev.michidk.voxvelo.fitnesslib.client.ftms.Ftms;
-import dev.michidk.voxvelo.fitnesslib.client.heartrate.HeartRate;
-import dev.michidk.voxvelo.fitnesslib.client.powermeter.CyclingPower;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
-import java.util.function.Function;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.CycleButton;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import org.jspecify.annotations.Nullable;
 
-/**
- * Every Bluetooth connection in one place: the trainer, a separate power meter and a heart rate sensor. One scan lists
- * all nearby devices that can fill one of these roles, and each device offers a button per role it supports.
- * Everything here is non-blocking.
- */
+/** Device connections and exclusive capability sources, with a separate list of nearby peripherals. */
 public class BluetoothScreen extends SettingsScreen {
 	private static final int WIDTH = SettingsList.WIDTH;
-	/** A role's status text fills its row up to the Disconnect and Forget buttons, which only exist when they can do something. */
-	private static final int DISCONNECT_WIDTH = 68;
-	private static final int FORGET_WIDTH = 54;
-	private static final int ROLE_BUTTON_WIDTH = 56;
-	private static final int ROLE_COLUMN = ROLE_BUTTON_WIDTH + 2;
-	private static final int NAME_WIDTH = WIDTH - Role.values().length * ROLE_COLUMN;
-	private static final long SCAN_MILLIS = 20_000;
-
-	/** Stores the device chosen for a role; empty strings forget it. */
-	@FunctionalInterface
-	private interface Saver {
-		void save(FitnessConfig config, String id, String name);
-	}
-
-	/** A Bluetooth role: the service it needs, the client that fills it, and where its device is saved. */
-	private enum Role {
-		TRAINER("trainer", Ftms.SERVICE, ctx -> ctx.ftms, FitnessStatus::trainerStatus,
-			config -> config.preferredTrainerId, config -> config.preferredTrainerName,
-			(config, id, name) -> {
-				config.preferredTrainerId = id;
-				config.preferredTrainerName = name;
-			}),
-		POWER_METER("power_meter", CyclingPower.SERVICE, ctx -> ctx.powerMeter, FitnessStatus::powerMeterStatus,
-			config -> config.preferredPowerMeterId, config -> config.preferredPowerMeterName,
-			(config, id, name) -> {
-				config.preferredPowerMeterId = id;
-				config.preferredPowerMeterName = name;
-			}),
-		HEART_RATE("heart_rate", HeartRate.SERVICE, ctx -> ctx.heartRate, FitnessStatus::heartRateStatus,
-			config -> config.preferredHeartRateId, config -> config.preferredHeartRateName,
-			(config, id, name) -> {
-				config.preferredHeartRateId = id;
-				config.preferredHeartRateName = name;
-			});
-
-		final String key;
-		final String service;
-		final Function<FitnessRuntime, BleServiceClient> client;
-		final Function<FitnessRuntime, Component> status;
-		final Function<FitnessConfig, String> savedId;
-		final Function<FitnessConfig, String> savedName;
-		final Saver saver;
-
-		Role(String key, String service, Function<FitnessRuntime, BleServiceClient> client, Function<FitnessRuntime, Component> status,
-			Function<FitnessConfig, String> savedId, Function<FitnessConfig, String> savedName, Saver saver) {
-			this.key = key;
-			this.service = service;
-			this.client = client;
-			this.status = status;
-			this.savedId = savedId;
-			this.savedName = savedName;
-			this.saver = saver;
-		}
-
-		Component label() {
-			return Component.translatable("voxvelo_fitness_lib.bluetooth.role." + this.key);
-		}
-	}
-
-	/** A nearby device with the roles it can be connected as right now. */
-	private record Row(BluetoothDevice device, List<Role> roles) {}
-
 	private final FitnessRuntime ctx = FitnessRuntime.get();
+	private final BluetoothDevices devices = this.ctx.bluetoothDevices;
 	private String signature = "";
 
 	public BluetoothScreen(Screen parent) {
-		super(parent, Component.translatable("voxvelo_fitness_lib.bluetooth.title"));
+		super(parent, text("title"));
+	}
+
+	private static Component text(String key) {
+		return Component.translatable("voxvelo_fitness_lib.bluetooth." + key);
 	}
 
 	@Override
 	protected void addOptions() {
-		this.rows.addText(this::headline, HINT);
+		this.rows.addText(() -> this.ctx.bluetooth.isAvailable() ? text("hint") :
+			Component.translatable("voxvelo_fitness_lib.bluetooth.unavailable", this.ctx.bluetooth.unavailableReason()).withColor(ERROR), HINT);
+		this.section("saved");
+		if (this.devices.saved().isEmpty()) this.rows.addText(() -> text("saved_empty"), HINT);
+		for (Device device : this.devices.saved()) this.saved(device);
 
-		for (Role role : Role.values()) {
-			List<AbstractWidget> buttons = new ArrayList<>();
-			int edge = WIDTH;
-			if (this.canForget(role)) {
-				edge -= FORGET_WIDTH;
-				buttons.add(Button.builder(Component.translatable("voxvelo_fitness_lib.trainer.forget"), button -> this.forget(role))
-					.tooltip(Tips.of("voxvelo_fitness_lib.trainer.forget")).bounds(edge, 0, FORGET_WIDTH, 20).build());
-				edge -= 2;
-			}
-			if (this.canDisconnect(role)) {
-				edge -= DISCONNECT_WIDTH;
-				buttons.add(Button.builder(Component.translatable("voxvelo_fitness_lib.trainer.disconnect"), button -> this.client(role).disconnect())
-					.tooltip(Tips.of("voxvelo_fitness_lib.trainer.disconnect")).bounds(edge, 0, DISCONNECT_WIDTH, 20).build());
-			} else if (this.canConnect(role)) {
-				edge -= DISCONNECT_WIDTH;
-				buttons.add(Button.builder(Component.translatable("voxvelo_fitness_lib.bluetooth.connect"), button -> this.connectSaved(role))
-					.tooltip(Tips.of("voxvelo_fitness_lib.bluetooth.connect")).bounds(edge, 0, DISCONNECT_WIDTH, 20).build());
-			}
-			this.rows.addRow(buttons, (graphics, font, left, top) ->
-				graphics.text(font, this.fit(role.status.apply(this.ctx).getString(), this.statusWidth(role)), left, top + 6, STATUS));
-		}
+		this.rows.addRow(Button.builder(text(this.ctx.bluetooth.isScanning() ? "scanning" : "scan"), button -> {
+			if (this.ctx.bluetooth.isScanning()) this.ctx.bluetooth.stopScan();
+			else this.devices.scan();
+		}).tooltip(Tips.of("voxvelo_fitness_lib.bluetooth.scan")).bounds(0, 0, WIDTH, 20).build());
+		this.section("nearby");
+		List<BluetoothDevice> nearby = this.devices.nearby();
+		if (nearby.isEmpty()) this.rows.addText(() -> text("nearby_empty"), HINT);
+		for (BluetoothDevice device : nearby) this.nearby(device);
 
-		this.rows.addRow(Button.builder(this.scanLabel(), button -> this.toggleScan())
-			.tooltip(Tips.of("voxvelo_fitness_lib.bluetooth.scan")).bounds(0, 0, WIDTH, 20).build());
-
-		for (Row row : this.nearby()) {
-			List<AbstractWidget> buttons = new ArrayList<>();
-			for (Role role : row.roles()) {
-				int x = WIDTH - (Role.values().length - role.ordinal()) * ROLE_COLUMN + 2;
-				buttons.add(Button.builder(role.label(), button -> this.choose(role, row.device()))
-					.tooltip(Tips.of("voxvelo_fitness_lib.bluetooth.role." + role.key)).bounds(x, 0, ROLE_BUTTON_WIDTH, 20).build());
-			}
-			BluetoothDevice device = row.device();
-			this.rows.addRow(buttons, (graphics, font, left, top) -> {
-				String rssi = String.valueOf(device.rssi());
-				graphics.text(font, this.fit(device.displayName(), NAME_WIDTH - font.width(rssi) - 10), left, top + 6, 0xFFFFFFFF);
-				graphics.text(font, rssi, left + NAME_WIDTH - 4 - font.width(rssi), top + 6, 0xFF808080);
-			});
-		}
-
-		FitnessConfig config = this.ctx.config;
-		boolean autoAll = config.autoConnectTrainer && config.autoConnectPowerMeter && config.autoConnectHeartRate;
-		this.rows.addRow(CycleButton.onOffBuilder(autoAll)
-				.withTooltip(value -> Tips.of("voxvelo_fitness_lib.config.auto_connect"))
-				.create(0, 0, SettingsList.HALF, 20, Component.translatable("voxvelo_fitness_lib.config.auto_connect"), (button, value) -> {
-					config.autoConnectTrainer = value;
-					config.autoConnectPowerMeter = value;
-					config.autoConnectHeartRate = value;
+		this.rows.addRow(CycleButton.onOffBuilder(this.ctx.config.autoConnectBluetooth)
+			.withTooltip(value -> Tips.of("voxvelo_fitness_lib.config.auto_connect"))
+			.create(0, 0, SettingsList.HALF, 20, Component.translatable("voxvelo_fitness_lib.config.auto_connect"),
+				(button, value) -> {
+					this.ctx.config.autoConnectBluetooth = value;
+					this.ctx.config.autoConnectTrainer = value;
+					this.ctx.config.autoConnectPowerMeter = value;
+					this.ctx.config.autoConnectHeartRate = value;
 				}),
-			Button.builder(Component.translatable("voxvelo_fitness_lib.bluetooth.trainer_settings"),
-					button -> this.minecraft.gui.setScreen(new TrainerSettingsScreen(this)))
+			Button.builder(text("trainer_settings"), button -> this.minecraft.gui.setScreen(new TrainerSettingsScreen(this)))
 				.tooltip(Tips.of("voxvelo_fitness_lib.bluetooth.trainer_settings")).bounds(WIDTH - SettingsList.HALF, 0, SettingsList.HALF, 20).build());
 		this.signature = this.currentSignature();
 	}
 
-	/** Why Bluetooth cannot be used, why the last connection failed, or else how this page works. */
-	private Component headline() {
-		if (!this.ctx.bluetooth.isAvailable()) {
-			return Component.translatable("voxvelo_fitness_lib.bluetooth.unavailable", this.ctx.bluetooth.unavailableReason()).withColor(ERROR & 0xFFFFFF);
-		}
-		Component failure = this.failure();
-		if (failure != null) {
-			return Component.literal(this.fit(failure.getString(), WIDTH)).withColor(ERROR & 0xFFFFFF);
-		}
-		return Component.translatable("voxvelo_fitness_lib.bluetooth.hint");
+	private void section(String key) {
+		this.rows.addText((graphics, font, left, top) -> {
+			graphics.text(font, text(key), left + 4, top + 2, STATUS);
+			int start = left + font.width(text(key)) + 12;
+			graphics.fill(start, top + 6, left + WIDTH - 4, top + 7, 0xFF52606B);
+		});
 	}
 
-	private Component scanLabel() {
-		return Component.translatable(this.ctx.bluetooth.isScanning() ? "voxvelo_fitness_lib.bluetooth.scanning" : "voxvelo_fitness_lib.bluetooth.scan");
-	}
-
-	/** Nearby devices that advertise a role's service. One device can fill several roles, such as a trainer that also reports power. */
-	private List<Row> nearby() {
-		List<String> services = Arrays.stream(Role.values()).map(role -> role.service).toList();
-		List<Row> rows = new ArrayList<>();
-		for (BluetoothDevice device : this.ctx.bluetooth.devicesAdvertisingAny(services)) {
-			List<Role> roles = new ArrayList<>();
-			for (Role role : Role.values()) {
-				if (device.advertises(role.service)) {
-					roles.add(role);
+	private void saved(Device device) {
+		boolean open = device.state() != ConnectionState.DISCONNECTED;
+		List<AbstractWidget> actions = List.of(
+			Button.builder(open ? Component.translatable("voxvelo_fitness_lib.trainer.disconnect") : text("connect"), button -> {
+				if (open) this.devices.disconnect(device); else device.connect();
+			}).bounds(WIDTH - 124, 0, 68, 20).build(),
+			Button.builder(Component.translatable("voxvelo_fitness_lib.trainer.forget"), button -> this.devices.forget(device))
+				.tooltip(Tooltip.create(text("forget.tip"))).bounds(WIDTH - 54, 0, 54, 20).build());
+		this.rows.addRow(actions, (graphics, font, left, top) -> {
+			panel(graphics, left, top, 25);
+			graphics.text(font, this.fit(device.descriptor().displayName(), WIDTH - 138), left + 7, top + 6, 0xFFFFFFFF);
+		});
+		this.rows.addText((graphics, font, left, top) -> {
+			panel(graphics, left, top, 12);
+			Component state = Component.translatable("voxvelo_fitness_lib.connection.state." + device.state().name().toLowerCase(java.util.Locale.ROOT));
+			Component message = device.message();
+			for (Capability capability : device.capabilities()) {
+				if (this.devices.selected(device, capability) && this.devices.client(capability).message() != null) {
+					message = this.devices.client(capability).message();
+					break;
 				}
 			}
-			if (!roles.isEmpty()) {
-				rows.add(new Row(device, roles));
+			graphics.text(font, this.fit(message == null ? state.getString() : message.getString(), WIDTH - 14), left + 7, top + 1,
+				device.isConnected() && message == null ? 0xFF8EE3B0 : STATUS);
+		});
+		List<AbstractWidget> badges = new ArrayList<>();
+		int x = 6;
+		for (Capability capability : device.capabilities()) {
+			boolean selected = this.devices.selected(device, capability);
+			boolean failed = selected && this.devices.client(capability).state() == ConnectionState.DISCONNECTED && this.devices.client(capability).message() != null;
+			Component label = Component.literal(failed ? "[!] " : selected ? "[x] " : "[ ] ").append(text("role." + capability.key));
+			int width = this.font.width(label) + 12;
+			Badge badge = new Badge(x, width, label, capability.color, selected, button -> this.devices.select(device, capability));
+			badge.active = device.isConnected();
+			Component error = this.devices.client(capability).message();
+			badge.setTooltip(Tooltip.create(failed ? error.copy().append("\n").append(text("retry.tip")) : selected && error != null ? error :
+				Component.translatable("voxvelo_fitness_lib.bluetooth.badge.tip", text("role." + capability.key))));
+			badges.add(badge);
+			x += width + 5;
+		}
+		this.rows.addRow(badges, (graphics, font, left, top) -> panel(graphics, left, top, 21));
+	}
+
+	private void nearby(BluetoothDevice device) {
+		this.rows.addRow(List.of(Button.builder(text("connect"), button -> this.devices.connect(device))
+			.bounds(WIDTH - 68, 0, 68, 20).build()), (graphics, font, left, top) -> {
+			panel(graphics, left, top, 25);
+			graphics.text(font, this.fit(device.displayName(), WIDTH - 122), left + 7, top + 6, 0xFFFFFFFF);
+			String signal = device.rssi() + "";
+			graphics.text(font, signal, left + WIDTH - 77 - font.width(signal), top + 6, HINT);
+		});
+		this.rows.addRow(List.of(), (graphics, font, left, top) -> {
+			panel(graphics, left, top, 21);
+			int x = left + 6;
+			for (Capability capability : Capability.values()) {
+				if (!device.advertises(capability.service)) continue;
+				Component label = text("role." + capability.key);
+				int width = font.width(label) + 12;
+				graphics.fill(x, top + 1, x + width, top + 17, 0xFF28323C);
+				graphics.fill(x, top + 15, x + width, top + 17, capability.color);
+				graphics.text(font, label, x + 6, top + 4, capability.color);
+				x += width + 5;
 			}
+		});
+	}
+
+	private static void panel(GuiGraphicsExtractor graphics, int left, int top, int height) {
+		graphics.fill(left, top, left + WIDTH, top + height, 0xB0182028);
+	}
+
+	/** Compact colored toggle with a visible check mark and vanilla keyboard and narration behavior. */
+	private static final class Badge extends Button {
+		private final int color;
+		private final boolean selected;
+
+		Badge(int x, int width, Component label, int color, boolean selected, OnPress press) {
+			super(x, 0, width, 18, label, press, DEFAULT_NARRATION);
+			this.color = color;
+			this.selected = selected;
 		}
-		return rows;
-	}
 
-	private BleServiceClient client(Role role) {
-		return role.client.apply(this.ctx);
-	}
-
-	private String savedId(Role role) {
-		return role.savedId.apply(this.ctx.config);
-	}
-
-	/** Disconnecting only means something while a connection exists or is being made. */
-	private boolean canDisconnect(Role role) {
-		return this.client(role).state() != ConnectionState.DISCONNECTED;
-	}
-
-	/** A saved device that is not connected can be connected again without scanning for it first. */
-	private boolean canConnect(Role role) {
-		return this.canForget(role) && this.client(role).state() == ConnectionState.DISCONNECTED;
-	}
-
-	private void connectSaved(Role role) {
-		// Connecting looks the device up by its id (scanning for it if it has not been seen yet); only the name is used besides.
-		this.client(role).connect(new BluetoothDevice(this.savedId(role), role.savedName.apply(this.ctx.config), 0, Set.of()));
-	}
-
-	/** A saved device can be forgotten whether or not it is connected right now; with none saved there is nothing to forget. */
-	private boolean canForget(Role role) {
-		return !this.savedId(role).isEmpty();
-	}
-
-	/** Width left for a role's status text once the buttons it has are placed. */
-	private int statusWidth(Role role) {
-		int width = WIDTH;
-		if (this.canForget(role)) {
-			width -= FORGET_WIDTH + 2;
+		@Override
+		protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
+			int x = this.getX();
+			int y = this.getY();
+			int edge = this.isHoveredOrFocused() && this.active ? 0xFFFFFFFF : this.selected ? this.color : 0xFF52606B;
+			graphics.fill(x, y, x + this.getWidth(), y + 18, edge);
+			graphics.fill(x + 1, y + 1, x + this.getWidth() - 1, y + 17, this.selected ? 0xFF344450 : 0xFF202A33);
+			graphics.centeredText(Minecraft.getInstance().font, this.getMessage(), x + this.getWidth() / 2, y + 5, this.active ? this.color : HINT);
 		}
-		if (this.canDisconnect(role) || this.canConnect(role)) {
-			width -= DISCONNECT_WIDTH + 2;
-		}
-		return width - 4;
-	}
-
-	/** Why the last attempt to connect a role failed, shown in full because the row's status text is cut off. Null when nothing failed. */
-	private @Nullable Component failure() {
-		for (Role role : Role.values()) {
-			BleServiceClient client = this.client(role);
-			Component message = client.message();
-			if (client.state() == ConnectionState.DISCONNECTED && message != null) {
-				return Component.translatable("voxvelo_fitness_lib.bluetooth.failure", role.label(), message);
-			}
-		}
-		return null;
-	}
-
-	private void toggleScan() {
-		if (this.ctx.bluetooth.isScanning()) {
-			this.ctx.bluetooth.stopScan();
-		} else {
-			this.ctx.bluetooth.scan(SCAN_MILLIS);
-		}
-	}
-
-	private void choose(Role role, BluetoothDevice device) {
-		role.saver.save(this.ctx.config, device.id(), device.displayName());
-		this.ctx.config.save();
-		this.ctx.bluetooth.stopScan();
-		this.client(role).connect(device);
-	}
-
-	private void forget(Role role) {
-		this.client(role).disconnect();
-		role.saver.save(this.ctx.config, "", "");
-		this.ctx.config.save();
 	}
 
 	private String currentSignature() {
-		StringBuilder sb = new StringBuilder(this.ctx.bluetooth.isScanning() ? "S" : "-");
-		for (Role role : Role.values()) {
-			sb.append('/').append(this.savedId(role)).append(this.client(role).state() == ConnectionState.DISCONNECTED ? 'x' : 'c');
+		StringBuilder signature = new StringBuilder().append(this.ctx.bluetooth.isAvailable()).append(this.ctx.bluetooth.isScanning());
+		for (Device device : this.devices.saved()) signature.append(device.descriptor()).append(device.state()).append(device.message());
+		for (Capability capability : Capability.values()) {
+			signature.append(this.devices.selectedId(capability)).append(this.devices.client(capability).state()).append(this.devices.client(capability).message());
 		}
-		List<Row> rows = this.nearby();
-		for (Row row : rows) {
-			sb.append('|').append(row.device().id()).append(row.device().name()).append(row.device().rssi() / 5).append(row.roles());
-		}
-		return sb.append('#').append(rows.size()).toString();
+		for (BluetoothDevice device : this.devices.nearby()) signature.append(device.id()).append(device.name()).append(device.advertisedServices());
+		return signature.toString();
 	}
 
 	@Override
 	public void tick() {
 		super.tick();
-		if (!this.currentSignature().equals(this.signature)) {
-			this.rebuildWidgets();
-		}
+		if (!this.currentSignature().equals(this.signature)) this.rebuildWidgets();
 	}
 
-	/** Shortens text with an ellipsis so it never runs into the buttons next to it. */
 	private String fit(String text, int maxWidth) {
-		if (this.font.width(text) <= maxWidth) {
-			return text;
-		}
-		return this.font.plainSubstrByWidth(text, maxWidth - this.font.width("...")) + "...";
+		return this.font.width(text) <= maxWidth ? text : this.font.plainSubstrByWidth(text, maxWidth - this.font.width("...")) + "...";
 	}
 
 	@Override
-	protected void save() {
-		this.ctx.config.save();
-	}
+	protected void save() { this.ctx.config.save(); }
 
 	@Override
 	public void onClose() {

@@ -2,6 +2,7 @@ package dev.michidk.voxvelo.fitnesslib.client.bluetooth;
 
 import dev.michidk.voxvelo.fitnesslib.client.FitnessRuntime;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,6 +31,7 @@ public final class BtleplugBackend implements BluetoothBackend, BtleplugNative.E
 		return thread;
 	});
 	private final Map<String, BtleplugConnection> connections = new ConcurrentHashMap<>();
+	private final Set<String> pairing = ConcurrentHashMap.newKeySet();
 	private final AtomicBoolean initStarted = new AtomicBoolean();
 
 	private volatile BtleplugNative ble;
@@ -161,6 +163,15 @@ public final class BtleplugBackend implements BluetoothBackend, BtleplugNative.E
 		if (listener != null && this.scanning) {
 			listener.accept(device);
 		}
+	}
+
+	@Override
+	public boolean isPairing(String deviceId) { return this.pairing.contains(deviceId); }
+
+	@Override
+	public void pairing(String deviceId, boolean active) {
+		if (active) this.pairing.add(deviceId);
+		else this.pairing.remove(deviceId);
 	}
 
 	@Override

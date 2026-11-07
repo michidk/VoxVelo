@@ -23,6 +23,9 @@ public interface BluetoothBackend {
 
 	boolean isScanning();
 
+	/** Whether the platform is currently authenticating this peripheral. */
+	default boolean isPairing(String deviceId) { return false; }
+
 	/** Connects to a device previously reported by the scan. {@code onDisconnected} fires once if the link drops later. */
 	CompletableFuture<BluetoothConnection> connect(String deviceId, Runnable onDisconnected);
 

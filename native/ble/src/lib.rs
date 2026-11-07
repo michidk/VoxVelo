@@ -26,6 +26,8 @@ const DEVICE: i32 = 2;
 const DISCONNECTED: i32 = 3;
 /// A notification or indication arrived: id, service UUID, characteristic UUID, then the value as the remaining bytes.
 const NOTIFICATION: i32 = 4;
+/// System pairing started or ended: device id, then active (u8).
+const PAIRING: i32 = 5;
 
 const OK: i32 = 0;
 const FAILED: i32 = 1;
@@ -172,6 +174,110 @@ fn characteristic(peripheral: &Peripheral, service: Uuid, characteristic: Uuid) 
 		.ok_or_else(|| format!("Characteristic {characteristic} of service {service} not found"))
 }
 
+/// Windows does not initiate pairing when a secured GATT attribute rejects access. Pair once and retry the operation.
+async fn authenticated<T, F, Fut>(peripheral: &Peripheral, mut operation: F) -> Result<T, String>
+where
+	F: FnMut() -> Fut,
+	Fut: Future<Output = Result<T, String>>,
+{
+	let result = operation().await;
+	#[cfg(target_os = "windows")]
+	if result.as_ref().err().is_some_and(|error| requires_authentication(error)) {
+		let id = peripheral.id().to_string();
+		emit(PAIRING, 0, OK, &Payload::default().str(&id).u8(1).0);
+		let paired = pair_windows(peripheral).await;
+		emit(PAIRING, 0, OK, &Payload::default().str(&id).u8(0).0);
+		paired?;
+		return operation().await;
+	}
+	#[cfg(not(target_os = "windows"))]
+	let _ = peripheral;
+	result
+}
+
+#[cfg(any(target_os = "windows", test))]
+fn requires_authentication(error: &str) -> bool {
+	error.to_ascii_lowercase().contains("0x80650005")
+}
+
+/// Completes Windows' confirmation-only ceremony after the player requested a device connection.
+/// Devices requiring PIN entry must be paired in system settings; no PIN is guessed or collected here.
+#[cfg(target_os = "windows")]
+async fn pair_windows(peripheral: &Peripheral) -> Result<(), String> {
+	use windows::Devices::Bluetooth::BluetoothLEDevice;
+	use windows::Devices::Enumeration::{DeviceInformationCustomPairing, DevicePairingKinds, DevicePairingRequestedEventArgs};
+	use windows::Foundation::TypedEventHandler;
+
+	let pair = async {
+		let properties = peripheral
+			.properties()
+			.await
+			.map_err(|e| e.to_string())?
+			.ok_or("Device is no longer available")?;
+		let device = BluetoothLEDevice::FromBluetoothAddressAsync(properties.address.into())
+			.map_err(|e| e.to_string())?
+			.await
+			.map_err(|e| e.to_string())?;
+		let pairing = device
+			.DeviceInformation()
+			.and_then(|info| info.Pairing())
+			.map_err(|e| e.to_string())?;
+		if pairing.IsPaired().map_err(|e| e.to_string())? {
+			return Err(
+				"PAIRING_STALE: Device is already paired but authentication failed. Remove it in system Bluetooth settings and pair again."
+					.to_owned(),
+			);
+		}
+		let custom = pairing.Custom().map_err(|e| e.to_string())?;
+		let token = {
+			let handler = TypedEventHandler::<DeviceInformationCustomPairing, DevicePairingRequestedEventArgs>::new(|_, args| {
+				let args = args.ok()?;
+				if args.PairingKind()? == DevicePairingKinds::ConfirmOnly {
+					args.Accept()?;
+				}
+				Ok(())
+			});
+			custom.PairingRequested(&handler).map_err(|e| e.to_string())?
+		};
+		// Keep the handler installed until completion or timeout, then always remove it.
+		let outcome = tokio::time::timeout(Duration::from_secs(45), async {
+			let result = custom
+				.PairAsync(DevicePairingKinds::ConfirmOnly)
+				.map_err(|e| e.to_string())?
+				.await
+				.map_err(|e| e.to_string())?;
+			pairing_result(result.Status().map_err(|e| e.to_string())?.0)
+		})
+		.await;
+		let _ = custom.RemovePairingRequested(token);
+		outcome.map_err(|_| "PAIRING_TIMEOUT: Windows pairing timed out".to_owned())?
+	};
+	tokio::time::timeout(Duration::from_secs(55), pair)
+		.await
+		.map_err(|_| "PAIRING_TIMEOUT: Windows pairing timed out".to_owned())?
+		.map_err(|error| {
+			if error.starts_with("PAIRING_") {
+				error
+			} else {
+				format!("PAIRING_FAILED: {error}")
+			}
+		})
+}
+
+/// Stable error categories cross the native boundary; Java translates the player-facing instructions.
+#[cfg(any(target_os = "windows", test))]
+fn pairing_result(status: i32) -> Result<(), String> {
+	match status {
+		0 | 3 => Ok(()), // Paired / AlreadyPaired
+		7 => Err("PAIRING_TIMEOUT: Authentication timed out".to_owned()),
+		4 | 14 | 17 => Err(format!("PAIRING_REJECTED: Windows pairing status {status}")),
+		18 => Err("PAIRING_STALE: The device already has an association".to_owned()),
+		_ => Err(format!(
+			"PAIRING_FAILED: Windows pairing status {status}. Put the device in pairing mode or pair in system settings."
+		)),
+	}
+}
+
 /// Starts the Bluetooth runtime and registers the callback. Safe to call more than once; later calls change nothing.
 /// Returns 0 on success.
 #[unsafe(no_mangle)]
@@ -284,11 +390,18 @@ pub extern "C" fn vvble_connect(request: i64, id: *const c_char) -> i32 {
 	let id = string(id).unwrap_or_default();
 	submit(request, async move {
 		let peripheral = peripheral(&id)?;
-		tokio::time::timeout(CONNECT_TIMEOUT, peripheral.connect())
-			.await
-			.map_err(|_| "Connecting timed out".to_owned())?
-			.map_err(|e| e.to_string())?;
-		peripheral.discover_services().await.map_err(|e| e.to_string())?;
+		let connected = authenticated(&peripheral, || async {
+			tokio::time::timeout(CONNECT_TIMEOUT, peripheral.connect())
+				.await
+				.map_err(|_| "Connecting timed out".to_owned())?
+				.map_err(|e| e.to_string())?;
+			peripheral.discover_services().await.map_err(|e| e.to_string())
+		})
+		.await;
+		if let Err(error) = connected {
+			let _ = peripheral.disconnect().await;
+			return Err(error);
+		}
 		let first = state().is_some_and(|s| s.forwarding.lock().unwrap().insert(id.clone()));
 		if first {
 			match peripheral.notifications().await {
@@ -404,7 +517,32 @@ pub extern "C" fn vvble_subscribe(request: i64, id: *const c_char, service: *con
 		let (service, characteristic_uuid) = target?;
 		let peripheral = peripheral(&id)?;
 		let c = characteristic(&peripheral, service, characteristic_uuid)?;
-		peripheral.subscribe(&c).await.map_err(|e| e.to_string())?;
+		authenticated(&peripheral, || async { peripheral.subscribe(&c).await.map_err(|e| e.to_string()) }).await?;
 		Ok(Vec::new())
 	})
+}
+
+#[cfg(test)]
+mod tests {
+	use super::{pairing_result, requires_authentication};
+
+	#[test]
+	fn pairing_outcomes_preserve_actionable_reasons() {
+		assert!(pairing_result(0).is_ok());
+		assert!(pairing_result(3).is_ok());
+		assert!(pairing_result(7).unwrap_err().starts_with("PAIRING_TIMEOUT:"));
+		assert!(pairing_result(14).unwrap_err().starts_with("PAIRING_REJECTED:"));
+		assert!(pairing_result(18).unwrap_err().starts_with("PAIRING_STALE:"));
+		assert!(pairing_result(16).unwrap_err().starts_with("PAIRING_FAILED:"));
+	}
+
+	#[test]
+	fn only_authentication_errors_trigger_pairing() {
+		assert!(requires_authentication(
+			"Error { code: HRESULT(0x80650005), message: authentication required }"
+		));
+		assert!(requires_authentication("HRESULT(0X80650005)"));
+		assert!(!requires_authentication("Not connected"));
+		assert!(!requires_authentication("HRESULT(0x800704C7)"));
+	}
 }
