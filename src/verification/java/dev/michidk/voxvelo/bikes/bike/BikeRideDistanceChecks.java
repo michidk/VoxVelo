@@ -5,7 +5,20 @@ import java.util.UUID;
 /** Regression checks for server-side distance accounting across riding sessions. */
 public final class BikeRideDistanceChecks {
 	public static void main(String[] args) {
-		BikeRideDistance distance = new BikeRideDistance();
+		require(!BikeUnstuck.resets(true, true, true, 0), "stationary wall contact continues countdown");
+require(BikeUnstuck.resets(true, true, false, 0), "parking without a wall cannot trigger recovery");
+require(BikeUnstuck.resets(true, true, true, 0.3), "moving away cancels recovery");
+require(BikeUnstuck.resets(false, true, true, 0), "dismounting cancels recovery");
+require(BikeUnstuck.resets(true, false, true, 0), "airborne bikes cannot trigger recovery");
+require(BikeUnstuck.impassable(true, true, true), "tall walls trigger recovery");
+require(!BikeUnstuck.impassable(true, true, false), "climbable ledges do not trigger recovery");
+require(!BikeUnstuck.impassable(true, false, true), "clear forward path does not trigger recovery");
+require(!BikeUnstuck.impassable(false, true, true), "disabled recovery ignores walls");
+require(BikeUnstuck.powered(1), "positive rider watts allow recovery");
+require(!BikeUnstuck.powered(0), "coasting downhill does not allow automatic recovery");
+require(!BikeUnstuck.powered(Double.NaN), "invalid power does not allow recovery");
+require(!BikeUnstuck.resets(true, true, true, 0.02), "collision jitter and small sideways sliding preserve countdown");
+BikeRideDistance distance = new BikeRideDistance();
 		UUID first = new UUID(0, 1), second = new UUID(0, 2);
 		require(distance.sample(first, 0, 0) == 0, "mounting establishes the starting position");
 		int total = 0;

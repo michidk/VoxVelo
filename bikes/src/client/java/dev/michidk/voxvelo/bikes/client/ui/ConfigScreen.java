@@ -54,6 +54,10 @@ public class ConfigScreen extends SettingsScreen {
 
 		if (this.minecraft.isLocalServer()) {
 			this.rows.addHeader(Component.translatable("voxvelo_bikes.config.section.world"));
+this.rows.addRow(CycleButton.onOffBuilder(BikeServerConfig.get().automaticUnstuck)
+.withTooltip(value -> Tips.of("voxvelo_bikes.config.automatic_unstuck"))
+.create(0, 0, SettingsList.WIDTH, 20, Component.translatable("voxvelo_bikes.config.automatic_unstuck"),
+(button, value) -> BikeServerConfig.setAutomaticUnstuck(value)));
 			this.rows.addRow(CycleButton.builder(ConfigScreen::tireWearValue, BikeServerConfig.get().enableTireDamage)
 				.withValues(true, false)
 				.withTooltip(value -> Tips.of("voxvelo_bikes.config.tire_damage"))

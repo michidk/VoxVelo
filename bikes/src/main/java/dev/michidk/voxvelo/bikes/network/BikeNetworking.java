@@ -12,7 +12,12 @@ public final class BikeNetworking {
 	}
 
 	public static void register() {
-		PayloadTypeRegistry.serverboundPlay().register(BikeStatePayload.TYPE, BikeStatePayload.CODEC);
+		PayloadTypeRegistry.serverboundPlay().register(UnstuckPayload.TYPE, UnstuckPayload.CODEC);
+ServerPlayNetworking.registerGlobalReceiver(UnstuckPayload.TYPE, (payload, context) -> {
+BikeEntity bike = BikeEntity.riddenBy(context.player());
+if (bike != null) bike.requestUnstuck();
+});
+PayloadTypeRegistry.serverboundPlay().register(BikeStatePayload.TYPE, BikeStatePayload.CODEC);
 		PayloadTypeRegistry.serverboundPlay().register(RiderSettingsPayload.TYPE, RiderSettingsPayload.CODEC);
 
 		ServerPlayNetworking.registerGlobalReceiver(BikeStatePayload.TYPE, (payload, context) -> {

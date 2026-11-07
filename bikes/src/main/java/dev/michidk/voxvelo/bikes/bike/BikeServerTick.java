@@ -30,6 +30,7 @@ final class BikeServerTick {
 	private static final double GRADIENT_STEPS = 100.0;
 
 	private final BikeEntity bike;
+private final BikeUnstuck unstuck;
 	private final BikeWear wear;
 	private final BikeEntityHits hits;
 	private final BikeRideDistance rideDistance = new BikeRideDistance();
@@ -43,12 +44,15 @@ final class BikeServerTick {
 
 	BikeServerTick(BikeEntity bike, BikeWear wear, BikeEntityHits hits) {
 		this.bike = bike;
+this.unstuck = new BikeUnstuck(bike);
 		this.wear = wear;
 		this.hits = hits;
 	}
 
 	/** @param riderSimulates whether the rider's client moved the bike this tick rather than the server */
-	void tick(boolean riderSimulates) {
+	void requestUnstuck() { this.unstuck.request(); }
+void tick(boolean riderSimulates) {
+this.unstuck.tick();
 		this.bike.getEntityData().set(BikeEntity.DATA_STEP_HEIGHT, (float) BikeServerConfig.get().stepHeightBlocks);
 		Player rider = this.bike.getRider();
 		if (rider != null && !this.bike.canRide()) {

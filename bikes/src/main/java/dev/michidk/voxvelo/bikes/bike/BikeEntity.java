@@ -63,7 +63,10 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 	private static final float GEAR_RATIO_STEP = 0.25F;
 
 	private static final EntityDataAccessor<Integer> DATA_TYPE = SynchedEntityData.defineId(BikeEntity.class, EntityDataSerializers.INT);
-	static final EntityDataAccessor<Float> DATA_SPEED = SynchedEntityData.defineId(BikeEntity.class, EntityDataSerializers.FLOAT);
+	static final EntityDataAccessor<Integer> DATA_UNSTUCK = SynchedEntityData.defineId(BikeEntity.class, EntityDataSerializers.INT);
+public void requestUnstuck() { if (!this.level().isClientSide()) this.server.requestUnstuck(); }
+public int unstuckSeconds() { return this.entityData.get(DATA_UNSTUCK); }
+static final EntityDataAccessor<Float> DATA_SPEED = SynchedEntityData.defineId(BikeEntity.class, EntityDataSerializers.FLOAT);
 	static final EntityDataAccessor<Float> DATA_STEERING = SynchedEntityData.defineId(BikeEntity.class, EntityDataSerializers.FLOAT);
 	static final EntityDataAccessor<Float> DATA_BRAKE = SynchedEntityData.defineId(BikeEntity.class, EntityDataSerializers.FLOAT);
 	static final EntityDataAccessor<Float> DATA_GRADIENT = SynchedEntityData.defineId(BikeEntity.class, EntityDataSerializers.FLOAT);
@@ -128,6 +131,7 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 	@Override
 	protected void defineSynchedData(SynchedEntityData.Builder entityData) {
 		super.defineSynchedData(entityData);
+entityData.define(DATA_UNSTUCK, 0);
 		entityData.define(DATA_COLOR, BikeComponents.DEFAULT_COLOR);
 		entityData.define(DATA_PARTS, BikeComponents.ALL_PARTS_MASK);
 		entityData.define(DATA_TIRES, BikeComponents.packTires(100, 100));

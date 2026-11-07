@@ -18,7 +18,8 @@ public final class VoxVeloKeys {
 	public static final KeyMapping HARD_BRAKE = register("key.voxvelo_bikes.hard_brake", InputConstants.KEY_LALT);
 	public static final KeyMapping STEER_LEFT = register("key.voxvelo_bikes.steer_left", InputConstants.KEY_LEFT);
 	public static final KeyMapping STEER_RIGHT = register("key.voxvelo_bikes.steer_right", InputConstants.KEY_RIGHT);
-	public static final KeyMapping OPEN_CONFIG = register("key.voxvelo_bikes.open_config", InputConstants.KEY_B);
+	public static final KeyMapping UNSTUCK = register("key.voxvelo_bikes.unstuck", InputConstants.UNKNOWN.getValue());
+public static final KeyMapping OPEN_CONFIG = register("key.voxvelo_bikes.open_config", InputConstants.KEY_B);
 
 	private VoxVeloKeys() {
 	}

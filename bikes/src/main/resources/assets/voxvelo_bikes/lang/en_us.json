@@ -1,4 +1,9 @@
 {
+ "voxvelo_bikes.unstuck.no_space": "Cannot unstuck: no safe space nearby. Move or try manual recovery.",
+ "key.voxvelo_bikes.unstuck": "Unstuck bike",
+ "voxvelo_bikes.config.automatic_unstuck": "Automatic unstuck",
+ "voxvelo_bikes.config.automatic_unstuck.tip": "After five seconds stopped against an impassable wall, move the bike to a safe position. Climbable ledges do not trigger recovery. Enabled by default. Multiplayer servers control this setting.",
+ "voxvelo_bikes.unstuck.countdown": "Blocked - moving bike to safety in %s...",
   "item.voxvelo_bikes.gravel_bike": "Gravel Bike",
   "item.voxvelo_bikes.mountain_bike": "Mountain Bike",
   "entity.voxvelo_bikes.bicycle": "Bicycle",

@@ -24,6 +24,7 @@ public class VoxVeloClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		VoxVeloKeys.register();
+UnstuckHud.register();
 		EntityRenderers.register(ModEntities.BICYCLE, BikeGeoRenderer::new);
 		EntityRenderers.register(ModEntities.BICYCLE_PART, NoopRenderer::new);
 		BikeHelmetRenderer.register();
@@ -56,6 +57,7 @@ public class VoxVeloClient implements ClientModInitializer {
 				extension.tick(client);
 			}
 			sender.tick(client);
+while (VoxVeloKeys.UNSTUCK.consumeClick()) dev.michidk.voxvelo.bikes.client.network.ManualUnstuck.request();
 			openConfigOnKey(client);
 		});
 

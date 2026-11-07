@@ -11,7 +11,8 @@ import net.fabricmc.loader.api.FabricLoader;
 public final class BikeServerConfig {
 	private static BikeServerConfig instance = new BikeServerConfig();
 
-	public boolean enableVehicleDamage = true;
+	public boolean automaticUnstuck = true;
+public boolean enableVehicleDamage = true;
 	public boolean vehicleDamageInCreativeMode = false;
 	public boolean enableTireDamage = true;
 	public double tireDamageRate = 0.0001;
@@ -31,7 +32,11 @@ public final class BikeServerConfig {
 	}
 
 	/** Changes the live integrated-server setting and persists it for the next world. */
-	public static void setTireDamageEnabled(boolean enabled) {
+	public static void setAutomaticUnstuck(boolean enabled) {
+instance.automaticUnstuck = enabled;
+save();
+}
+public static void setTireDamageEnabled(boolean enabled) {
 		instance.enableTireDamage = enabled;
 		save();
 	}
