@@ -26,12 +26,10 @@ public final class TrainerLimits {
 	public static final double MAX_INTENSITY = 2.0;
 	public static final double DEFAULT_INTENSITY = 1.0;
 
-	/** Physical gear ratio of the real bike on the trainer, chainring over cog; the default is 50/20. */
-	public static final double MIN_GEAR_RATIO = 0.5;
-	public static final double MAX_GEAR_RATIO = 6.0;
+	/** Reference ratio for virtual gear six (50/20). */
 	public static final double DEFAULT_GEAR_RATIO = 2.5;
 
-	/** Circumference of the trainer's wheel in metres, for speed from cadence. */
+	/** Virtual wheel circumference in metres, for virtual speed from measured cadence. */
 	public static final double MIN_WHEEL_CIRCUMFERENCE_M = 1.0;
 	public static final double MAX_WHEEL_CIRCUMFERENCE_M = 3.0;
 	public static final double DEFAULT_WHEEL_CIRCUMFERENCE_M = 2.1;

@@ -55,8 +55,7 @@ public final class FitnessConfig {
 	public boolean trainerResistanceEnabled = true;
 	public double trainerResistanceIntensity = TrainerLimits.DEFAULT_INTENSITY;
 	public boolean virtualShiftingEnabled = true;
-	/** Physical chainring teeth divided by rear cog teeth; keep the real bike in this gear. */
-	public double trainerGearRatio = TrainerLimits.DEFAULT_GEAR_RATIO;
+	/** Virtual wheel circumference used with measured cadence to calculate road speed. */
 	public double trainerWheelCircumferenceM = TrainerLimits.DEFAULT_WHEEL_CIRCUMFERENCE_M;
 
 	/** Show other riders watts and heart rate on screen, and whether this player shares theirs with the others. */
@@ -191,8 +190,6 @@ loaded.sanitize();
 		this.obcPreferredName = this.obcPreferredName == null ? "" : this.obcPreferredName;
 		this.trainerResistanceIntensity = clamp(this.trainerResistanceIntensity,
 			TrainerLimits.MIN_INTENSITY, TrainerLimits.MAX_INTENSITY, TrainerLimits.DEFAULT_INTENSITY);
-		this.trainerGearRatio = clamp(this.trainerGearRatio,
-			TrainerLimits.MIN_GEAR_RATIO, TrainerLimits.MAX_GEAR_RATIO, TrainerLimits.DEFAULT_GEAR_RATIO);
 		this.trainerWheelCircumferenceM = clamp(this.trainerWheelCircumferenceM,
 			TrainerLimits.MIN_WHEEL_CIRCUMFERENCE_M, TrainerLimits.MAX_WHEEL_CIRCUMFERENCE_M, TrainerLimits.DEFAULT_WHEEL_CIRCUMFERENCE_M);
 		this.roadBlocks = sanitizeBlocks(this.roadBlocks);

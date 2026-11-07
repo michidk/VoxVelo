@@ -63,7 +63,7 @@ public final class RoadFollowInput implements BikeInputSource {
 
 	/** The open left/right question for the HUD, or null. */
 	public JunctionNavigator.Prompt prompt() {
-		return this.guidance.prompt();
+		return this.config.roadFollowEnabled ? this.guidance.prompt() : null;
 	}
 
 	@Override

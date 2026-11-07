@@ -69,9 +69,8 @@ public final class TrainerFeedback {
 		double gear = bike.virtualGearRatio();
 		if (this.ctx.config.virtualShiftingEnabled && gear > 0) {
 			TrainerTelemetry telemetry = this.ctx.ftms.freshTelemetry();
-			double speed = telemetry == null ? 0.0 : VirtualShifting.speed(telemetry.speedKmh(), telemetry.cadenceRpm(),
-				this.ctx.config.trainerGearRatio, this.ctx.config.trainerWheelCircumferenceM);
-			target = VirtualShifting.targetRatio(target, gear, this.ctx.config.trainerGearRatio, speed,
+			target = VirtualShifting.targetRatio(target, gear, telemetry == null ? null : telemetry.cadenceRpm(),
+				telemetry == null ? null : telemetry.speedKmh(), this.ctx.config.trainerWheelCircumferenceM,
 				bike.massKg(), TrainerLimits.WIND_RESISTANCE);
 		}
 
@@ -84,8 +83,8 @@ public final class TrainerFeedback {
 		if (due && (changed || shifted || !this.applying || now - this.lastSentAt >= REFRESH_MILLIS)) {
 			// Not queued (initialising, unsupported or in a retry cooldown): try again next tick with fresh values.
 			if (!control.apply(target)) return;
-			if (shifted) FitnessRuntime.LOGGER.info("Virtual shifting: ratio {}, physical ratio {}, SIM grade {} %, rolling resistance {}",
-				gear, this.ctx.config.trainerGearRatio, target.gradePercent(), target.crr());
+			if (shifted) FitnessRuntime.LOGGER.info("Virtual shifting: ratio {}, SIM grade {} %, rolling resistance {}",
+				gear, target.gradePercent(), target.crr());
 			this.lastSent = target;
 			this.lastSentAt = now;
 			this.lastGear = gear;

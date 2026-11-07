@@ -32,16 +32,24 @@ public final class TrainerDebugHud implements HudElement {
 			+ " | riding: " + (vehicle != null ? "yes" : "no"));
 		if (vehicle != null) {
 			lines.add(format("Road: %+.2f%% | intensity %.2fx", vehicle.gradient() * 100, this.ctx.config.trainerResistanceIntensity));
-			lines.add(format("Virtual gear: %.2f | physical: %.2f | %s", vehicle.virtualGearRatio(),
-				this.ctx.config.trainerGearRatio, this.ctx.config.virtualShiftingEnabled ? "ON" : "OFF"));
+			lines.add(format("Virtual gear: %.2f | %s", vehicle.virtualGearRatio(),
+				this.ctx.config.virtualShiftingEnabled ? "ON" : "OFF"));
 		}
 		var telemetry = this.ctx.ftms.freshTelemetry();
 		if (telemetry == null) lines.add("Telemetry: unavailable / stale");
 		else {
 			lines.add(format("Telemetry: %d W | %s rpm | %s km/h", telemetry.powerWatts(), value(telemetry.cadenceRpm()), value(telemetry.speedKmh())));
-			lines.add(format("Model speed: %.2f m/s | reported resistance: %s",
-				VirtualShifting.speed(telemetry.speedKmh(), telemetry.cadenceRpm(), this.ctx.config.trainerGearRatio,
-					this.ctx.config.trainerWheelCircumferenceM), telemetry.resistanceLevel() == null ? "n/a" : telemetry.resistanceLevel()));
+			if (vehicle != null && telemetry.cadenceRpm() != null) {
+				lines.add(format("Virtual speed: %.2f m/s | reported resistance: %s",
+					VirtualShifting.virtualSpeed(telemetry.cadenceRpm(), vehicle.virtualGearRatio(),
+						this.ctx.config.trainerWheelCircumferenceM), telemetry.resistanceLevel() == null ? "n/a" : telemetry.resistanceLevel()));
+			}
+		}
+		if (vehicle != null && this.ctx.config.virtualShiftingEnabled) {
+			if (telemetry == null || telemetry.cadenceRpm() == null || !Double.isFinite(telemetry.cadenceRpm()))
+				lines.add("Shifting inactive: no cadence | plain road target");
+			else if (!VirtualShifting.telemetryAvailable(telemetry.cadenceRpm(), telemetry.speedKmh()))
+				lines.add("Shifting inactive: no moving trainer speed | plain road target");
 		}
 		var control = this.ctx.ftms.control();
 		if (control == null) lines.add("Control: no trainer connection");

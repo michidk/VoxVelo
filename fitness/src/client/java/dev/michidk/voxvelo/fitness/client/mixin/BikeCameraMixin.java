@@ -20,7 +20,8 @@ public abstract class BikeCameraMixin {
 		Minecraft client = Minecraft.getInstance();
 		if ((Object) this != client.player || !FabricLoader.getInstance().isModLoaded("voxvelo_fitness_lib")) return null;
 		FitnessContext context = FitnessContext.get();
-		return context != null && context.config.bikeCameraFollow ? BikeEntity.riddenBy(client.player) : null;
+		return context != null && context.config.bikeCameraFollow && client.player != null
+			&& client.player.getVehicle() instanceof BikeEntity bike ? bike : null;
 	}
 
 	@Inject(method = "getViewXRot", at = @At("HEAD"), cancellable = true)

@@ -265,8 +265,10 @@ change the rolling resistance. *Trainer Settings...* has:
 - *Resistance* on/off and *Intensity* (0–200%). Grades are clamped to -10% .. +15%.
 - *Slope Window* (10–40 blocks): how far ahead and behind the grade is averaged, so steps blend into a smooth hill.
 - *Virtual Shifting* (on by default): leave the real bike in one gear and shift through 12 virtual gears with
-  `X` / `Z` or OpenBikeControl. Set *Physical ratio* to chainring teeth divided by cog teeth (50/20 = 2.50) and
-  *Wheel* to the wheel circumference.
+  `X` / `Z` or OpenBikeControl. Measured cadence, the virtual gear and *Wheel circumference* determine virtual
+  road speed and power. Measured trainer speed converts that power to resistance, independently of the real
+  cassette gear. Without cadence or moving speed telemetry, shifting is inactive and the plain road target
+  applies. The debug HUD reports this state.
 
 If climbs feel too hard or too easy on your trainer, adjust *Intensity*.
 

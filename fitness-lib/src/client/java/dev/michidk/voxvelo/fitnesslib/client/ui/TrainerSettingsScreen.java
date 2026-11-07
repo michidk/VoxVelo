@@ -39,9 +39,6 @@ public class TrainerSettingsScreen extends SettingsScreen {
 			.withTooltip(value -> Tips.of("voxvelo_fitness_lib.config.virtual_shifting"))
 			.create(0, 0, SettingsList.WIDTH, 20, Component.translatable("voxvelo_fitness_lib.config.virtual_shifting"),
 				(button, value) -> this.ctx.config.virtualShiftingEnabled = value));
-		this.rows.addRow(new ValueSlider(0, 0, WIDTH, TrainerLimits.MIN_GEAR_RATIO, TrainerLimits.MAX_GEAR_RATIO, 0.05, this.ctx.config.trainerGearRatio,
-				v -> Component.translatable("voxvelo_fitness_lib.config.physical_ratio", String.format(Locale.ROOT, "%.2f", v)),
-				v -> this.ctx.config.trainerGearRatio = v).tip("voxvelo_fitness_lib.config.physical_ratio"));
 		this.rows.addRow(new ValueSlider(0, 0, WIDTH, TrainerLimits.MIN_WHEEL_CIRCUMFERENCE_M, TrainerLimits.MAX_WHEEL_CIRCUMFERENCE_M, 0.05, this.ctx.config.trainerWheelCircumferenceM,
 				v -> Component.translatable("voxvelo_fitness_lib.config.wheel_circumference", String.format(Locale.ROOT, "%.2f", v)),
 				v -> this.ctx.config.trainerWheelCircumferenceM = v).tip("voxvelo_fitness_lib.config.wheel_circumference"));
