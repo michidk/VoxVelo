@@ -27,7 +27,8 @@ public final class FitnessSettingsScreen extends SettingsScreen {
 		new SettingsPage("voxvelo_fitness_lib.config.bluetooth_page", BluetoothScreen::new),
 		new SettingsPage("voxvelo_fitness_lib.bluetooth.trainer_settings", TrainerSettingsScreen::new),
 		new SettingsPage("voxvelo_fitness_lib.config.obc", ObcScreen::new),
-		new SettingsPage("voxvelo_fitness_lib.config.ride_recording", RideScreen::new)));
+		new SettingsPage("voxvelo_fitness_lib.config.ride_recording", RideScreen::new),
+		new SettingsPage("voxvelo_fitness_lib.photos.title", dev.michidk.voxvelo.fitnesslib.client.ride.PhotoSettingsScreen::new)));
 
 	private final FitnessRuntime ctx = FitnessRuntime.get();
 

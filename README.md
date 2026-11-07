@@ -322,6 +322,21 @@ heart rate, work and climbing. In `B` > *Ride Recording...*:
 Starting a new recording discards the previous ride, so export it first. Leaving the world saves an unexported ride
 automatically.
 
+### Automatic ride photos
+
+Open `F8` > **Ride photos** to configure automatic screenshots. By default, a photo is taken after every five
+minutes of active riding, requiring at least 50 W of fresh trainer or power meter data and a speed of 3 km/h.
+Stops, menus, pausing and an unfocused game pause the timer. Photos work without starting a ride recording.
+
+You can turn photos off, adjust the interval (30 seconds to one hour), power and speed thresholds, and choose
+the current view, behind the rider, facing the rider, or alternating front/rear views. Alternate perspectives
+briefly appear on screen for the captured frame; the camera and HUD are restored afterward. Keeping the current
+view is the default. Hiding the HUD in photos is separately configurable.
+
+PNG photos and matching JSON files containing capture time, dimension, position, power and speed are saved in
+`.minecraft/voxvelo_fitness_lib/rides/photos/`. Use **Open photo folder** to find them. These are local files for
+attaching to an activity later; uploading photos to Strava is not implemented.
+
 ## Configuration
 
 Press `B` for bicycle settings, or `F8` for Fitness Library settings. Client settings are stored in `config/voxvelo-bikes-client.json` (fitness:
