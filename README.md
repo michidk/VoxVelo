@@ -14,7 +14,7 @@ and record your rides as FIT files. VoxVelo combines **VoxVelo Bikes**, **VoxVel
 
 ## What should I install?
 
-> **Fitness Library setup:** Starting with version 0.1.3, Fitness can launch without Fitness Library. On the title screen, choose **Download and install library** to fetch the exact matching version from the official GitHub release, then quit and relaunch. Downloads only start after your click and are checked against GitHub's SHA-256 digest. Keyboard cycling remains available if you skip setup. Older releases still require [manual installation](https://github.com/michidk/VoxVelo/releases/latest).
+> **Fitness Library setup:** Starting with version 0.1.3, Fitness can launch without Fitness Library. On the title screen, choose **Download and install library** to fetch the exact matching version from the official GitHub release, then quit and relaunch. Downloads only start after your click and are checked against GitHub's SHA-256 digest. Keyboard cycling remains available if you skip setup. Versions before 0.1.3 require manually installing the library from the same GitHub release as Bikes and Fitness.
 
 Use **Minecraft 26.3**, **Java 25**, and [Fabric Loader](https://fabricmc.net/use/) **0.19.5 or newer**.
 Both setups below also need [Fabric API](https://modrinth.com/mod/fabric-api) for Minecraft 26.3 and
@@ -22,10 +22,10 @@ Both setups below also need [Fabric API](https://modrinth.com/mod/fabric-api) fo
 
 | I want to… | Install these VoxVelo mods |
 | --- | --- |
-| **Work out with a smart trainer**, use fitness sensors, or record rides | **All three:** [VoxVelo Bikes](https://modrinth.com/project/voxvelo-bikes), [VoxVelo Fitness Library](https://modrinth.com/project/voxvelo-fitness-lib), and [VoxVelo Fitness](https://modrinth.com/project/voxvelo-fitness) |
+| **Work out with a smart trainer**, use fitness sensors, or record rides | [VoxVelo Fitness](https://modrinth.com/project/voxvelo-fitness) and matching [VoxVelo Bikes](https://modrinth.com/project/voxvelo-bikes); install Fitness Library through the in-game setup |
 | **Just ride bikes with a keyboard and mouse**, without fitness features | **[VoxVelo Bikes](https://modrinth.com/project/voxvelo-bikes) only** |
 
-For manual installation, download the JARs from the same [GitHub release](https://github.com/michidk/VoxVelo/releases)
+Alternatively, to install all three mods manually, download the JARs from the same [GitHub release](https://github.com/michidk/VoxVelo/releases)
 and put them, Fabric API, and GeckoLib in your instance's `mods/` folder. For the fitness setup, that means:
 
 - `voxvelo-bikes-<version>.jar`
