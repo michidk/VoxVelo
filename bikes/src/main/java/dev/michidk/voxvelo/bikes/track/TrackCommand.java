@@ -2,6 +2,7 @@ package dev.michidk.voxvelo.bikes.track;
 
 import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -20,12 +21,11 @@ import net.minecraft.commands.arguments.blocks.BlockStateArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.permissions.Permissions;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.FallingBlock;
 import net.minecraft.world.level.block.state.BlockState;
 
-/** Operator-only, incrementally applied world edits. One build per server. */
+/** Incrementally applied world edits available to all players. One build per server. */
 public final class TrackCommand {
 	// The optional arguments, in the order they are typed; any tail of them may be left off.
 	private static final String LENGTH = "length_km";
@@ -57,12 +57,20 @@ public final class TrackCommand {
 			tail = Commands.argument(CHECKPOINTS, IntegerArgumentType.integer(8, 24)).executes(TrackCommand::start).then(tail);
 			tail = Commands.argument(MATERIAL, BlockStateArgument.block(registry)).executes(TrackCommand::start).then(tail);
 			tail = Commands.argument(LENGTH, DoubleArgumentType.doubleArg(0.25, 20)).executes(TrackCommand::start).then(tail);
-			dispatcher.register(Commands.literal("voxvelo_bikes").then(Commands.literal("track")
-				.requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER))
+			var root = dispatcher.register(Commands.literal("voxvelo")
+				.executes(c -> help(c.getSource(), false))
+				.then(Commands.literal("help").executes(c -> help(c.getSource(), false)))
+				.then(Commands.literal("track")
+
 				.executes(TrackCommand::start)
 				.then(Commands.literal("status").executes(c -> status(c.getSource())))
 				.then(Commands.literal("cancel").executes(c -> cancel(c.getSource())))
-				.then(tail)));
+				.then(tail)
+				.then(Commands.argument("invalid_arguments", StringArgumentType.greedyString()).suggests((context, builder) -> builder.buildFuture())
+					.executes(c -> invalid(c, "invalid_arguments"))))
+				.then(Commands.argument("unknown_subcommand", StringArgumentType.greedyString()).suggests((context, builder) -> builder.buildFuture())
+					.executes(c -> invalid(c, "unknown_subcommand"))));
+			dispatcher.register(Commands.literal("vv").executes(c -> help(c.getSource(), false)).redirect(root));
 		});
 		ServerTickEvents.END_SERVER_TICK.register(server -> {
 			TrackBuild job = JOBS.get(server);
@@ -79,6 +87,25 @@ public final class TrackCommand {
 			TrackBuild job = JOBS.remove(server);
 			if (job != null) job.cancel();
 		});
+	}
+
+	/** Explains the track command instead of leaving incomplete input to vanilla's generic syntax error. */
+	private static int help(CommandSourceStack source, boolean invalid) {
+		if (invalid) {
+			source.sendFailure(Component.translatable("commands.voxvelo_bikes.track.invalid_arguments"));
+		}
+		source.sendSuccess(() -> Component.translatable("commands.voxvelo_bikes.track.usage"), false);
+		source.sendSuccess(() -> Component.translatable("commands.voxvelo_bikes.track.example"), false);
+		return invalid ? 0 : 1;
+	}
+
+	/** Keeps errors short, with a concrete example and a route to the full argument reference. */
+	private static int invalid(CommandContext<CommandSourceStack> context, String argument) {
+		CommandSourceStack source = context.getSource();
+		String input = StringArgumentType.getString(context, argument);
+		source.sendFailure(Component.translatable("commands.voxvelo_bikes.track." + argument, input));
+		source.sendSuccess(() -> Component.translatable("commands.voxvelo_bikes.track.help_hint"), false);
+		return 0;
 	}
 
 	private static int start(CommandContext<CommandSourceStack> c) throws CommandSyntaxException {

@@ -5,14 +5,16 @@ and record your rides as FIT files. VoxVelo combines **VoxVelo Bikes**, **VoxVel
 **VoxVelo Fitness**. You can also install Bikes alone for keyboard riding without fitness features.
 
 <p align="center">
-  <img src=".github/images/icon_bikes.png" alt="VoxVelo Bikes icon" width="144">
+  <a href="https://modrinth.com/mod/voxvelo-bikes"><img src=".github/images/icon_bikes.png" alt="VoxVelo Bikes icon" width="144"></a>
   &nbsp;&nbsp;
-  <img src=".github/images/icon_fitness_lib.png" alt="VoxVelo Fitness Library icon" width="144">
+  <a href="https://modrinth.com/mod/voxvelo-fitness-lib"><img src=".github/images/icon_fitness_lib.png" alt="VoxVelo Fitness Library icon" width="144"></a>
   &nbsp;&nbsp;
-  <img src=".github/images/icon_fitness.png" alt="VoxVelo Fitness icon" width="144">
+  <a href="https://modrinth.com/mod/voxvelo-fitness"><img src=".github/images/icon_fitness.png" alt="VoxVelo Fitness icon" width="144"></a>
 </p>
 
 ## What should I install?
+
+> **Temporary installation step:** VoxVelo Fitness Library is awaiting publication. Download [Fitness Library 0.1.2](https://github.com/michidk/VoxVelo/releases/download/v0.1.2/voxvelo-fitness-lib-0.1.2.jar) from GitHub and place it in your instance's `mods/` folder. Use matching versions of Bikes, Fitness, and Fitness Library. [Latest release](https://github.com/michidk/VoxVelo/releases/latest). This notice will be removed once the library is available through the launchers.
 
 Use **Minecraft 26.3**, **Java 25**, and [Fabric Loader](https://fabricmc.net/use/) **0.19.5 or newer**.
 Both setups below also need [Fabric API](https://modrinth.com/mod/fabric-api) for Minecraft 26.3 and
@@ -32,7 +34,7 @@ and put them, Fabric API, and GeckoLib in your instance's `mods/` folder. For th
 
 **Fitness alone is not enough:** it requires both Bikes and Fitness Library, with matching version numbers.
 The library alone does not add bicycles. With a dependency-aware Modrinth launcher, install VoxVelo Fitness
-and confirm that it also installs Bikes, Fitness Library, Fabric API, and GeckoLib.
+and confirm that it also installs Bikes, Fabric API, and GeckoLib. While the library is awaiting publication, install it manually as described below.
 
 Once installed, mount a bike and press `F8` to connect your Bluetooth FTMS trainer and optional sensors.
 See [Fitness features](#fitness-features) for device setup, phone steering, resistance, and ride recording.
@@ -41,6 +43,13 @@ See [Fitness features](#fitness-features) for device setup, phone steering, resi
 for multiplayer rider stats and ride maps. Fitness devices connect to the player's client, not the server.
 
 Downloads and changelogs are on [GitHub Releases](https://github.com/michidk/VoxVelo/releases).
+Download on Modrinth: [VoxVelo Bikes](https://modrinth.com/mod/voxvelo-bikes) |
+[VoxVelo Fitness Library](https://modrinth.com/mod/voxvelo-fitness-lib) |
+[VoxVelo Fitness](https://modrinth.com/mod/voxvelo-fitness).
+
+Watch [VoxVelo in action on YouTube](https://youtu.be/N1gC_XH1ZYk).
+
+
 
 ## Screenshots
 
@@ -65,7 +74,7 @@ Downloads and changelogs are on [GitHub Releases](https://github.com/michidk/Vox
 - **Multiplayer first:** a synchronized entity that rides like a horse or boat. Everyone sees steering, wheels,
   cranks and a posed rider. Works in singleplayer, on LAN and on dedicated servers.
 - **Keyboard riding** is always available and fully rebindable.
-- **Cycling track generator:** `/voxvelo_bikes track` builds a closed, terrain-following loop road with slab slopes,
+- **Cycling track generator:** `/voxvelo track` builds a closed, terrain-following loop road with slab slopes,
   borders, tunnels and bridges.
 - **Cycling statistics:** Distance Cycled and Time on a Bicycle in the vanilla statistics screen.
 - **Fitness add-on:**
@@ -80,11 +89,11 @@ Downloads and changelogs are on [GitHub Releases](https://github.com/michidk/Vox
 
 Each mod has its own jar and a separately configured Modrinth entry:
 
-| Jar | Mod ID | Purpose | Requires |
-| --- | --- | --- | --- |
-| `voxvelo-bikes-<version>.jar` | `voxvelo_bikes` | Bikes, physics, recipes, keyboard riding, tracks | Fabric API, GeckoLib |
-| `voxvelo-fitness-lib-<version>.jar` | `voxvelo_fitness_lib` | Reusable Bluetooth/device connections, trainer feedback, HUD, sessions, recording and FIT export | Fabric API |
-| `voxvelo-fitness-<version>.jar` | `voxvelo_fitness` | Connects bikes to the fitness library; road following, rider stats and ride maps | Matching VoxVelo Bikes and VoxVelo Fitness Library, plus Fabric API and GeckoLib |
+| Project | Jar | Mod ID | Purpose | Requires |
+| --- | --- | --- | --- | --- |
+| [VoxVelo Bikes](https://modrinth.com/mod/voxvelo-bikes) | `voxvelo-bikes-<version>.jar` | `voxvelo_bikes` | Bikes, physics, recipes, keyboard riding, tracks | Fabric API, GeckoLib |
+| [VoxVelo Fitness Library](https://modrinth.com/mod/voxvelo-fitness-lib) | `voxvelo-fitness-lib-<version>.jar` | `voxvelo_fitness_lib` | Reusable Bluetooth/device connections, trainer feedback, HUD, sessions, recording and FIT export | Fabric API |
+| [VoxVelo Fitness](https://modrinth.com/mod/voxvelo-fitness) | `voxvelo-fitness-<version>.jar` | `voxvelo_fitness` | Connects bikes to the fitness library; road following, rider stats and ride maps | Matching VoxVelo Bikes and VoxVelo Fitness Library, plus Fabric API and GeckoLib |
 
 **VoxVelo Bikes** works independently. It contains no Bluetooth support, fitness-device integrations, workout
 recording or fitness libraries. Players who just want bicycles only need Bikes and its normal dependencies.
@@ -202,11 +211,11 @@ leather armor. Any wheel plus any tire swaps the tread, and a worn tire comes ba
 
 ## Cycling track generator
 
-Operators can build a closed loop road through the landscape, starting at their current X/Z position:
+Players can build a closed loop road through the landscape, starting at their current X/Z position:
 
 ```text
-/voxvelo_bikes track
-/voxvelo_bikes track 10 minecraft:smooth_stone 12 0.85 6 8 0
+/voxvelo track
+/voxvelo track 10 minecraft:smooth_stone 12 0.85 6 8 0
 ```
 
 Arguments are positional and optional from the right:
@@ -226,7 +235,7 @@ Arguments are positional and optional from the right:
 
 The road follows the ground with half-block slab steps, crosses water and lava on solid foundations, bridges dry
 valleys and tunnels through mountains, with low lit borders and five blocks of headroom. Progress shows in a boss
-bar; `/voxvelo_bikes track status` and `/voxvelo_bikes track cancel` inspect or stop it (cancelling keeps what is already
+bar; `/voxvelo track status` and `/voxvelo track cancel` inspect or stop it (cancelling keeps what is already
 built). Only one track can be built per server at a time. The same seed, position and arguments give the same layout.
 
 ## Fitness features

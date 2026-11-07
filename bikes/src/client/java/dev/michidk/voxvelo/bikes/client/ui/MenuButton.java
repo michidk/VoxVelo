@@ -3,6 +3,7 @@ package dev.michidk.voxvelo.bikes.client.ui;
 import dev.michidk.voxvelo.bikes.VoxVelo;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
@@ -22,7 +23,7 @@ import net.minecraft.resources.Identifier;
  * A "VoxVelo" button on the pause menu and the options menu that opens the settings hub.
  *
  * <p>To live next to other mods it never uses fixed coordinates for the normal case: it is placed against vanilla
- * buttons found by their label or position, below "Save and Quit to Title" on the pause menu and as a row under the
+ * buttons found by their label or position, above "Save and Quit to Title" on the pause menu and as a row under the
  * settings grid (spanning both columns) on the options menu. The listener runs after the default phase, so buttons
  * added by other mods already exist; if the spot is taken it moves one row further away. On the options menu it
  * then tries above "Done", and as a last resort every screen falls back to the top-left corner.
@@ -34,8 +35,13 @@ public final class MenuButton {
 	private static final int MAX_SHIFTS = 6;
 	/** Buttons this class added, held weakly so closed screens can be collected. */
 	private static final Set<Button> ADDED = Collections.newSetFromMap(new WeakHashMap<>());
+	private static final Map<AbstractWidget, MovedButton> MOVED = new WeakHashMap<>();
 
 	private MenuButton() {
+	}
+
+	/** Remembers the quit button's position across repeated layout passes. */
+	private record MovedButton(int originalY, int movedY) {
 	}
 
 	/** Where the button goes: left edge, top edge and width. */
@@ -48,21 +54,33 @@ public final class MenuButton {
 			// AFTER_INIT also fires when a screen is only repositioned (e.g. on resize), which keeps its widgets, so
 			// drop the button from the previous pass before placing it again.
 			if (screen instanceof PauseScreen || screen instanceof OptionsScreen) {
+				for (AbstractWidget widget : Screens.getWidgets(screen)) {
+					MovedButton moved = MOVED.remove(widget);
+					if (moved != null && widget.getY() == moved.movedY()) {
+						widget.setY(moved.originalY());
+					}
+				}
 				Screens.getWidgets(screen).removeIf(ADDED::contains);
 			}
 			if (screen instanceof PauseScreen) {
-				addBelow(client, screen, CommonComponents.disconnectButtonLabel(client.isLocalServer()));
+				addBeforeQuit(client, screen, CommonComponents.disconnectButtonLabel(client.isLocalServer()));
 			} else if (screen instanceof OptionsScreen) {
 				addToOptions(client, screen);
 			}
 		});
 	}
 
-	/** Adds the button below the widget labelled {@code anchorLabel}, in the same column and width. */
-	private static void addBelow(Minecraft client, Screen screen, Component anchorLabel) {
+	/** Takes the quit button's row and moves quitting to the next free row below it. */
+	private static void addBeforeQuit(Minecraft client, Screen screen, Component anchorLabel) {
 		List<AbstractWidget> widgets = Screens.getWidgets(screen);
 		AbstractWidget anchor = find(widgets, anchorLabel);
 		Slot slot = anchor == null ? null : findSlot(screen, widgets, anchor.getX(), anchor.getY() + anchor.getHeight() + GAP, anchor.getWidth(), 1);
+		if (slot != null) {
+			int originalY = anchor.getY();
+			anchor.setY(slot.y());
+			MOVED.put(anchor, new MovedButton(originalY, slot.y()));
+			slot = new Slot(anchor.getX(), originalY, anchor.getWidth());
+		}
 		place(client, screen, widgets, slot);
 	}
 
