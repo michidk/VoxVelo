@@ -71,7 +71,7 @@ public final class TrainerFeedback {
 			TrainerTelemetry telemetry = this.ctx.ftms.freshTelemetry();
 			target = VirtualShifting.targetRatio(target, gear, telemetry == null ? null : telemetry.cadenceRpm(),
 				telemetry == null ? null : telemetry.speedKmh(), this.ctx.config.trainerWheelCircumferenceM,
-				bike.massKg(), TrainerLimits.WIND_RESISTANCE);
+				bike.massKg(), TrainerLimits.WIND_RESISTANCE, bike.dragAreaM2());
 		}
 
 		long now = System.currentTimeMillis();

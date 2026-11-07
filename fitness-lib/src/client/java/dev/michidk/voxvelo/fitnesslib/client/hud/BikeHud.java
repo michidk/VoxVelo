@@ -43,7 +43,7 @@ public final class BikeHud implements HudElement {
 
 		if (bike == null) {
 TrainerTelemetry trainer = this.ctx.ftms.freshTelemetry();
-bike = new VehicleTelemetry(mc.player.position(), 0, trainer == null ? 0 : trainer.powerWatts(), trainer == null || trainer.cadenceRpm() == null ? 0 : trainer.cadenceRpm(), 0, 0, 0, 85, 0, "");
+bike = new VehicleTelemetry(mc.player.position(), 0, trainer == null ? 0 : trainer.powerWatts(), trainer == null || trainer.cadenceRpm() == null ? 0 : trainer.cadenceRpm(), 0, 0, 0, 85, 0, 0, "");
 }
 List<Component> lines = new ArrayList<>();
 		double power = bike.powerWatts();

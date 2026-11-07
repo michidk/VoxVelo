@@ -17,8 +17,13 @@ public final class VirtualShiftingChecks {
 		}
 		double lowPower = power(target(flat, 1, 90, 10), 10);
 		double highPower = power(target(flat, 12, 90, 10), 10);
-		require(lowPower > 8 && lowPower < 15, "gear 1 at 90 rpm should demand about 11 W, got " + lowPower);
-		require(highPower > 1250 && highPower < 1500, "gear 12 at 90 rpm should demand about 1.4 kW, got " + highPower);
+		require(lowPower > 15 && lowPower < 25, "gear 1 at 90 rpm should demand about 18 W, got " + lowPower);
+		require(highPower > 500 && highPower < 600, "gear 12 at 90 rpm should demand about 550 W, got " + highPower);
+		double gameAir = power(VirtualShifting.targetRatio(flat, VirtualShifting.ratio(9), 90.0, 36.0, 2.1, 85, 0.51, 0.30), 10);
+		double trainerAir = power(VirtualShifting.targetRatio(flat, VirtualShifting.ratio(9), 90.0, 36.0, 2.1, 85, 0.51, 0), 10);
+		require(gameAir < trainerAir, "a slipperier vehicle (CdA 0.30, Cw 0.37) must demand less than the trainer default Cw 0.51");
+		near(VirtualShifting.targetRatio(flat, VirtualShifting.ratio(9), 90.0, 36.0, 2.1, 85, 0.51, Double.NaN).gradePercent(),
+			VirtualShifting.targetRatio(flat, VirtualShifting.ratio(9), 90.0, 36.0, 2.1, 85, 0.51, 0).gradePercent());
 		for (VirtualShifting.GearRange range : VirtualShifting.GearRange.values()) {
 			near(VirtualShifting.ratio(1, range), range.lowest);
 			near(VirtualShifting.ratio(12, range), range.highest);
@@ -27,7 +32,7 @@ public final class VirtualShiftingChecks {
 				near(VirtualShifting.ratio(gear, range) / VirtualShifting.ratio(gear - 1, range), step);
 			}
 		}
-		near(VirtualShifting.ratio(0, null), VirtualShifting.GearRange.DEFAULT.lowest);
+		near(VirtualShifting.ratio(0, null), VirtualShifting.GearRange.COMPACT.lowest);
 		near(VirtualShifting.ratio(99, VirtualShifting.GearRange.WIDE), 6.5);
 		for (int gear : new int[] {1, 6, 9}) {
 			for (double speed : new double[] {6, 8, 12}) {

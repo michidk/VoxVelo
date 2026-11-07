@@ -32,7 +32,7 @@ public final class FitnessApiChecks {
 
 		@Override
 		public VehicleTelemetry sample(LocalPlayer player, Entity vehicle) {
-			return new VehicleTelemetry(new Vec3(1, 2, 3), speed, 100, 60, .1, 1, .01, 100, 0, "");
+			return new VehicleTelemetry(new Vec3(1, 2, 3), speed, 100, 60, .1, 1, .01, 100, 0, 0, "");
 		}
 
 		@Override
@@ -99,14 +99,15 @@ public final class FitnessApiChecks {
 						1,
 						.4,
 						Double.NaN,
+						Double.NaN,
 						0,
 						null);
 		require(
-				telemetry.speedMps() == 0 && telemetry.gradient() == 0 && telemetry.massKg() == 85,
+				telemetry.speedMps() == 0 && telemetry.gradient() == 0 && telemetry.massKg() == 85 && telemetry.dragAreaM2() == 0,
 				"vehicle measurements sanitized");
 		boolean invalid = false;
 		try {
-			new VehicleTelemetry(new Vec3(Double.NaN, 0, 0), 0, 0, 0, 0, 1, 0, 85, 0, "");
+			new VehicleTelemetry(new Vec3(Double.NaN, 0, 0), 0, 0, 0, 0, 1, 0, 85, 0, 0, "");
 		} catch (IllegalArgumentException e) {
 			invalid = true;
 		}

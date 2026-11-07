@@ -3,7 +3,10 @@ package dev.michidk.voxvelo.fitnesslib.api;
 import java.util.Objects;
 import net.minecraft.world.phys.Vec3;
 
-/** SI units: blocks/metres, m/s, watts, rpm, rise/run, kg. Ratio 0 disables virtual shifting. */
+/**
+ * SI units: blocks/metres, m/s, watts, rpm, rise/run, kg, m^2. Ratio 0 disables virtual shifting; drag area 0 means
+ * unknown, so the trainer default is used for the virtual road.
+ */
 public record VehicleTelemetry(
 		Vec3 position,
 		double speedMps,
@@ -13,6 +16,7 @@ public record VehicleTelemetry(
 		double slopeScale,
 		double rollingResistance,
 		double massKg,
+		double dragAreaM2,
 		double virtualGearRatio,
 		String gearLabel) {
 	public VehicleTelemetry {
@@ -29,6 +33,7 @@ public record VehicleTelemetry(
 		slopeScale = bounded(slopeScale, 0, 10, 0);
 		rollingResistance = bounded(rollingResistance, 0, 1, 0);
 		massKg = bounded(massKg, 1, 10000, 85);
+		dragAreaM2 = bounded(dragAreaM2, 0, 5, 0);
 		virtualGearRatio = bounded(virtualGearRatio, 0, 100, 0);
 		gearLabel = Objects.requireNonNullElse(gearLabel, "");
 	}

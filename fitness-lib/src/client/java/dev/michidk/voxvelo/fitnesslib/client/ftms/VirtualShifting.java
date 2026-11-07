@@ -11,7 +11,7 @@ public final class VirtualShifting {
 
 	/** The lowest and highest virtual ratio; the gears in between are spaced evenly on a geometric curve. */
 	public enum GearRange {
-		DEFAULT(0.75, 5.49),
+		STANDARD(0.75, 5.49),
 		COMPACT(1.0, 4.0),
 		WIDE(0.5, 6.5),
 		ONE_BY(2.2, 4.2);
@@ -30,17 +30,21 @@ public final class VirtualShifting {
 		}
 	}
 
-	/** Ratio of a gear on the default range. */
+	/** Ratio of a gear on the compact range, the default. */
 	public static double ratio(int gear) {
-		return ratio(gear, GearRange.DEFAULT);
+		return ratio(gear, GearRange.COMPACT);
 	}
 
 	/** Ratio of a gear, 1..{@link #GEAR_COUNT}, with the same step between every pair of neighbours. */
 	public static double ratio(int gear, GearRange range) {
-		GearRange chosen = range == null ? GearRange.DEFAULT : range;
+		GearRange chosen = range == null ? GearRange.COMPACT : range;
 		double position = (Math.max(1, Math.min(GEAR_COUNT, gear)) - 1) / (double) (GEAR_COUNT - 1);
 		return chosen.lowest * Math.pow(chosen.highest / chosen.lowest, position);
 	}
+
+	/**
+	/** Air density the vehicle's drag area is multiplied with to get a wind resistance coefficient in kg/m. */
+	public static final double AIR_DENSITY = 1.225;
 
 	/**
 	 * Match virtual road power at the trainer's measured speed. Cadence sets virtual wheel speed independently
@@ -49,12 +53,19 @@ public final class VirtualShifting {
 	 */
 	public static TrainerSimulation.Target target(TrainerSimulation.Target road, int gear,
 		Double cadenceRpm, Double trainerSpeedKmh, double circumferenceM, double massKg, double windResistance) {
-		return targetRatio(road, ratio(gear), cadenceRpm, trainerSpeedKmh, circumferenceM, massKg, windResistance);
+		return targetRatio(road, ratio(gear), cadenceRpm, trainerSpeedKmh, circumferenceM, massKg, windResistance, 0);
 	}
 
+	/**
+	 * @param windResistance the coefficient the trainer was given (kg/m), which it applies to its own flywheel speed
+	 * @param dragAreaM2     the vehicle's drag area for the virtual road, or 0 to use {@code windResistance} there too
+	 */
 	public static TrainerSimulation.Target targetRatio(TrainerSimulation.Target road, double virtualRatio,
-		Double cadenceRpm, Double trainerSpeedKmh, double circumferenceM, double massKg, double windResistance) {
+		Double cadenceRpm, Double trainerSpeedKmh, double circumferenceM, double massKg, double windResistance,
+		double dragAreaM2) {
 		if (!telemetryAvailable(cadenceRpm, trainerSpeedKmh)) return road;
+		double roadWind = dragAreaM2 > 0 && Double.isFinite(dragAreaM2) ? Math.min(TrainerLimits.MAX_WIND_RESISTANCE, AIR_DENSITY * dragAreaM2)
+			: bounded(windResistance, 0.0, TrainerLimits.MAX_WIND_RESISTANCE, TrainerLimits.WIND_RESISTANCE);
 		double speed = trainerSpeedKmh / 3.6;
 		double weight = bounded(massKg, 40.0, 200.0, 85.0) * 9.81;
 		double wind = bounded(windResistance, 0.0, TrainerLimits.MAX_WIND_RESISTANCE, TrainerLimits.WIND_RESISTANCE);
@@ -62,7 +73,7 @@ public final class VirtualShifting {
 		double rolling = bounded(road.crr(), 0.0, TrainerLimits.MAX_CRR, TrainerLimits.DEFAULT_CRR);
 		double virtualSpeed = virtualSpeed(cadenceRpm, virtualRatio, circumferenceM);
 		double roadForce = weight * (slope + rolling) / Math.sqrt(1.0 + slope * slope)
-			+ 0.5 * wind * virtualSpeed * virtualSpeed;
+			+ 0.5 * roadWind * virtualSpeed * virtualSpeed;
 		double desiredForce = Math.max(0.0, roadForce) * virtualSpeed / speed;
 		// Solve sin(angle) + Crr*cos(angle) = (desiredForce - aeroForce) / weight.
 		double gravityAndRolling = (desiredForce - 0.5 * wind * speed * speed) / weight;

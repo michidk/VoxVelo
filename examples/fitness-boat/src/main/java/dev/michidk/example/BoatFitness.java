@@ -54,6 +54,7 @@ public final class BoatFitness implements ClientModInitializer, VehicleAdapter {
 				.004,
 				100,
 				0,
+				0,
 				"");
 	}
 }
