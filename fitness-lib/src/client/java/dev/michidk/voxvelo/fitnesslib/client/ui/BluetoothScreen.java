@@ -73,25 +73,34 @@ public class BluetoothScreen extends SettingsScreen {
 
 	private void saved(Device device) {
 		boolean open = device.state() != ConnectionState.DISCONNECTED;
-		List<AbstractWidget> actions = List.of(
-			Button.builder(open ? Component.translatable("voxvelo_fitness_lib.trainer.disconnect") : text("connect"), button -> {
+		List<AbstractWidget> actions = new ArrayList<>(List.of(
+			Button.builder(device.state() == ConnectionState.CONNECTING ? text("stop_searching")
+				: open ? Component.translatable("voxvelo_fitness_lib.trainer.disconnect") : text("connect"), button -> {
 				if (open) this.devices.disconnect(device); else device.connect();
-			}).bounds(WIDTH - 124, 0, 68, 20).build(),
+			}).bounds(WIDTH - 144, 0, 88, 20).build(),
 			Button.builder(Component.translatable("voxvelo_fitness_lib.trainer.forget"), button -> this.devices.forget(device))
-				.tooltip(Tooltip.create(text("forget.tip"))).bounds(WIDTH - 54, 0, 54, 20).build());
+				.tooltip(Tooltip.create(text("forget.tip"))).bounds(WIDTH - 54, 0, 54, 20).build()));
+		Button status = new Button(5, 0, WIDTH - 154, 24, device.descriptor().displayName().isEmpty() ? Component.empty() : Component.literal(device.descriptor().displayName()),
+			button -> {}, supplier -> supplier.get()) {
+			@Override
+			protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
+				Component message = BluetoothScreen.this.deviceStatus(device);
+				for (Capability capability : device.capabilities()) {
+					if (BluetoothScreen.this.devices.selected(device, capability) && BluetoothScreen.this.devices.client(capability).message() != null) {
+						message = BluetoothScreen.this.devices.client(capability).message();
+						break;
+					}
+				}
+				this.setTooltip(Tooltip.create(message));
+			}
+		};
+		actions.add(status);
 		this.rows.addRow(actions, (graphics, font, left, top) -> {
 			panel(graphics, left, top, 25);
-			graphics.text(font, this.fit(device.descriptor().displayName(), WIDTH - 138), left + 7, top + 2, 0xFFFFFFFF);
-			Component state = Component.translatable("voxvelo_fitness_lib.connection.state." + device.state().name().toLowerCase(java.util.Locale.ROOT));
-			Component message = device.message();
-			for (Capability capability : device.capabilities()) {
-				if (this.devices.selected(device, capability) && this.devices.client(capability).message() != null) {
-					message = this.devices.client(capability).message();
-					break;
-				}
-			}
-			graphics.text(font, this.fit(message == null ? state.getString() : message.getString(), WIDTH - 138), left + 7, top + 13,
-				device.isConnected() && message == null ? 0xFF8EE3B0 : STATUS);
+			graphics.text(font, this.fit(device.descriptor().displayName(), WIDTH - 158), left + 7, top + 2,
+				device.isConnected() ? 0xFFFFFFFF : HINT);
+			graphics.text(font, this.fit(this.deviceStatus(device).getString(), WIDTH - 158), left + 7, top + 13,
+				device.isConnected() ? 0xFF8EE3B0 : HINT);
 		});
 		List<AbstractWidget> badges = new ArrayList<>();
 		int x = 6;
@@ -100,7 +109,8 @@ public class BluetoothScreen extends SettingsScreen {
 			boolean failed = selected && this.devices.client(capability).state() == ConnectionState.DISCONNECTED && this.devices.client(capability).message() != null;
 			Component label = Component.literal(failed ? "[!] " : selected ? "[x] " : "[ ] ").append(text("role." + capability.key));
 			int width = this.font.width(label) + 12;
-			Badge badge = new Badge(x, width, label, capability.color, selected, button -> this.devices.select(device, capability));
+			Badge badge = new Badge(x, width, label, device.isConnected() ? capability.color : HINT, selected && device.isConnected(),
+				button -> this.devices.select(device, capability));
 			badge.active = true;
 			Component error = this.devices.client(capability).message();
 			badge.setTooltip(Tooltip.create(failed ? error.copy().append("\n").append(text("retry.tip")) : selected && error != null ? error :
@@ -111,9 +121,24 @@ public class BluetoothScreen extends SettingsScreen {
 		this.rows.addRow(badges, (graphics, font, left, top) -> panel(graphics, left, top, 21));
 	}
 
+	private Component deviceStatus(Device device) {
+		if (!device.isConnected()) {
+			return device.message() != null ? device.message() : Component.translatable("voxvelo_fitness_lib.connection.state."
+				+ device.state().name().toLowerCase(java.util.Locale.ROOT));
+		}
+		boolean unavailable = device.capabilities().stream().anyMatch(capability -> this.devices.selected(device, capability)
+			&& !this.devices.client(capability).isConnected());
+		return unavailable ? text("connected_pending") : Component.translatable("voxvelo_fitness_lib.connection.state.connected");
+	}
+
 	private void nearby(BluetoothDevice device) {
-		this.rows.addRow(List.of(Button.builder(text("connect"), button -> this.devices.connect(device))
-			.bounds(WIDTH - 68, 0, 68, 20).build()), (graphics, font, left, top) -> {
+		Device attempt = this.devices.attempt(device.id());
+		boolean pending = attempt != null && attempt.state() == ConnectionState.CONNECTING;
+		Button connect = Button.builder(pending ? Component.translatable("voxvelo_fitness_lib.connection.connecting") : text("connect"),
+			button -> this.devices.connect(device)).bounds(WIDTH - 68, 0, 68, 20).build();
+		connect.active = !pending;
+		if (attempt != null && attempt.message() != null) connect.setTooltip(Tooltip.create(attempt.message()));
+		this.rows.addRow(List.of(connect), (graphics, font, left, top) -> {
 			panel(graphics, left, top, 25);
 			graphics.text(font, this.fit(device.displayName(), WIDTH - 122), left + 7, top + 2, 0xFFFFFFFF);
 			String signal = device.rssi() + "";
@@ -167,6 +192,10 @@ public class BluetoothScreen extends SettingsScreen {
 			signature.append(this.devices.selectedId(capability)).append(this.devices.client(capability).state()).append(this.devices.client(capability).message());
 		}
 		for (BluetoothDevice device : this.devices.nearby()) signature.append(device.id()).append(device.name()).append(device.advertisedServices());
+		for (BluetoothDevice device : this.devices.nearby()) {
+			Device attempt = this.devices.attempt(device.id());
+			if (attempt != null) signature.append(attempt.state()).append(attempt.message());
+		}
 		return signature.toString();
 	}
 

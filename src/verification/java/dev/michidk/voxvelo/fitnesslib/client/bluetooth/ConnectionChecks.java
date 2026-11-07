@@ -31,7 +31,86 @@ public final class ConnectionChecks {
 		deviceRoster();
 		pairingLifecycle();
 		advertisedCapabilitiesSurviveDiscovery();
+		unusedCapabilitiesActivate();
+		steeringAngles();
+		refreshIncompleteServices();
+		fallbackPreservesPreference();
 		System.out.println("Trainer, heart rate sensor, game thread, shared device, OpenBikeControl and device list checks passed.");
+	}
+
+	/** Calibrated angle overrides digital fallback, keeps its sign, and clears when unavailable. */
+	private static void fallbackPreservesPreference() {
+		Backend backend = new Backend();
+		BluetoothManager manager = new BluetoothManager(backend);
+		FitnessConfig config = new FitnessConfig();
+		PowerMeterClient power = new PowerMeterClient(manager, GAME);
+		BluetoothDevices roster = new BluetoothDevices(manager, GAME, config, new FtmsClient(manager, GAME), power,
+			new HeartRateClient(manager, GAME), () -> {});
+		BluetoothDevice preferred = new BluetoothDevice("pedals", "Pedals", -40, Set.of(CyclingPower.SERVICE));
+		BluetoothDevice backup = new BluetoothDevice("trainer", "Trainer", -45, Set.of(CyclingPower.SERVICE));
+		roster.scan(); backend.discover(preferred); backend.discover(backup);
+		roster.connect(preferred); backend.last().complete(CyclingPower.SERVICE);
+		roster.connect(backup); backend.last().complete(CyclingPower.SERVICE);
+		roster.disconnect(roster.attempt("pedals")); roster.tick();
+		require(power.isConnected() && roster.selectedId(BluetoothDevices.Capability.POWER).equals("trainer"), "available power source takes over");
+		require(config.preferredPowerMeterId.equals("pedals"), "fallback preserves manual preference");
+		roster.attempt("pedals").connect(); backend.last().complete(CyclingPower.SERVICE);
+		require(power.isConnected() && roster.selectedId(BluetoothDevices.Capability.POWER).equals("pedals"), "preferred power source wins when it returns");
+	}
+
+	private static void refreshIncompleteServices() {
+		Backend backend = new Backend();
+		BluetoothManager manager = new BluetoothManager(backend);
+		HeartRateClient heart = new HeartRateClient(manager, GAME);
+		BluetoothDevice device = new BluetoothDevice("refresh", "Strap", -40, Set.of(HeartRate.SERVICE));
+		heart.connect(device);
+		backend.discover(device);
+		Connection connection = new Connection();
+		connection.refreshedServices = Set.of(HeartRate.SERVICE);
+		backend.last().result.complete(connection);
+		require(heart.isConnected() && connection.refreshes == 1, "missing cached service is refreshed before rejection");
+		require(new BluetoothDevice("refresh", "", -45, Set.of()).withServicesFrom(device).displayName().equals("Strap"),
+			"unnamed advertisement preserves known device name");
+	}
+
+	/** Calibrated angle overrides digital fallback, keeps its sign, and clears when unavailable. */
+	private static void steeringAngles() {
+		ObcControls controls = new ObcControls();
+		controls.apply(Obc.BUTTON_STEER_LEFT, 1);
+		controls.apply(Obc.BUTTON_STEERING_ANGLE, 148);
+		require(controls.steeringAngleDegrees() == 10 && controls.steering() > 0, "positive calibrated angle overrides digital left");
+		controls.apply(Obc.BUTTON_STEERING_ANGLE, 108);
+		require(controls.steeringAngleDegrees() == -10 && controls.steering() < 0, "negative angle means left");
+		controls.apply(Obc.BUTTON_STEERING_ANGLE, 1);
+		controls.apply(Obc.BUTTON_STEERING_ANGLE, 255);
+		require(controls.steeringAngleDegrees() == -10, "reserved values do not alter the angle");
+		controls.apply(Obc.BUTTON_STEERING_ANGLE, 128);
+		require(controls.steeringAngleDegrees() == 0 && controls.steering() == 0, "center overrides held digital buttons");
+		controls.apply(Obc.BUTTON_STEERING_ANGLE, 0);
+		require(controls.steeringAngleDegrees() == null && controls.steering() == -1, "unavailable angle restores digital fallback");
+		controls.apply(Obc.BUTTON_STEERING_ANGLE, 148);
+		controls.releaseAll();
+		require(controls.steeringAngleDegrees() == null && controls.steering() == 0, "disconnect clears angle");
+	}
+
+	/** A new device fills unused capabilities without replacing another device's selected source. */
+	private static void unusedCapabilitiesActivate() {
+		Backend backend = new Backend();
+		BluetoothManager manager = new BluetoothManager(backend);
+		FitnessConfig config = new FitnessConfig();
+		BluetoothDevices roster = new BluetoothDevices(manager, GAME, config, new FtmsClient(manager, GAME),
+			new PowerMeterClient(manager, GAME), new HeartRateClient(manager, GAME), () -> {});
+		BluetoothDevice strap = new BluetoothDevice("strap", "Strap", -40, Set.of(HeartRate.SERVICE));
+		BluetoothDevice combo = new BluetoothDevice("combo", "Combo", -40, Set.of(HeartRate.SERVICE, CyclingPower.SERVICE));
+		roster.scan();
+		backend.discover(strap);
+		backend.discover(combo);
+		roster.connect(strap);
+		backend.last().complete(HeartRate.SERVICE);
+		roster.connect(combo);
+		backend.last().complete(HeartRate.SERVICE, CyclingPower.SERVICE);
+		require(config.preferredHeartRateId.equals("strap"), "new device preserves existing heart rate selection");
+		require(config.preferredPowerMeterId.equals("combo"), "new device automatically supplies unused power capability");
 	}
 
 	/** Windows can return an empty service list; advertised capabilities must remain selectable. */
@@ -95,7 +174,7 @@ public final class ConnectionChecks {
 		backend.discover(second);
 		require(roster.nearby().size() == 2, "scan initially shows both devices");
 		roster.connect(first);
-		require(roster.nearby().equals(List.of(second)), "connecting device moves out of nearby immediately");
+		require(roster.nearby().size() == 2 && roster.saved().isEmpty() && config.bluetoothDevices.isEmpty(), "pending connection stays nearby and is not saved");
 		Connection firstLink = backend.last().complete(HeartRate.SERVICE);
 		BluetoothDevices.Device firstDevice = roster.saved().getFirst();
 		require(firstDevice.isConnected() && heart.isConnected(), "first device connects and supplies its unused capability");
@@ -119,7 +198,7 @@ public final class ConnectionChecks {
 		require(config.preferredHeartRateId.isEmpty(), "reconnecting respects an explicitly deselected capability");
 		roster.disconnect(secondDevice);
 		roster.select(secondDevice, BluetoothDevices.Capability.HEART);
-		require(roster.selected(secondDevice, BluetoothDevices.Capability.HEART), "a disconnected device can be selected again via its badge");
+		require(roster.preferredId(BluetoothDevices.Capability.HEART).equals(second.id()), "a disconnected device can be preferred again via its badge");
 		backend.last().complete(HeartRate.SERVICE);
 		require(secondDevice.isConnected() && heart.isConnected(), "selecting a disconnected badge reconnects and activates its source");
 		roster.select(firstDevice, BluetoothDevices.Capability.HEART);
@@ -134,7 +213,7 @@ public final class ConnectionChecks {
 		delayed.connect(first);
 		runAll(game);
 		Attempt late = backend.last();
-		delayed.forget(delayed.saved().getFirst());
+		delayed.forget(delayed.attempt(first.id()));
 		Connection orphan = late.complete(HeartRate.SERVICE);
 		runAll(game);
 		require(!orphan.connected && delayed.saved().isEmpty(), "forget during connection closes a late result");
@@ -143,7 +222,7 @@ public final class ConnectionChecks {
 		legacy.preferredHeartRateName = "Combo";
 		legacy.preferredPowerMeterId = "combo";
 		BluetoothDevices migrated = new BluetoothDevices(manager, GAME, legacy, trainer, power, heart, () -> {});
-		require(migrated.saved().size() == 1 && migrated.saved().getFirst().capabilities().size() == 2, "legacy role preferences migrate into a single device");
+		require(migrated.saved().isEmpty() && migrated.attempt("combo").capabilities().size() == 2, "legacy role preferences migrate into a single device");
 		require(says(DeviceClient.describe(new IllegalStateException("HRESULT(0x80650005)")), "voxvelo_fitness_lib.connection.authentication"),
 			"authentication failures explain how to pair");
 	}
@@ -485,7 +564,9 @@ public final class ConnectionChecks {
 	}
 
 	private static final class Connection implements BluetoothConnection {
-		final Set<String> services;
+		Set<String> services;
+		Set<String> refreshedServices;
+		int refreshes;
 		final Map<String, Consumer<byte[]>> handlers = new HashMap<>();
 		/** Characteristics subscribed to as indications rather than notifications. */
 		final Set<String> indicating = new HashSet<>();
@@ -496,6 +577,11 @@ public final class ConnectionChecks {
 		public String deviceId() { return "fake"; }
 		public boolean isConnected() { return connected; }
 		public Set<String> serviceUuids() { return services; }
+		public CompletableFuture<Void> refreshServices() {
+			this.refreshes++;
+			if (this.refreshedServices != null) this.services = this.refreshedServices;
+			return CompletableFuture.completedFuture(null);
+		}
 		final byte[] features = new byte[8];
 		boolean respond;
 		/** First byte (the op code) of every command written to the control point. */

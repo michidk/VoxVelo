@@ -72,6 +72,11 @@ final class BtleplugConnection implements BluetoothConnection {
 	}
 
 	@Override
+	public CompletableFuture<Void> refreshServices() {
+		return this.ble.services(this.deviceId).thenAccept(services -> this.services = services);
+	}
+
+	@Override
 	public CompletableFuture<byte[]> read(String serviceUuid, String characteristicUuid) {
 		return this.ble.read(this.deviceId, serviceUuid, characteristicUuid);
 	}

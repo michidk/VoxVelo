@@ -229,7 +229,16 @@ public abstract class DeviceClient {
 				this.message = Component.translatable("voxvelo_fitness_lib.connection.connecting");
 				return this.bluetooth.connect(device.id(), this.callback(gen, () -> this.lost(gen, Component.translatable("voxvelo_fitness_lib.connection.lost"))));
 			}, this.gameThread)
-			.thenComposeAsync(conn -> this.subscribe(gen, conn, profile, onData), this.gameThread)
+			.thenComposeAsync(conn -> {
+				if (!this.isCurrent(gen)) {
+					this.disconnectQuietly(conn);
+					return CompletableFuture.completedFuture(null);
+				}
+				this.retainConnection(conn);
+				CompletableFuture<Void> discovery = conn.serviceUuids().contains(profile.service())
+					? CompletableFuture.completedFuture(null) : conn.refreshServices();
+				return discovery.thenComposeAsync(ignored -> this.subscribe(gen, conn, profile, onData), this.gameThread);
+			}, this.gameThread)
 			.whenCompleteAsync((ignored, error) -> {
 				if (error != null) {
 					this.fail(gen, error);
@@ -294,6 +303,7 @@ public abstract class DeviceClient {
 		if (nativeMessage.startsWith("PAIRING_TIMEOUT:")) return Component.translatable("voxvelo_fitness_lib.connection.pairing_timeout");
 		if (nativeMessage.startsWith("PAIRING_REJECTED:")) return Component.translatable("voxvelo_fitness_lib.connection.pairing_rejected");
 		if (nativeMessage.startsWith("PAIRING_FAILED:")) return Component.translatable("voxvelo_fitness_lib.connection.pairing_failed");
+		if (nativeMessage.startsWith("SERVICE_DISCOVERY_FAILED:")) return Component.translatable("voxvelo_fitness_lib.connection.discovery_failed");
 		if (nativeMessage.toLowerCase(java.util.Locale.ROOT).contains("0x80650005")) {
 			return Component.translatable("voxvelo_fitness_lib.connection.authentication");
 		}

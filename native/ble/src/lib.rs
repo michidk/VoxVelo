@@ -395,7 +395,18 @@ pub extern "C" fn vvble_connect(request: i64, id: *const c_char) -> i32 {
 				.await
 				.map_err(|_| "Connecting timed out".to_owned())?
 				.map_err(|e| e.to_string())?;
-			peripheral.discover_services().await.map_err(|e| e.to_string())
+			peripheral.discover_services().await.map_err(|e| e.to_string())?;
+			// WinRT can complete discovery with an empty cache after a failed authentication attempt.
+			// Reopen the connection instead of reporting a successfully connected device with no services.
+			if peripheral.services().is_empty() {
+				peripheral.disconnect().await.map_err(|e| e.to_string())?;
+				peripheral.connect().await.map_err(|e| e.to_string())?;
+				peripheral.discover_services().await.map_err(|e| e.to_string())?;
+			}
+			if peripheral.services().is_empty() {
+				return Err("SERVICE_DISCOVERY_FAILED: Windows returned no Bluetooth services. Reconnect the device; if this persists, remove its system pairing and pair again.".to_owned());
+			}
+			Ok(())
 		})
 		.await;
 		if let Err(error) = connected {
@@ -447,7 +458,11 @@ pub extern "C" fn vvble_disconnect(request: i64, id: *const c_char) -> i32 {
 pub extern "C" fn vvble_services(request: i64, id: *const c_char) -> i32 {
 	let id = string(id).unwrap_or_default();
 	submit(request, async move {
-		let services = peripheral(&id)?.services();
+		let peripheral = peripheral(&id)?;
+		authenticated(&peripheral, || async {
+			peripheral.discover_services().await.map_err(|e| e.to_string())
+		}).await?;
+		let services = peripheral.services();
 		let mut payload = Payload::default().u16(services.len() as u16);
 		for service in &services {
 			payload = payload.str(&service.uuid.to_string()).u16(service.characteristics.len() as u16);
@@ -516,8 +531,16 @@ pub extern "C" fn vvble_subscribe(request: i64, id: *const c_char, service: *con
 	submit(request, async move {
 		let (service, characteristic_uuid) = target?;
 		let peripheral = peripheral(&id)?;
-		let c = characteristic(&peripheral, service, characteristic_uuid)?;
-		authenticated(&peripheral, || async { peripheral.subscribe(&c).await.map_err(|e| e.to_string()) }).await?;
+		authenticated(&peripheral, || async {
+			// Switching sources keeps the physical link alive. Its platform service cache can still
+			// be invalidated by Windows, so refresh before treating a missing characteristic as final.
+			if characteristic(&peripheral, service, characteristic_uuid).is_err() {
+				peripheral.discover_services().await.map_err(|e| e.to_string())?;
+			}
+			let c = characteristic(&peripheral, service, characteristic_uuid)?;
+			peripheral.subscribe(&c).await.map_err(|e| e.to_string())
+		})
+		.await?;
 		Ok(Vec::new())
 	})
 }

@@ -13,6 +13,9 @@ public interface BluetoothConnection {
 	/** Lower-case 128-bit UUIDs of the services discovered on the device. */
 	Set<String> serviceUuids();
 
+	/** Refreshes discovery when a live connection has an incomplete cached service list. */
+	default CompletableFuture<Void> refreshServices() { return CompletableFuture.completedFuture(null); }
+
 	CompletableFuture<byte[]> read(String serviceUuid, String characteristicUuid);
 
 	CompletableFuture<Void> write(String serviceUuid, String characteristicUuid, byte[] data, boolean withResponse);

@@ -22,11 +22,12 @@ public record BluetoothDevice(String id, String name, int rssi, Set<String> adve
 
 	/** This sighting, plus every service an earlier sighting of the same device advertised. */
 	public BluetoothDevice withServicesFrom(BluetoothDevice earlier) {
-		if (this.advertisedServices.containsAll(earlier.advertisedServices)) {
+		String mergedName = this.name == null || this.name.isBlank() ? earlier.name : this.name;
+		if (this.advertisedServices.containsAll(earlier.advertisedServices) && java.util.Objects.equals(mergedName, this.name)) {
 			return this;
 		}
 		Set<String> all = new HashSet<>(earlier.advertisedServices);
 		all.addAll(this.advertisedServices);
-		return new BluetoothDevice(this.id, this.name, this.rssi, Set.copyOf(all));
+		return new BluetoothDevice(this.id, mergedName, this.rssi, Set.copyOf(all));
 	}
 }

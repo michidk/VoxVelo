@@ -34,6 +34,13 @@ final class SharedConnections {
 		this.backend = backend;
 	}
 
+	/** A connected peripheral need not keep advertising before another role can join it. */
+	synchronized boolean isConnected(String deviceId) {
+		Link link = this.links.get(deviceId);
+		BluetoothConnection connection = link == null || link.ready.isCompletedExceptionally() ? null : link.ready.getNow(null);
+		return connection != null && !link.lost && connection.isConnected();
+	}
+
 	/** Connects to the device, or joins the connection already made for it. {@code onLost} fires once if the link drops. */
 	CompletableFuture<BluetoothConnection> connect(String deviceId, Runnable onLost) {
 		Link link;
@@ -204,6 +211,11 @@ final class SharedConnections {
 		@Override
 		public Set<String> serviceUuids() {
 			return this.connection.serviceUuids();
+		}
+
+		@Override
+		public CompletableFuture<Void> refreshServices() {
+			return this.link.serial(() -> this.connection.refreshServices());
 		}
 
 		@Override

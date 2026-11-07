@@ -117,7 +117,7 @@ public final class BluetoothManager {
 		long now = System.currentTimeMillis();
 		BluetoothDevice known = this.devices.get(deviceId);
 		Long seen = this.lastSeen.get(deviceId);
-		if (known != null && seen != null && now - seen < FRESH_MILLIS) {
+		if (known != null && (this.connections.isConnected(deviceId) || seen != null && now - seen < FRESH_MILLIS)) {
 			return CompletableFuture.completedFuture(known);
 		}
 		CompletableFuture<BluetoothDevice> result = new CompletableFuture<>();

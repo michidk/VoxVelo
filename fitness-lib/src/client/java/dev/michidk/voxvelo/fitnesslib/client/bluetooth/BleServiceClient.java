@@ -25,6 +25,11 @@ public abstract class BleServiceClient extends DeviceClient {
 	/** Called every client tick while a world is loaded. Starts auto-connect and reconnect attempts. */
 	public abstract void tick(FitnessConfig config);
 
+	/** Retries the effective source without overwriting the user's saved preference. */
+	public final void tickSource(boolean enabled, BluetoothDevice device) {
+		this.autoConnect(enabled, device.id(), device.displayName());
+	}
+
 	/** Tries the saved device now and then, while auto-connect is on for it. */
 	protected final void autoConnect(boolean enabled, String savedId, String savedName) {
 		if (this.autoAttemptDue(enabled && !savedId.isEmpty())) {
