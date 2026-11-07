@@ -57,6 +57,7 @@ jobs:
     timeout-minutes: 15
     env:
       GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
       TAG: ${{ inputs.tag }}
       PLATFORM: ${{ inputs.platform }}
     steps:
