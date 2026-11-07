@@ -1,6 +1,13 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "github>michidk/workflows//templates/presets/renovate"
+    "github>michidk/workflows//templates/presets/renovate-library"
+  ],
+  "packageRules": [
+    {
+      "description": "Pin build tools and the Java dependencies bundled into the mod; Fabric runtime compatibility is declared separately in fabric.mod.json",
+      "matchManagers": ["gradle", "gradle-wrapper", "github-actions"],
+      "rangeStrategy": "pin"
+    }
   ]
 }
