@@ -484,9 +484,13 @@ public class BikeEntity extends VehicleEntity implements GeoEntity {
 		return false;
 	}
 
-	/** Left-clicking an unoccupied bicycle with the wrench repairs its whole-vehicle durability. */
+	/** Creative attacks remove the bike immediately; survival wrench attacks repair it. */
 	@Override
 	public boolean hurtServer(ServerLevel level, DamageSource source, float amount) {
+		if (source.getEntity() instanceof Player player && player.isCreative()) {
+			this.discard();
+			return true;
+		}
 		if (source.getEntity() instanceof Player player && player.getMainHandItem().is(ModItems.BIKE_WRENCH)) {
 			this.wear.repairWithWrench(player);
 			return true;

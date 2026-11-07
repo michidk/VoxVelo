@@ -4,6 +4,7 @@
 	"package": "dev.michidk.voxvelo.bikes.client.mixin",
 	"compatibilityLevel": "JAVA_25",
 	"client": [
+		"CreativeBikeAttackMixin",
 		"AvatarRendererMixin",
 		"HumanoidModelMixin"
 	],

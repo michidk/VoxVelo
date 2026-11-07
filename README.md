@@ -155,6 +155,8 @@ At 200 W on flat stone the three cruise at roughly 34, 32 and 28 km/h; on sand 1
 - **Speed Boost I–III** (enchanting table or anvil) adds 10% speed per level. Dismantling a bike loses it.
 - **Damage and repair:** hard crashes and falls over three blocks damage the bike; at zero it breaks into its
   parts. Left-click a parked bike with the **Bike Wrench** to repair it, right-click to dismantle it.
+  In Creative, one left-click instantly removes a bike without drops or an attack swing, including when holding
+  a wrench. Normal right-click still mounts the bike.
 
 ## Crafting
 
