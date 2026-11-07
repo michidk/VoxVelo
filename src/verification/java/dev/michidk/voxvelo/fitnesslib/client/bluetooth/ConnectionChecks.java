@@ -30,7 +30,23 @@ public final class ConnectionChecks {
 		deviceLists();
 		deviceRoster();
 		pairingLifecycle();
+		advertisedCapabilitiesSurviveDiscovery();
 		System.out.println("Trainer, heart rate sensor, game thread, shared device, OpenBikeControl and device list checks passed.");
+	}
+
+	/** Windows can return an empty service list; advertised capabilities must remain selectable. */
+	private static void advertisedCapabilitiesSurviveDiscovery() {
+		Backend backend = new Backend();
+		BluetoothManager manager = new BluetoothManager(backend);
+		BluetoothDevices roster = new BluetoothDevices(manager, GAME, new FitnessConfig(), new FtmsClient(manager, GAME),
+			new PowerMeterClient(manager, GAME), new HeartRateClient(manager, GAME), () -> {});
+		BluetoothDevice strap = new BluetoothDevice("secure", "HRM 600", -40, Set.of(HeartRate.SERVICE));
+		roster.scan();
+		backend.discover(strap);
+		roster.connect(strap);
+		backend.last().complete();
+		require(roster.saved().getFirst().capabilities().contains(BluetoothDevices.Capability.HEART),
+			"empty discovered services must not erase the advertised heart rate capability");
 	}
 
 	/** Pairing is visible while pending, failures wait for a manual retry, and messages explain recovery. */
@@ -101,6 +117,11 @@ public final class ConnectionChecks {
 		secondDevice.connect();
 		backend.last().complete(HeartRate.SERVICE);
 		require(config.preferredHeartRateId.isEmpty(), "reconnecting respects an explicitly deselected capability");
+		roster.disconnect(secondDevice);
+		roster.select(secondDevice, BluetoothDevices.Capability.HEART);
+		require(roster.selected(secondDevice, BluetoothDevices.Capability.HEART), "a disconnected device can be selected again via its badge");
+		backend.last().complete(HeartRate.SERVICE);
+		require(secondDevice.isConnected() && heart.isConnected(), "selecting a disconnected badge reconnects and activates its source");
 		roster.select(firstDevice, BluetoothDevices.Capability.HEART);
 		roster.forget(firstDevice);
 		backend.discover(first);

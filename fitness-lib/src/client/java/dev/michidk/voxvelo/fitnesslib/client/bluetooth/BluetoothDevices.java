@@ -71,7 +71,8 @@ public final class BluetoothDevices {
 					if (error != null) { this.fail(gen, error); return; }
 					if (!this.isCurrent(gen)) { connection.disconnect(); return; }
 					this.retainConnection(connection);
-					this.descriptor = new BluetoothDevice(this.descriptor.id(), this.descriptor.name(), this.descriptor.rssi(), connection.serviceUuids());
+					this.descriptor = new BluetoothDevice(this.descriptor.id(), this.descriptor.name(), this.descriptor.rssi(), connection.serviceUuids())
+						.withServicesFrom(this.descriptor);
 					this.connected(gen);
 					BluetoothDevices.this.remember();
 					for (Capability capability : this.capabilities()) {
@@ -132,7 +133,14 @@ public final class BluetoothDevices {
 
 	/** Selecting a source replaces only that capability; other devices keep their physical connections. */
 	public void select(Device device, Capability capability) {
-		if (!device.isConnected() || !device.capabilities().contains(capability)) return;
+		if (!device.capabilities().contains(capability)) return;
+		if (!device.isConnected()) {
+			this.client(capability).disconnect();
+			this.store(capability, device.descriptor.id(), device.descriptor.displayName());
+			this.remember();
+			device.connect();
+			return;
+		}
 		boolean clear = this.selected(device, capability);
 		if (clear && this.client(capability).state() == ConnectionState.DISCONNECTED && this.client(capability).message() != null) {
 			this.client(capability).connect(device.descriptor);

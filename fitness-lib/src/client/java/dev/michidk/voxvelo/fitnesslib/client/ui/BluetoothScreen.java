@@ -81,10 +81,7 @@ public class BluetoothScreen extends SettingsScreen {
 				.tooltip(Tooltip.create(text("forget.tip"))).bounds(WIDTH - 54, 0, 54, 20).build());
 		this.rows.addRow(actions, (graphics, font, left, top) -> {
 			panel(graphics, left, top, 25);
-			graphics.text(font, this.fit(device.descriptor().displayName(), WIDTH - 138), left + 7, top + 6, 0xFFFFFFFF);
-		});
-		this.rows.addText((graphics, font, left, top) -> {
-			panel(graphics, left, top, 12);
+			graphics.text(font, this.fit(device.descriptor().displayName(), WIDTH - 138), left + 7, top + 2, 0xFFFFFFFF);
 			Component state = Component.translatable("voxvelo_fitness_lib.connection.state." + device.state().name().toLowerCase(java.util.Locale.ROOT));
 			Component message = device.message();
 			for (Capability capability : device.capabilities()) {
@@ -93,7 +90,7 @@ public class BluetoothScreen extends SettingsScreen {
 					break;
 				}
 			}
-			graphics.text(font, this.fit(message == null ? state.getString() : message.getString(), WIDTH - 14), left + 7, top + 1,
+			graphics.text(font, this.fit(message == null ? state.getString() : message.getString(), WIDTH - 138), left + 7, top + 13,
 				device.isConnected() && message == null ? 0xFF8EE3B0 : STATUS);
 		});
 		List<AbstractWidget> badges = new ArrayList<>();
@@ -104,7 +101,7 @@ public class BluetoothScreen extends SettingsScreen {
 			Component label = Component.literal(failed ? "[!] " : selected ? "[x] " : "[ ] ").append(text("role." + capability.key));
 			int width = this.font.width(label) + 12;
 			Badge badge = new Badge(x, width, label, capability.color, selected, button -> this.devices.select(device, capability));
-			badge.active = device.isConnected();
+			badge.active = true;
 			Component error = this.devices.client(capability).message();
 			badge.setTooltip(Tooltip.create(failed ? error.copy().append("\n").append(text("retry.tip")) : selected && error != null ? error :
 				Component.translatable("voxvelo_fitness_lib.bluetooth.badge.tip", text("role." + capability.key))));
@@ -118,7 +115,7 @@ public class BluetoothScreen extends SettingsScreen {
 		this.rows.addRow(List.of(Button.builder(text("connect"), button -> this.devices.connect(device))
 			.bounds(WIDTH - 68, 0, 68, 20).build()), (graphics, font, left, top) -> {
 			panel(graphics, left, top, 25);
-			graphics.text(font, this.fit(device.displayName(), WIDTH - 122), left + 7, top + 6, 0xFFFFFFFF);
+			graphics.text(font, this.fit(device.displayName(), WIDTH - 122), left + 7, top + 2, 0xFFFFFFFF);
 			String signal = device.rssi() + "";
 			graphics.text(font, signal, left + WIDTH - 77 - font.width(signal), top + 6, HINT);
 		});
@@ -156,10 +153,10 @@ public class BluetoothScreen extends SettingsScreen {
 		protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
 			int x = this.getX();
 			int y = this.getY();
-			int edge = this.isHoveredOrFocused() && this.active ? 0xFFFFFFFF : this.selected ? this.color : 0xFF52606B;
+			int edge = this.isHoveredOrFocused() && this.active ? 0xFFFFFFFF : this.color;
 			graphics.fill(x, y, x + this.getWidth(), y + 18, edge);
 			graphics.fill(x + 1, y + 1, x + this.getWidth() - 1, y + 17, this.selected ? 0xFF344450 : 0xFF202A33);
-			graphics.centeredText(Minecraft.getInstance().font, this.getMessage(), x + this.getWidth() / 2, y + 5, this.active ? this.color : HINT);
+			graphics.centeredText(Minecraft.getInstance().font, this.getMessage(), x + this.getWidth() / 2, y + 5, this.color);
 		}
 	}
 
