@@ -21,6 +21,11 @@ public final class RideChecks {
 	private static final long T0 = 1_791_288_000_000L; // 2026-10-06T12:00:00Z
 
 	public static void main(String[] args) throws IOException {
+		require(RideExport.folderName(java.time.Instant.parse("2026-11-08T15:20:03Z").toEpochMilli(), java.time.ZoneId.of("Europe/Berlin")).equals("2026-11-08_16-20-03"), "ride folders use local date and start time");
+		var rendered = dev.michidk.voxvelo.fitness.fitness.RideMapImage.draw(List.of(point(0, 0), point(50, 0)), null);
+		require(rendered.argb(0, 0) == dev.michidk.voxvelo.fitness.fitness.RideMapImage.PAPER, "unseen terrain stays map paper");
+		require(rendered.argb(rendered.layout().pixelX(25), rendered.layout().pixelZ(0)) != dev.michidk.voxvelo.fitness.fitness.RideMapImage.PAPER, "PNG renderer includes route without a map item");
+		require(rendered.argb(rendered.layout().pixelX(0), rendered.layout().pixelZ(0)) != rendered.argb(rendered.layout().pixelX(50), rendered.layout().pixelZ(0)), "PNG start and finish have distinct colors");
 		RideRecording ride = sampleRide();
 		RideSummary summary = ride.summary();
 		require(summary.timerSeconds() == 598, "riding time leaves out the dismounted minute: " + summary.timerSeconds());

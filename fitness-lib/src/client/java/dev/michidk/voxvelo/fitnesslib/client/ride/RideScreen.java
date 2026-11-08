@@ -128,7 +128,7 @@ public class RideScreen extends SettingsScreen {
 			Path file = RideExport.writeFit(ride, this.ctx.config);
 			this.ctx.rideRecorder.markLastRideSaved();
 			this.rebuildWidgets();
-			this.message = Component.translatable("voxvelo_fitness_lib.ride.saved", file.getFileName().toString()).withStyle(ChatFormatting.GREEN);
+			this.message = Component.translatable("voxvelo_fitness_lib.ride.saved", file.getParent().getFileName().toString()).withStyle(ChatFormatting.GREEN);
 			if (this.minecraft.player != null) {
 				this.minecraft.player.sendSystemMessage(savedMessage(file));
 			}
@@ -138,11 +138,12 @@ public class RideScreen extends SettingsScreen {
 		}
 	}
 
-	/** A chat line with the file name, clickable like a screenshot link. */
+	/** A chat line with the ride's folder name, clickable like a screenshot link, which opens the folder. */
 	public static Component savedMessage(Path file) {
-		Component name = Component.literal(file.getFileName().toString())
+		Path folder = file.getParent();
+		Component name = Component.literal(folder.getFileName().toString())
 			.withStyle(ChatFormatting.UNDERLINE)
-			.withStyle(style -> style.withClickEvent(new ClickEvent.OpenFile(file.toAbsolutePath())));
+			.withStyle(style -> style.withClickEvent(new ClickEvent.OpenFile(folder.toAbsolutePath())));
 		return Component.translatable("voxvelo_fitness_lib.ride.saved_chat", name);
 	}
 

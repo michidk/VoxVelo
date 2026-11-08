@@ -16,6 +16,8 @@ public final class RideRecorder {
 
 	public RideRecorder(FitnessRuntime ctx) { this.ctx = ctx; }
 	public boolean isRecording() { return this.session.isRecording(); }
+	/** When the current recording started, in epoch milliseconds; names the ride's export folder. */
+	public long startMillis() { return this.session.startMillis(); }
 	public void start() { this.session.start(); }
 	public RideRecording stop() { return this.session.stop(); }
 	public @Nullable RideRecording lastRide() { return this.session.lastRide(); }

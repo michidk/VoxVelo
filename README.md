@@ -473,3 +473,5 @@ player faced when mounting.
 
 See the [OpenBikeControl protocol](https://github.com/OpenBikeControl/openbikecontrol-protocol/blob/main/PROTOCOL.md)
 for the wire format. Actions absent from these tables are not implemented.
+
+Ride exports are grouped under `voxvelo_fitness_lib/rides/yyyy-MM-dd_HH-mm-ss/`: `activity.fit`, `map.png`, and photos taken during that recording. The map PNG is produced when saving the ride without requesting a map item. It uses terrain sampled from loaded client chunks during the recording; unseen terrain remains blank paper. Photos taken outside a recording go in `rides/photos/`.

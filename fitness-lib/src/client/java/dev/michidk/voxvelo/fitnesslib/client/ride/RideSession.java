@@ -39,6 +39,11 @@ final class RideSession {
 		return this.recording;
 	}
 
+	/** When the current recording started, in epoch milliseconds; meaningful only while recording. */
+	public long startMillis() {
+		return this.startMillis;
+	}
+
 	public void start() {
 		if (this.recording) return;
 		this.samples.clear();

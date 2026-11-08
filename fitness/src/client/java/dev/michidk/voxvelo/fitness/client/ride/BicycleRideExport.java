@@ -16,7 +16,40 @@ public final class BicycleRideExport {
 	private static final DateTimeFormatter LABEL_TIME =
 			DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
+	private static final java.util.Map<String, dev.michidk.voxvelo.fitness.fitness.RideTerrainSketch> sketches = new java.util.HashMap<>();
+	private static long recordingStart = Long.MIN_VALUE;
+	private static Object recordedLevel;
+
 	private BicycleRideExport() {}
+
+	/** Keeps a bounded sketch of already loaded terrain for the current recording. */
+	public static void tick(Minecraft client) {
+		var recorder = dev.michidk.voxvelo.fitnesslib.client.FitnessRuntime.get().rideRecorder;
+		if (recordedLevel != client.level) {
+			if (client.level == null) sketches.clear();
+			recordedLevel = client.level;
+		}
+		if (!recorder.isRecording() || client.level == null || client.player == null || client.isPaused()) return;
+		if (recordingStart != recorder.startMillis()) { sketches.clear(); recordingStart = recorder.startMillis(); }
+		if (client.player.getVehicle() == null || client.level.dimensionType().hasCeiling()) return;
+		var level = client.level;
+		sketches.computeIfAbsent(level.dimension().identifier().toString(), key -> new dev.michidk.voxvelo.fitness.fitness.RideTerrainSketch())
+			.captureLoaded(level, client.player.blockPosition(), 8, 1,
+				(x, z) -> level.getChunkSource().getChunk(x, z, net.minecraft.world.level.chunk.status.ChunkStatus.FULL, false));
+	}
+
+	/** Writes the same route drawing as the map item without requesting an item from the server. */
+	public static void writeImage(RideRecording ride, java.nio.file.Path directory) throws java.io.IOException {
+		if (ride.isEmpty()) return;
+		var points = routePoints(ride.samples(), RideMapPayload.MAX_POINTS);
+		var sketch = recordingStart == ride.startMillis() ? sketches.get(ride.samples().getFirst().dimension()) : null;
+		var drawn = dev.michidk.voxvelo.fitness.fitness.RideMapImage.draw(points, sketch);
+		try (var image = new com.mojang.blaze3d.platform.NativeImage(128, 128, false)) {
+			for (int z = 0; z < 128; z++) for (int x = 0; x < 128; x++) image.setPixel(x, z, drawn.argb(x, z));
+			image.writeToFile(directory.resolve("map.png"));
+		}
+	}
+
 
 	/** Whether the server can draw ride maps (it runs the fitness build). */
 	public static boolean canRequestMap() {

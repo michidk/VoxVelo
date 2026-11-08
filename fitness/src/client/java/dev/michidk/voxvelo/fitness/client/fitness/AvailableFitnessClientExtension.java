@@ -33,6 +33,7 @@ public final class AvailableFitnessClientExtension implements VoxVeloClientExten
 		this.ctx = ctx;
 		RideExport.registerMapExporter(
 				BicycleRideExport::canRequestMap, BicycleRideExport::requestMap);
+		RideExport.registerFolderWriter(BicycleRideExport::writeImage);
 		FitnessKeys.register();
 dev.michidk.voxvelo.fitnesslib.client.obc.ObcActions.register(0x83, "key.voxvelo_bikes.unstuck", dev.michidk.voxvelo.bikes.client.input.VoxVeloKeys.UNSTUCK, dev.michidk.voxvelo.bikes.client.network.ManualUnstuck::request);
 dev.michidk.voxvelo.fitnesslib.client.obc.ObcActions.register(0x84, "key.voxvelo_fitness_lib.road_follow", FitnessKeys.action("key.voxvelo_fitness_lib.road_follow"), () -> { ctx.config.roadFollowEnabled = !ctx.config.roadFollowEnabled; ctx.config.save(); });
@@ -67,6 +68,7 @@ dev.michidk.voxvelo.fitnesslib.client.obc.ObcActions.register(0x85, "key.voxvelo
 	@Override
 	public void tick(Minecraft client) {
 		FitnessContext ctx = this.ctx;
+		BicycleRideExport.tick(client);
 		if (client.level == null || client.player == null) {
 			this.mountRecording.reset();
 		} else if (!client.isPaused() && this.mountRecording.shouldStart(

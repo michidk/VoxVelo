@@ -38,7 +38,7 @@ public final class PhotoSettingsScreen extends SettingsScreen {
 			.create(0, 0, width, 20, Component.translatable(KEY + "hide_hud"), (button, value) -> this.config.ridePhotoHideHud = value));
 		this.rows.addRow(Button.builder(Component.translatable(KEY + "folder"), button -> {
 			try {
-				var directory = RideExport.ridesDirectory().resolve("photos");
+				var directory = RideExport.ridesDirectory();
 				java.nio.file.Files.createDirectories(directory);
 				com.mojang.blaze3d.Blaze3D.openPath(directory);
 			} catch (java.io.IOException failure) { FitnessRuntime.LOGGER.warn("Could not open photo folder", failure); }

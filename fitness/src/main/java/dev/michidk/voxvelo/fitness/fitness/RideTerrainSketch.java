@@ -19,7 +19,7 @@ import org.jspecify.annotations.Nullable;
  * an 8 x 8 grid, one sample per 2 x 2 blocks: the top block's map colour and its height, or for water a brightness by
  * depth. That is 256 bytes a chunk, so {@link #MAX_CHUNKS} chunks are about 4 MB.
  */
-final class RideTerrainSketch {
+public final class RideTerrainSketch {
 	static final int MAX_CHUNKS = 16_384;
 	private static final int GRID = 8;
 	private static final int CELLS = GRID * GRID;
@@ -42,6 +42,12 @@ final class RideTerrainSketch {
 	 * yet, nearest first. Returns how many were added.
 	 */
 	int captureAround(ServerLevel level, BlockPos centre, int radius, int budget) {
+		return this.captureLoaded(level, centre, radius, budget, (x, z) -> level.getChunkSource().getChunkNow(x, z));
+	}
+
+	/** Samples only chunks supplied by the caller, which must never load or generate them. */
+	public int captureLoaded(net.minecraft.world.level.Level level, BlockPos centre, int radius, int budget,
+		java.util.function.BiFunction<Integer, Integer, LevelChunk> loadedChunk) {
 		int cx = centre.getX() >> 4;
 		int cz = centre.getZ() >> 4;
 		int added = 0;
@@ -55,7 +61,7 @@ final class RideTerrainSketch {
 					if (this.chunks.containsKey(key)) {
 						continue;
 					}
-					LevelChunk chunk = level.getChunkSource().getChunkNow(cx + dx, cz + dz);
+					LevelChunk chunk = loadedChunk.apply(cx + dx, cz + dz);
 					if (chunk != null) {
 						this.chunks.put(key, sample(level, chunk));
 						added++;
@@ -73,7 +79,7 @@ final class RideTerrainSketch {
 		}
 	}
 
-	private static byte[] sample(ServerLevel level, LevelChunk chunk) {
+	private static byte[] sample(net.minecraft.world.level.Level level, LevelChunk chunk) {
 		byte[] data = new byte[CELLS * 4];
 		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 		int minY = level.getMinY();

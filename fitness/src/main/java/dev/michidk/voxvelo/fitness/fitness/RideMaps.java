@@ -24,7 +24,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ItemLore;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.saveddata.maps.MapId;
 import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 import org.jspecify.annotations.Nullable;
@@ -42,15 +41,12 @@ import org.jspecify.annotations.Nullable;
  * <p>In survival a ride map costs one empty map from the inventory, like any other map; creative players get it free.
  */
 final class RideMaps {
-	private static final int SKETCH_INTERVAL_TICKS = 20;
+	private static final int SKETCH_INTERVAL_TICKS = 1;
 	private static final int COOLDOWN_TICKS = 200;
 	static final int SKETCH_RADIUS_CHUNKS = 8;
-	/** New chunks sketched per rider and second; riding exposes about a dozen a second, standing still none. */
-	private static final int SKETCH_BUDGET = 48;
+	/** At most one chunk per tick, spreading terrain sampling instead of one large burst each second. */
+	private static final int SKETCH_BUDGET = 1;
 
-	private static final byte ROUTE = MapColor.COLOR_RED.getPackedId(MapColor.Brightness.HIGH);
-	private static final byte START = MapColor.COLOR_LIGHT_GREEN.getPackedId(MapColor.Brightness.HIGH);
-	private static final byte FINISH = MapColor.COLOR_BLACK.getPackedId(MapColor.Brightness.NORMAL);
 	private static final Style LORE = Style.EMPTY.withItalic(false).withColor(ChatFormatting.GRAY);
 
 	private static final Map<UUID, Map<ResourceKey<Level>, RideTerrainSketch>> SKETCHES = new HashMap<>();
@@ -59,7 +55,7 @@ final class RideMaps {
 	private RideMaps() {
 	}
 
-	/** Sketches the surroundings of every bike rider, once a second. */
+	/** Sketches a bounded slice of the surroundings each tick. */
 	static void tick(MinecraftServer server) {
 		if (server.getTickCount() % SKETCH_INTERVAL_TICKS != 0) {
 			return;
@@ -129,13 +125,9 @@ final class RideMaps {
 
 	/** Draws the map and registers its data with the level. Without a sketch the map shows only the route. */
 	static ItemStack create(ServerLevel level, RideMapPayload payload, @Nullable RideTerrainSketch sketch) {
-		List<RideMapPayload.Point> points = payload.points();
-		RideMapLayout layout = RideMapLayout.fit(points);
-		byte[] colors = new byte[RideMapLayout.SIZE * RideMapLayout.SIZE];
-		if (sketch != null) {
-			paintTerrain(layout, colors, sketch);
-		}
-		layout.drawRoute(colors, points, ROUTE, START, FINISH);
+		RideMapImage.Drawn drawn = RideMapImage.draw(payload.points(), sketch);
+		RideMapLayout layout = drawn.layout();
+		byte[] colors = drawn.colors();
 
 		// Vanilla snaps a new map's centre to its grid; the saved form lets the map sit exactly on the route.
 		MapItemSavedData fresh = MapItemSavedData.createFresh(layout.centerX(), layout.centerZ(), (byte) layout.scale(),
@@ -169,33 +161,5 @@ final class RideMaps {
 	private static String formatDuration(int seconds) {
 		int s = Math.max(0, seconds);
 		return String.format(java.util.Locale.ROOT, "%d:%02d:%02d", s / 3600, s / 60 % 60, s % 60);
-	}
-
-	/**
-	 * Paints every pixel whose block was sketched, shaded like a vanilla map: brighter where the ground rises towards
-	 * the north edge, darker where it falls, water darker with depth.
-	 */
-	private static void paintTerrain(RideMapLayout layout, byte[] colors, RideTerrainSketch sketch) {
-		int[] previousRow = new int[RideMapLayout.SIZE];
-		java.util.Arrays.fill(previousRow, Integer.MIN_VALUE);
-		for (int pz = 0; pz < RideMapLayout.SIZE; pz++) {
-			for (int px = 0; px < RideMapLayout.SIZE; px++) {
-				RideTerrainSketch.Cell cell = sketch.cell(layout.blockX(px), layout.blockZ(pz));
-				if (cell == null || cell.colorId() == 0) {
-					previousRow[px] = Integer.MIN_VALUE;
-					continue;
-				}
-				MapColor.Brightness brightness;
-				if (cell.isWater()) {
-					brightness = MapColor.Brightness.values()[cell.brightness()];
-				} else {
-					int north = previousRow[px];
-					brightness = north == Integer.MIN_VALUE || north == cell.height() ? MapColor.Brightness.NORMAL
-						: cell.height() > north ? MapColor.Brightness.HIGH : MapColor.Brightness.LOW;
-				}
-				previousRow[px] = cell.height();
-				colors[px + pz * RideMapLayout.SIZE] = MapColor.byId(cell.colorId()).getPackedId(brightness);
-			}
-		}
 	}
 }
