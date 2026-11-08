@@ -84,7 +84,23 @@ dev.michidk.voxvelo.fitnesslib.client.obc.ObcActions.register(0x85, "key.voxvelo
 			}
 		}
 		if (client.level != null) ctx.vitalsSender.tick();
+		lookAlongBike(client);
 		toggleStatsOnKey(client);
+	}
+
+	/**
+	 * With the view locked to the bike, the camera already looks ahead (see the camera mixins), but the player
+	 * entity still carries the last mouse look: in third person the rider's head turns away, and a reset of the
+	 * bike leaves the camera offset. Keeping the entity's own yaw and head on the bike's heading, and its pitch
+	 * level, fixes both, and sends that look to the server so other riders see it too.
+	 */
+	private void lookAlongBike(Minecraft client) {
+		var player = client.player;
+		if (player == null || !this.ctx.config.bikeCameraFollow
+			|| !(player.getVehicle() instanceof dev.michidk.voxvelo.bikes.bike.BikeEntity bike) || bike.getRider() != player) return;
+		player.setYRot(bike.getYRot());
+		player.setYHeadRot(bike.getYRot());
+		player.setXRot(0.0F);
 	}
 
 	@Override
