@@ -12,6 +12,15 @@ public final class BikePhysics {
 	private static final double MIN_DRIVE_SPEED = 1.5;
 
 	/**
+	 * Extra slowing, in m/s², while nobody pedals. Real tyres and air alone let a road bike coast for over 300 m from
+	 * 30 km/h, far longer than feels right in the game's world; this brings it down to about 80 m. It only acts without
+	 * power, so speed while pedalling and the resistance sent to a trainer are unchanged.
+	 */
+	public static final double COAST_DECELERATION = 0.3;
+	/** Downhill grade at which the coasting drag has faded out, so the bike still rolls down hills. */
+	private static final double COAST_FADE_GRADIENT = 0.03;
+
+	/**
 	 * @param riderMass            kg
 	 * @param bikeMass             kg
 	 * @param maxSpeed             hard cap, m/s
@@ -116,12 +125,24 @@ public final class BikePhysics {
 		// Rolling resistance and braking only ever remove speed; they must not push it through zero.
 		double rollingForce = p.rolling(surface) * mass * GRAVITY * cosSlope;
 		double brakeDeceleration = brake * p.maxBrakeDeceleration() * grip;
-		double friction = (rollingForce / mass + brakeDeceleration) * dt;
+		double friction = (rollingForce / mass + brakeDeceleration + coastDeceleration(power, gradient)) * dt;
 		if (newSpeed > 0.0) {
 			newSpeed = Math.max(0.0, newSpeed - friction);
 		}
 
 		return Math.max(0.0, Math.min(p.maxSpeed(), newSpeed));
+	}
+
+	/**
+	 * The coasting drag for the given power and grade: full on flat ground and uphill, fading out linearly towards
+	 * {@link #COAST_FADE_GRADIENT} downhill, and none at all while there is power.
+	 */
+	static double coastDeceleration(double power, double gradient) {
+		if (power > 0.0) {
+			return 0.0;
+		}
+		double fade = Math.max(0.0, Math.min(1.0, 1.0 + gradient / COAST_FADE_GRADIENT));
+		return COAST_DECELERATION * fade;
 	}
 
 	/** Maximum front wheel steering angle in radians; large at walking pace, small when fast. */

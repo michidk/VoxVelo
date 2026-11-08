@@ -32,6 +32,24 @@ public final class BikeRiderStateChecks {
 		double braked = BikePhysics.stepSpeed(startingSpeed, BikeMotion.DT, 0.0, 1.0, BikeSurface.PATH, 0.0, BikeType.GRAVEL.params());
 		require(coasted > 0.0 && coasted < startingSpeed, "an unattended bike keeps moving and slows under natural resistance");
 		require(braked < coasted, "coasting does not apply the full brake used by an active rider");
+
+		// Coasting on the flat ends within a sensible distance, pedalling is unaffected, and hills still roll.
+		BikePhysics.Params road = BikeType.ROAD.params();
+		double speed = 30 / 3.6;
+		double distance = 0.0;
+		while (speed > 0.0 && distance < 1000) {
+			double next = BikePhysics.stepSpeed(speed, BikeMotion.DT, 0.0, 0.0, BikeSurface.STONE, 0.0, road);
+			distance += (speed + next) / 2 * BikeMotion.DT;
+			speed = next;
+		}
+		require(distance > 50 && distance < 120, "a road bike coasts 50 to 120 m from 30 km/h on stone, got " + distance);
+		require(BikePhysics.coastDeceleration(150, 0.0) == 0.0, "no coasting drag while pedalling");
+		require(BikePhysics.coastDeceleration(0, 0.02) == BikePhysics.COAST_DECELERATION, "full coasting drag uphill");
+		require(BikePhysics.coastDeceleration(0, -0.03) == 0.0 && BikePhysics.coastDeceleration(0, -0.10) == 0.0,
+			"no coasting drag on descents of 3 % and steeper");
+		double descent = 5.0;
+		for (int i = 0; i < 4000; i++) descent = BikePhysics.stepSpeed(descent, BikeMotion.DT, 0.0, 0.0, BikeSurface.STONE, -0.05, road);
+		require(descent * 3.6 > 25, "a 5 % descent still rolls at speed, got " + descent * 3.6 + " km/h");
 		System.out.println("Bike rider state checks passed.");
 	}
 
