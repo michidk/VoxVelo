@@ -7,10 +7,10 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** Prepares the camera before extraction and captures after the frame has rendered. */
+/** Prepares the camera before its update and captures after the frame has rendered. */
 @Mixin(GameRenderer.class)
 public abstract class RidePhotoMixin {
-	@Inject(method = "extract", at = @At("HEAD"))
+	@Inject(method = "update", at = @At("HEAD"))
 	private void voxvelo$preparePhoto(CallbackInfo ci) { RidePhotos.prepare(); }
 	@Inject(method = "extract", at = @At("RETURN"))
 private void voxvelo$restoreView(CallbackInfo ci) { RidePhotos.restoreExtractedView(); }
