@@ -6,8 +6,32 @@
   "packageRules": [
     {
       "description": "Pin build tools and the Java dependencies bundled into the mod; Fabric runtime compatibility is declared separately in fabric.mod.json",
-      "matchManagers": ["gradle", "gradle-wrapper", "github-actions"],
+      "matchManagers": [
+        "gradle",
+        "gradle-wrapper",
+        "github-actions"
+      ],
       "rangeStrategy": "pin"
+    },
+    {
+      "description": "Minecraft is supplied by Loom, not a Maven repository; update it together with Fabric API and GeckoLib after compatibility testing",
+      "matchPackageNames": [
+        "com.mojang:minecraft"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Fabric Loader and Fabric API are published in Fabric's Maven repository, which Loom adds implicitly",
+      "matchDatasources": [
+        "maven"
+      ],
+      "matchPackageNames": [
+        "net.fabricmc:fabric-loader",
+        "net.fabricmc.fabric-api:fabric-api"
+      ],
+      "registryUrls": [
+        "https://maven.fabricmc.net/"
+      ]
     }
   ]
 }
