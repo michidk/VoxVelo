@@ -63,6 +63,18 @@ public final class VirtualShiftingChecks {
 		byte[] bytes = TrainerSimulation.encode(new TrainerSimulation.Target(-1.25, 0.004));
 		require(bytes.length == 7 && bytes[0] == 0x11 && bytes[3] == (byte) 0x83 && bytes[4] == (byte) 0xff
 			&& bytes[5] == 40 && bytes[6] == 51, "FTMS signed grade and field widths");
+		// The grade low-pass filter: a time constant of 0 passes measurements on, a steady slope comes through by
+		// about two thirds after one time constant, and a single block bump (a few ticks of slope) is mostly lost.
+		require(TrainerFeedback.smooth(0, 10, 0, 0.05) == 10, "no smoothing passes the measurement on");
+		double steady = 0;
+		for (int tick = 0; tick < 30; tick++) steady = TrainerFeedback.smooth(steady, 10, 1.5, 0.05);
+		require(steady > 6.0 && steady < 6.6, "two thirds of a steady slope after one time constant, got " + steady);
+		double bump = 0;
+		for (int tick = 0; tick < 4; tick++) bump = TrainerFeedback.smooth(bump, 10, 1.5, 0.05);
+		require(bump < 1.3, "a four tick bump of ten percent is mostly filtered, got " + bump);
+		for (int tick = 0; tick < 40; tick++) bump = TrainerFeedback.smooth(bump, 0, 1.5, 0.05);
+		require(bump < 0.4, "the filtered bump dies away");
+		require(TrainerFeedback.smooth(0, 10, Double.NaN, 0.05) == 10, "an invalid time constant does not stall the filter");
 		System.out.println("Virtual shifting checks passed");
 	}
 

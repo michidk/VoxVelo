@@ -26,6 +26,14 @@ public final class TrainerLimits {
 	public static final double MAX_INTENSITY = 2.0;
 	public static final double DEFAULT_INTENSITY = 1.0;
 
+	/**
+	 * Time constant, in seconds, of the low-pass filter on the grade sent to the trainer: how long a new slope
+	 * takes to come through by about two thirds. 0 passes every measurement straight on.
+	 */
+	public static final double MIN_GRADE_SMOOTHING_S = 0.0;
+	public static final double MAX_GRADE_SMOOTHING_S = 5.0;
+	public static final double DEFAULT_GRADE_SMOOTHING_S = 1.5;
+
 	/** Reference ratio for virtual gear six (50/20). */
 	public static final double DEFAULT_GEAR_RATIO = 2.5;
 

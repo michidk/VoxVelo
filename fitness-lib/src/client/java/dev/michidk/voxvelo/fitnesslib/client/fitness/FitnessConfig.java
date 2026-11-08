@@ -55,6 +55,8 @@ public final class FitnessConfig {
 	/** Send terrain gradient and surface to the trainer as resistance. Intensity 1.0 matches the game physics. */
 	public boolean trainerResistanceEnabled = true;
 	public double trainerResistanceIntensity = TrainerLimits.DEFAULT_INTENSITY;
+	/** Seconds the grade sent to the trainer takes to follow the terrain, so a single block step is not felt. */
+	public double trainerGradeSmoothingSeconds = TrainerLimits.DEFAULT_GRADE_SMOOTHING_S;
 	public boolean virtualShiftingEnabled = true;
 	public VirtualShifting.GearRange virtualGearRange = VirtualShifting.GearRange.COMPACT;
 	/** Virtual wheel circumference used with measured cadence to calculate road speed. */
@@ -192,6 +194,8 @@ loaded.sanitize();
 		this.obcPreferredName = this.obcPreferredName == null ? "" : this.obcPreferredName;
 		this.trainerResistanceIntensity = clamp(this.trainerResistanceIntensity,
 			TrainerLimits.MIN_INTENSITY, TrainerLimits.MAX_INTENSITY, TrainerLimits.DEFAULT_INTENSITY);
+		this.trainerGradeSmoothingSeconds = clamp(this.trainerGradeSmoothingSeconds,
+			TrainerLimits.MIN_GRADE_SMOOTHING_S, TrainerLimits.MAX_GRADE_SMOOTHING_S, TrainerLimits.DEFAULT_GRADE_SMOOTHING_S);
 		if (this.virtualGearRange == null) this.virtualGearRange = VirtualShifting.GearRange.COMPACT;
 		this.trainerWheelCircumferenceM = clamp(this.trainerWheelCircumferenceM,
 			TrainerLimits.MIN_WHEEL_CIRCUMFERENCE_M, TrainerLimits.MAX_WHEEL_CIRCUMFERENCE_M, TrainerLimits.DEFAULT_WHEEL_CIRCUMFERENCE_M);

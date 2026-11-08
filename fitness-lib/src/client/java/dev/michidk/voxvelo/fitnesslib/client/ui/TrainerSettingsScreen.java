@@ -34,6 +34,9 @@ public class TrainerSettingsScreen extends SettingsScreen {
 				.create(0, 0, WIDTH, 20, Component.translatable("voxvelo_fitness_lib.config.resistance"), (button, value) -> this.ctx.config.trainerResistanceEnabled = value));
 		this.rows.addRow(new ValueSlider(0, 0, WIDTH, TrainerLimits.MIN_INTENSITY, TrainerLimits.MAX_INTENSITY, 0.1, this.ctx.config.trainerResistanceIntensity,
 				v -> Component.translatable("voxvelo_fitness_lib.config.intensity", Math.round(v * 100)), v -> this.ctx.config.trainerResistanceIntensity = v).tip("voxvelo_fitness_lib.config.intensity"));
+		this.rows.addRow(new ValueSlider(0, 0, WIDTH, TrainerLimits.MIN_GRADE_SMOOTHING_S, TrainerLimits.MAX_GRADE_SMOOTHING_S, 0.25, this.ctx.config.trainerGradeSmoothingSeconds,
+				v -> Component.translatable("voxvelo_fitness_lib.config.grade_smoothing", String.format(Locale.ROOT, "%.2f", v)),
+				v -> this.ctx.config.trainerGradeSmoothingSeconds = v).tip("voxvelo_fitness_lib.config.grade_smoothing"));
 		this.rows.addText((graphics, font, left, top) ->
 			graphics.text(font, Component.translatable("voxvelo_fitness_lib.trainer_settings.gearing"), left, top + 2, HINT));
 		this.rows.addRow(CycleButton.onOffBuilder(this.ctx.config.virtualShiftingEnabled)

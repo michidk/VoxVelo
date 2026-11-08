@@ -19,8 +19,8 @@ public final class TrainerFeedback {
 	private static final long URGENT_INTERVAL_MILLIS = 150;
 	/** A grade change of at least this much since the last update is sent without waiting out the normal interval. */
 	private static final double URGENT_GRADE_STEP_PERCENT = 0.5;
-	/** Per-tick smoothing so single stair steps do not make the trainer jerk. */
-	private static final double SMOOTHING = 0.35;
+	/** The game tick the grade filter advances by on each update. */
+	private static final double TICK_SECONDS = 0.05;
 	private static final double GRADE_DEADBAND_PERCENT = 0.1;
 	/** An unchanged target is sent again this often, so a trainer that dropped a command still ends up on it. */
 	private static final long REFRESH_MILLIS = 5_000;
@@ -63,7 +63,9 @@ public final class TrainerFeedback {
 		double gradient = bike.gradient();
 		TrainerSimulation.Target raw = TrainerSimulation.target(
 			gradient, bike.rollingResistance(), bike.slopeScale(), this.ctx.config.trainerResistanceIntensity);
-		this.smoothedGrade = this.hasSmoothed ? this.smoothedGrade + (raw.gradePercent() - this.smoothedGrade) * SMOOTHING : raw.gradePercent();
+		this.smoothedGrade = this.hasSmoothed
+			? smooth(this.smoothedGrade, raw.gradePercent(), this.ctx.config.trainerGradeSmoothingSeconds, TICK_SECONDS)
+			: raw.gradePercent();
 		this.hasSmoothed = true;
 		TrainerSimulation.Target target = new TrainerSimulation.Target(this.smoothedGrade, raw.crr());
 		double gear = bike.virtualGearRatio();
@@ -90,6 +92,17 @@ public final class TrainerFeedback {
 			this.lastGear = gear;
 		}
 		this.applying = true;
+	}
+
+	/**
+	 * One step of the first-order low-pass filter on the grade: the smoothed value moves towards the measured one by
+	 * the share {@code dt / (timeConstant + dt)}, so after {@code timeConstant} seconds of a steady new slope about two
+	 * thirds of it has come through, and a bump lasting a fraction of that is mostly lost. A time constant of 0
+	 * passes the measurement straight on.
+	 */
+	public static double smooth(double previous, double measured, double timeConstantSeconds, double dtSeconds) {
+		double tau = Double.isFinite(timeConstantSeconds) ? Math.max(0, timeConstantSeconds) : 0;
+		return previous + (measured - previous) * (dtSeconds / (tau + dtSeconds));
 	}
 
 	/** Best effort on game exit: leave the trainer on a flat road instead of the last hill. */
