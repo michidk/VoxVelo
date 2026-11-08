@@ -56,7 +56,9 @@ public final class InputManagerChecks {
 		road.steering = 0.7;
 		require(manager.compose(null).steering() == 0.7, "road follow steers over the controller and keyboard");
 		road.steering = 0.0;
-		require(manager.compose(null).steering() == 0.4, "centred road follow falls through to the controller");
+		require(manager.compose(null).steering() == 0.4, "a centred source that does not hold the steering falls through");
+		road.holds = true;
+		require(manager.compose(null).steering() == 0.0, "road follow keeps a straight road over the controller");
 		road.active = false;
 		road.steering = 0.9;
 		require(manager.compose(null).steering() == 0.4, "an inactive road follow is ignored");
@@ -69,10 +71,17 @@ public final class InputManagerChecks {
 		require(manager.compose(null).steeringAngleDegrees() == 12.5, "controller angle reaches bike controls unchanged");
 		controller.angle = 0.0;
 		require(manager.compose(null).steeringAngleDegrees() == 0.0, "a centered angle overrides keyboard steering");
+		controller.angle = 20.0;
 		road.active = true;
-		require(manager.compose(null).steeringAngleDegrees() == 0.0,
-			"explicit handlebar angle overrides road guidance");
+		road.steering = 0.3;
+		state = manager.compose(null);
+		require(state.steeringAngleDegrees() == null && state.steering() == 0.3, "road follow steers over a handlebar angle");
+		road.steering = 0.0;
+		state = manager.compose(null);
+		require(state.steeringAngleDegrees() == null && state.steering() == 0.0, "a handlebar angle does not take a straight road");
 		road.active = false;
+		require(manager.compose(null).steeringAngleDegrees() == 20.0, "off the road the handlebar steers again");
+		controller.angle = 0.0;
 		controller.active = false;
 		require(manager.compose(null).steeringAngleDegrees() == null, "disconnected angle is ignored");
 		controller.angle = null;
@@ -109,6 +118,7 @@ public final class InputManagerChecks {
 		double propulsion;
 		double steering;
 		Double angle;
+		boolean holds;
 		double brake;
 		int shifts;
 		int setGear;
@@ -138,6 +148,7 @@ public final class InputManagerChecks {
 		@Override public OptionalDouble propulsion() { return OptionalDouble.of(this.propulsion); }
 		@Override public OptionalDouble steering() { return OptionalDouble.of(this.steering); }
 		@Override public OptionalDouble steeringAngleDegrees() { return this.angle == null ? OptionalDouble.empty() : OptionalDouble.of(this.angle); }
+		@Override public boolean holdsSteering() { return this.holds && this.active; }
 		@Override public OptionalDouble brake() { return OptionalDouble.of(this.brake); }
 		@Override public int consumeGearShift() {
 			int value = this.shifts;

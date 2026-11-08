@@ -83,7 +83,7 @@ public final class FitnessConfig {
 	public boolean junctionHudEnabled = true;
 
 	/** Steer the bike along the road by itself. It takes over the steering whenever a road is found ahead. */
-	public boolean roadFollowEnabled = false;
+	public boolean roadFollowEnabled = true;
 	/** Keep the bicycle camera level and facing along the bike when the Fitness adapter is installed. */
 	public boolean bikeCameraFollow = true;
 	/** Blocks that count as road for the road-follow steering source: block ids, or tags written as #namespace:tag. */

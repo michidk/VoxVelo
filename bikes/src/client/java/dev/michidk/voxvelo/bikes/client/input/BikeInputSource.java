@@ -35,6 +35,13 @@ public interface BikeInputSource {
 	/** Calibrated front-wheel angle; when present, takes precedence over normalized steering. */
 	default OptionalDouble steeringAngleDegrees() { return OptionalDouble.empty(); }
 
+	/**
+	 * Whether this source keeps the steering while it is active even when it steers straight ahead. Most sources
+	 * count as idle when centred, so an earlier one may steer; an automatic source such as road follow must not lose
+	 * the bike to a handlebar or key every time its road runs straight.
+	 */
+	default boolean holdsSteering() { return false; }
+
 	/** Normalized brake 0..1, if this source provides braking. */
 	OptionalDouble brake();
 

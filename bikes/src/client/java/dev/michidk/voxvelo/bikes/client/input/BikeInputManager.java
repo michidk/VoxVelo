@@ -16,6 +16,9 @@ import net.minecraft.client.Minecraft;
  * <li>Gears: every source's shifts count, and an absolute gear a source asks for is applied.
  * <li>Steering: the latest registered source that is steering wins, so road follow takes over from an
  *     OpenBikeControl device, which takes over from the keyboard; the keyboard steers when the others are idle.
+ *     A source steers when it reports a handlebar angle, steers off centre, or holds the steering
+ *     ({@link BikeInputSource#holdsSteering()}): road follow keeps the bike on a straight road even while a
+ *     handlebar sends angles.
  * </ul>
  */
 public final class BikeInputManager {
@@ -76,29 +79,20 @@ public final class BikeInputManager {
 		}
 		this.gear = clampGear(this.gear + shifts);
 
+		// The latest registered active source that is steering wins; otherwise whatever the keyboard has (it may be
+		// easing back to centre).
 		for (int i = this.sources.size() - 1; i >= 0; i--) {
 			BikeInputSource source = this.sources.get(i);
 			if (!source.isActive() || !source.supports(ControlChannel.STEERING)) continue;
 			if (source.steeringAngleDegrees().isPresent()) {
 				return new BikeControlState(propulsion, 0, brake, this.gear, source.steeringAngleDegrees().getAsDouble()).sanitized();
 			}
-
-		}
-		return new BikeControlState(propulsion, this.steering(), brake, this.gear).sanitized();
-	}
-
-	/** The latest registered active source that is steering; otherwise whatever the keyboard has (it may be easing back to centre). */
-	private double steering() {
-		for (int i = this.sources.size() - 1; i >= 0; i--) {
-			BikeInputSource source = this.sources.get(i);
-			if (source.isActive() && source.supports(ControlChannel.STEERING)) {
-				double value = source.steering().orElse(0.0);
-				if (Math.abs(value) >= STEERING_IDLE) {
-					return value;
-				}
+			double value = source.steering().orElse(0.0);
+			if (source.holdsSteering() || Math.abs(value) >= STEERING_IDLE) {
+				return new BikeControlState(propulsion, value, brake, this.gear).sanitized();
 			}
 		}
-		return this.keyboard.steering().orElse(0.0);
+		return new BikeControlState(propulsion, this.keyboard.steering().orElse(0.0), brake, this.gear).sanitized();
 	}
 
 	private static int clampGear(int gear) {

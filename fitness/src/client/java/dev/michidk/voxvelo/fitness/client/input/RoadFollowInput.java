@@ -27,6 +27,8 @@ public final class RoadFollowInput implements BikeInputSource {
 	private static final double SLEW_PER_TICK = 0.3;
 	/** Below this speed the bike would only pivot on the spot, so no steering is applied. */
 	private static final double MIN_SPEED = 0.5;
+	/** The handlebar angle that counts as steering fully to one side when answering a junction. */
+	private static final double FULL_CHOICE_DEGREES = 30.0;
 
 	private final FitnessConfig config;
 	private final BikeInputManager manager;
@@ -58,6 +60,12 @@ public final class RoadFollowInput implements BikeInputSource {
 
 	@Override
 	public boolean isActive() {
+		return this.active;
+	}
+
+	/** While a road is found the bike follows it, straight sections included; a handlebar only answers junctions. */
+	@Override
+	public boolean holdsSteering() {
 		return this.active;
 	}
 
@@ -105,12 +113,19 @@ public final class RoadFollowInput implements BikeInputSource {
 		this.steering += Math.max(-SLEW_PER_TICK, Math.min(SLEW_PER_TICK, target - this.steering));
 	}
 
-	/** What the rider is steering with the keyboard or another source: negative left, positive right. */
+	/**
+	 * What the rider is steering with the keyboard or another source: negative left, positive right. A handlebar
+	 * angle counts as full steering at {@link #FULL_CHOICE_DEGREES}, so turning it a few degrees past its dead zone
+	 * answers a junction.
+	 */
 	private double riderChoice() {
 		double strongest = 0.0;
 		for (BikeInputSource source : this.manager.sources()) {
 			if (source != this && source.supports(ControlChannel.STEERING) && source.isActive()) {
-				double value = source.steering().orElse(0.0);
+				OptionalDouble angle = source.steeringAngleDegrees();
+				double value = angle.isPresent()
+					? Math.max(-1.0, Math.min(1.0, angle.getAsDouble() / FULL_CHOICE_DEGREES))
+					: source.steering().orElse(0.0);
 				if (Math.abs(value) > Math.abs(strongest)) {
 					strongest = value;
 				}
