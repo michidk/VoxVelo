@@ -177,6 +177,13 @@ tasks.register('verifyObcMenus', JavaExec) {
 }
 tasks.named('check') { dependsOn 'verifyObcMenus' }
 
+tasks.register('verifyObcStream', JavaExec) {
+	dependsOn verificationClasses
+	classpath = sourceSets.verification.runtimeClasspath
+	mainClass = 'dev.michidk.voxvelo.fitnesslib.client.obc.ObcStreamChecks'
+}
+tasks.named('check') { dependsOn 'verifyObcStream' }
+
 tasks.register('verifyRideSession', JavaExec) {
 	dependsOn verificationClasses
 	classpath = sourceSets.verification.runtimeClasspath
