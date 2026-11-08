@@ -64,6 +64,11 @@ if (target == null) {
 if (target != null) {
 	this.bike.teleportTo((net.minecraft.server.level.ServerLevel) this.bike.level(), target.x, target.y, target.z, java.util.Set.of(), this.bike.getYRot(), this.bike.getXRot(), false);
 	this.bike.setDeltaMovement(Vec3.ZERO);
+	// The rider's client moves the bike itself and ignores the server's position updates for it, then reports
+	// its old position back. The vehicle move packet is the one it obeys: it snaps the bike to the new spot.
+	if (this.bike.getRider() instanceof net.minecraft.server.level.ServerPlayer rider) {
+		rider.connection.send(net.minecraft.network.protocol.game.ClientboundMoveVehiclePacket.fromEntity(this.bike));
+	}
 } else if (this.bike.getRider() != null) {
 this.bike.getRider().sendOverlayMessage(net.minecraft.network.chat.Component.translatable("voxvelo_bikes.unstuck.no_space"));
 }
