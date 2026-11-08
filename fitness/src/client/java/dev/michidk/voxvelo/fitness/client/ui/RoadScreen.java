@@ -10,6 +10,7 @@ import dev.michidk.voxvelo.fitnesslib.client.fitness.FitnessConfig;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.CycleButton;
 import net.minecraft.client.gui.components.EditBox;
@@ -18,6 +19,8 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -43,30 +46,33 @@ public class RoadScreen extends SettingsScreen {
 
 	@Override
 	protected void addOptions() {
-		this.rows.addText(() -> Component.translatable("voxvelo_fitness_lib.road.hint"), HINT);
-		this.rows.addRow(CycleButton.onOffBuilder(this.ctx.config.bikeCameraFollow)
-			.withTooltip(value -> Tips.of("voxvelo_fitness.camera.follow"))
-			.create(0, 0, WIDTH, 20, Component.translatable("voxvelo_fitness.camera.follow"),
-				(button, value) -> this.ctx.config.bikeCameraFollow = value));
-
 		this.rows.addHeader(Component.translatable("voxvelo_fitness_lib.road.section.following"));
-		this.rows.addRow(CycleButton.onOffBuilder(this.ctx.config.roadFollowEnabled)
-				.withTooltip(value -> Tips.of("voxvelo_fitness_lib.road.follow"))
-				.create(0, 0, HALF, 20, Component.translatable("voxvelo_fitness_lib.road.follow"), (button, value) -> this.ctx.config.roadFollowEnabled = value),
-			new ValueSlider(RIGHT, 0, HALF, 2.0, 16.0, 1.0, this.ctx.config.roadMaxHalfWidth,
-				v -> Component.translatable("voxvelo_fitness_lib.road.half_width", Math.round(v)), v -> this.ctx.config.roadMaxHalfWidth = (int) Math.round(v)).tip("voxvelo_fitness_lib.road.half_width"));
-		this.rows.addRow(CycleButton.onOffBuilder(this.ctx.config.junctionPrompt)
-				.withTooltip(value -> Tips.of("voxvelo_fitness_lib.road.junction"))
-				.create(0, 0, HALF, 20, Component.translatable("voxvelo_fitness_lib.road.junction"), (button, value) -> this.ctx.config.junctionPrompt = value),
-			new ValueSlider(RIGHT, 0, HALF, 5.0, 120.0, 5.0, this.ctx.config.junctionCooldownSeconds,
-				v -> Component.translatable("voxvelo_fitness_lib.road.cooldown", Math.round(v)), v -> this.ctx.config.junctionCooldownSeconds = (int) Math.round(v)).tip("voxvelo_fitness_lib.road.cooldown"));
-
-		this.rows.addHeader(Component.translatable("voxvelo_fitness_lib.road.section.terrain"));
-		this.rows.addRow(new ValueSlider(0, 0, WIDTH, 10, 40, 1, this.ctx.config.slopeWindowBlocks,
-			v -> Component.translatable("voxvelo_fitness_lib.config.slope_window", Math.round(v)),
-			v -> this.ctx.config.slopeWindowBlocks = (int) Math.round(v)).tip("voxvelo_fitness_lib.config.slope_window"));
+		ValueSlider halfWidth = new ValueSlider(RIGHT, 0, HALF, 2.0, 16.0, 1.0, this.ctx.config.roadMaxHalfWidth,
+			v -> Component.translatable("voxvelo_fitness_lib.road.half_width", Math.round(v)), v -> this.ctx.config.roadMaxHalfWidth = (int) Math.round(v)).tip("voxvelo_fitness_lib.road.half_width");
+		ValueSlider cooldown = new ValueSlider(RIGHT, 0, HALF, 5.0, 120.0, 5.0, this.ctx.config.junctionCooldownSeconds,
+			v -> Component.translatable("voxvelo_fitness_lib.road.cooldown", Math.round(v)), v -> this.ctx.config.junctionCooldownSeconds = (int) Math.round(v)).tip("voxvelo_fitness_lib.road.cooldown");
+		CycleButton<Boolean> junction = CycleButton.onOffBuilder(this.ctx.config.junctionPrompt)
+			.withTooltip(value -> Tips.of("voxvelo_fitness_lib.road.junction"))
+			.create(0, 0, HALF, 20, Component.translatable("voxvelo_fitness_lib.road.junction"), (button, value) -> {
+				this.ctx.config.junctionPrompt = value;
+				cooldown.active = this.ctx.config.roadFollowEnabled && value;
+			});
+		CycleButton<Boolean> follow = CycleButton.onOffBuilder(this.ctx.config.roadFollowEnabled)
+			.withTooltip(value -> Tips.of("voxvelo_fitness_lib.road.follow"))
+			.create(0, 0, HALF, 20, Component.translatable("voxvelo_fitness_lib.road.follow"), (button, value) -> {
+				this.ctx.config.roadFollowEnabled = value;
+				this.updateDependents(halfWidth, junction, cooldown);
+			});
+		this.updateDependents(halfWidth, junction, cooldown);
+		this.rows.addRow(follow, halfWidth);
+		this.rows.addRow(junction, cooldown);
 
 		this.rows.addHeader(Component.translatable("voxvelo_fitness_lib.road.section.blocks"));
+		// One line that explains the list, or says why the last block could not be added.
+		this.rows.addText((graphics, font, left, top) -> {
+			Component line = this.error != null ? this.error : Component.translatable("voxvelo_fitness_lib.road.hint");
+			graphics.centeredText(font, line, left + WIDTH / 2, top + 2, this.error != null ? ERROR : HINT);
+		});
 		EditBox input = new EditBox(this.font, 0, 0, HALF, 20, Component.translatable("voxvelo_fitness_lib.road.input"));
 		input.setTooltip(Tips.of("voxvelo_fitness_lib.road.input"));
 		input.setHint(Component.translatable("voxvelo_fitness_lib.road.input_hint"));
@@ -82,7 +88,6 @@ public class RoadScreen extends SettingsScreen {
 				this.rebuildWidgets();
 			}
 		}).tooltip(Tips.of("voxvelo_fitness_lib.road.add")).bounds(RIGHT, 0, HALF, 20).build());
-		this.rows.addText(() -> this.error, ERROR);
 
 		boolean inWorld = this.minecraft.level != null && this.minecraft.player != null;
 		Button under = Button.builder(Component.translatable("voxvelo_fitness_lib.road.add_under"), button -> this.addPicked(this.blockUnderPlayer(), "voxvelo_fitness_lib.road.nothing_under"))
@@ -108,14 +113,40 @@ public class RoadScreen extends SettingsScreen {
 			this.error = null;
 			this.rebuildWidgets();
 		}).tooltip(Tips.of("voxvelo_fitness_lib.road.reset")).bounds(0, 0, WIDTH, 20).build());
+
+		this.rows.addHeader(Component.translatable("voxvelo_fitness_lib.road.section.terrain"));
+		this.rows.addRow(new ValueSlider(0, 0, WIDTH, 10, 40, 1, this.ctx.config.slopeWindowBlocks,
+			v -> Component.translatable("voxvelo_fitness_lib.config.slope_window", Math.round(v)),
+			v -> this.ctx.config.slopeWindowBlocks = (int) Math.round(v)).tip("voxvelo_fitness_lib.config.slope_window"));
+
+		this.rows.addHeader(Component.translatable("voxvelo_fitness.camera.section"));
+		this.rows.addRow(CycleButton.onOffBuilder(this.ctx.config.bikeCameraFollow)
+			.withTooltip(value -> Tips.of("voxvelo_fitness.camera.follow"))
+			.create(0, 0, WIDTH, 20, Component.translatable("voxvelo_fitness.camera.follow"),
+				(button, value) -> this.ctx.config.bikeCameraFollow = value));
 	}
 
-	/** A listed road block; pressing it takes the block off the list. */
+	/** The road options only matter with road follow on, and the cooldown only with the junction prompt on. */
+	private void updateDependents(ValueSlider halfWidth, CycleButton<Boolean> junction, ValueSlider cooldown) {
+		boolean following = this.ctx.config.roadFollowEnabled;
+		halfWidth.active = following;
+		junction.active = following;
+		cooldown.active = following && this.ctx.config.junctionPrompt;
+	}
+
+	/** A listed road block, by its name in the game; pressing it takes the block off the list. */
 	private Button entry(int x, String entry) {
-		return Button.builder(Component.literal(shorten(entry)), button -> this.remove(entry))
+		return Button.builder(Component.translatable("voxvelo_fitness_lib.road.entry", displayName(entry)), button -> this.remove(entry))
 			.bounds(x, 0, HALF, 20)
 			.tooltip(Tooltip.create(Component.translatable("voxvelo_fitness_lib.road.remove", entry)))
 			.build();
+	}
+
+	/** The block's translated name, or the shortened id for a tag or a block the game does not know. */
+	private static Component displayName(String entry) {
+		Identifier id = entry.startsWith("#") ? null : Identifier.tryParse(entry);
+		Optional<Block> block = id == null ? Optional.empty() : BuiltInRegistries.BLOCK.getOptional(id);
+		return block.<Component>map(Block::getName).orElseGet(() -> Component.literal(shorten(entry)));
 	}
 
 	private static String shorten(String entry) {

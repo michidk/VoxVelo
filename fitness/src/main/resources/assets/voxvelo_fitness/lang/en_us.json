@@ -1,4 +1,5 @@
 {
+	"voxvelo_fitness.camera.section": "Camera",
 	"voxvelo_fitness.camera.follow": "Always look ahead",
 	"voxvelo_fitness.camera.follow.tip": "Keep your camera level and facing the bike's heading while riding. Turn off to look around freely. Only affects riding a VoxVelo bike.",
   "voxvelo_fitness.setup.title": "Set up VoxVelo Fitness",
