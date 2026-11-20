@@ -4,6 +4,9 @@ Turn Minecraft into an indoor cycling workout: pedal a smart trainer, feel the h
 and record your rides as FIT files. VoxVelo combines **VoxVelo Bikes**, **VoxVelo Fitness Library**, and
 **VoxVelo Fitness**. You can also install Bikes alone for keyboard riding without fitness features.
 
+[What to install](#what-should-i-install) · [Quick start](#quick-start) · [Crafting](#crafting) ·
+[Fitness features](#fitness-features) · [Compatibility](#compatibility) · [Controller mappings](#controller-action-mappings)
+
 <p align="center">
   <a href="https://modrinth.com/mod/voxvelo-bikes"><img src=".github/images/icon_bikes.png" alt="VoxVelo Bikes icon" width="144"></a>
   &nbsp;&nbsp;
@@ -48,8 +51,6 @@ Download on Modrinth: [VoxVelo Bikes](https://modrinth.com/mod/voxvelo-bikes) |
 [VoxVelo Fitness](https://modrinth.com/mod/voxvelo-fitness).
 
 Watch [VoxVelo in action on YouTube](https://youtu.be/N1gC_XH1ZYk).
-
-
 
 ## Screenshots
 
@@ -337,13 +338,17 @@ heart rate, work and climbing. In `B` > *Ride Recording...*:
   stopped until the next mount. A previous unsaved ride is exported before a new recording starts; if saving fails,
   automatic recording is skipped so the previous ride stays available.
 
-- **Export .FIT** saves the ride to `.minecraft/voxvelo_fitness_lib/rides/` for Strava, Garmin Connect, intervals.icu or
+- **Export .FIT** saves the ride to its own folder in `.minecraft/voxvelo_fitness_lib/rides/` for Strava, Garmin Connect, intervals.icu or
   TrainingPeaks. With *GPS in FIT* on, the route is placed on the globe (in the mid Atlantic by default, set by
   `rideFitOriginLat`/`rideFitOriginLon`) so websites draw it.
 - **Draw on Map** gives you a filled map of the route (one empty map in survival).
 
 Starting a new recording discards the previous ride, so export it first. Leaving the world saves an unexported ride
 automatically.
+
+Each ride folder is named `yyyy-MM-dd_HH-mm-ss` and holds `activity.fit`, `map.png`, and photos taken during that
+recording. The map PNG is produced when saving the ride without requesting a map item. It uses terrain sampled from
+loaded client chunks during the recording; unseen terrain remains blank paper.
 
 ### Automatic ride photos
 
@@ -358,7 +363,7 @@ briefly appear on screen for the captured frame; the camera and HUD are restored
 view is the default. Hiding the HUD in photos is separately configurable.
 
 PNG photos and matching JSON files containing capture time, dimension, position, power and speed are saved in
-`.minecraft/voxvelo_fitness_lib/rides/photos/`. Use **Open photo folder** to find them. These are local files for
+the ride's folder (photos taken outside a recording go in `.minecraft/voxvelo_fitness_lib/rides/photos/`). Use **Open photo folder** to find them. These are local files for
 attaching to an activity later; uploading photos to Strava is not implemented.
 
 ## Configuration
@@ -373,7 +378,7 @@ Press `B` for bicycle settings, or `F8` for Fitness Library settings. Client set
 |-----------|---------|
 | Minecraft | 26.3 |
 | Fabric Loader | >= 0.19.5 |
-| Fabric API | >= 0.161.0 (built against 0.161.0+26.3) |
+| Fabric API | >= 0.161.0 (built against 0.161.2+26.4) |
 | GeckoLib | >= 5.5.7, < 6 (required on clients and servers) |
 | Java | 25 |
 
@@ -392,7 +397,7 @@ The VoxVelo Bikes jar bundles no third-party code.
 | Library | Version | Licence | Used for |
 |---|---|---|---|
 | [btleplug](https://github.com/deviceplug/btleplug) and its Rust dependencies, built into VoxVelo's native Bluetooth library ([`native/ble`](native/ble)) | 0.13 | [BSD-3-Clause](https://github.com/deviceplug/btleplug/blob/master/LICENSE.md); dependencies MIT or Apache-2.0 | Bluetooth LE |
-| [JmDNS](https://github.com/jmdns/jmdns) (`org.jmdns:jmdns`) | 3.6.3 | [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0) | OpenBikeControl network discovery |
+| [JmDNS](https://github.com/jmdns/jmdns) (`org.jmdns:jmdns`) | 3.6.5 | [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0) | OpenBikeControl network discovery |
 
 Minecraft is a trademark of Mojang AB. VoxVelo is not affiliated with Mojang or Microsoft.
 
@@ -419,7 +424,7 @@ controller app. Change Camera does not start recording.
 | Right | 0x13 | 19 | Navigate right in menus |
 | Select / Confirm | 0x14 | 20 | Activate the focused menu control |
 | Back / Cancel | 0x15 | 21 | Go back in menus |
-| Menu | 0x16 | 22 | Open the Minecraft pause menu during gameplay |
+| Menu | 0x16 | 22 | Open fitness settings during gameplay |
 | Steer Left | 0x18 | 24 | Steer left when no handlebar angle is available |
 | Steer Right | 0x19 | 25 | Steer right when no handlebar angle is available |
 | Brake | 0x1A | 26 | Apply brakes; state 1 is full braking |
@@ -473,5 +478,3 @@ player faced when mounting.
 
 See the [OpenBikeControl protocol](https://github.com/OpenBikeControl/openbikecontrol-protocol/blob/main/PROTOCOL.md)
 for the wire format. Actions absent from these tables are not implemented.
-
-Ride exports are grouped under `voxvelo_fitness_lib/rides/yyyy-MM-dd_HH-mm-ss/`: `activity.fit`, `map.png`, and photos taken during that recording. The map PNG is produced when saving the ride without requesting a map item. It uses terrain sampled from loaded client chunks during the recording; unseen terrain remains blank paper. Photos taken outside a recording go in `rides/photos/`.
