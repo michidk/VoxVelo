@@ -32,6 +32,16 @@
       "registryUrls": [
         "https://maven.fabricmc.net/"
       ]
+    },
+    {
+      "description": "Fabric toolchain and runtime move together with Minecraft; test them as one change",
+      "groupName": "fabric",
+      "matchPackageNames": [
+        "net.fabricmc:fabric-loader",
+        "net.fabricmc.fabric-api:fabric-api",
+        "net.fabricmc.fabric-loom",
+        "net.fabricmc.fabric-loom:net.fabricmc.fabric-loom.gradle.plugin"
+      ]
     }
   ]
 }
