@@ -27,6 +27,10 @@
   <a href="#controller-action-mappings">Controller mappings</a>
 </p>
 
+<p align="center">
+  <img src=".github/images/readme/separator.svg" width="800" alt="">
+</p>
+
 VoxVelo combines **VoxVelo Bikes**, **VoxVelo Fitness Library**, and **VoxVelo Fitness**. You can also
 install Bikes alone for keyboard riding without fitness features.
 
@@ -85,9 +89,11 @@ Download on Modrinth: [VoxVelo Bikes](https://modrinth.com/mod/voxvelo-bikes) |
   <img src="https://raw.githubusercontent.com/michidk/VoxVelo/main/.github/screenshots/07-settings.png" alt="The VoxVelo settings screen" width="49%">
 </p>
 
-## Features
+<p align="center">
+  <img src=".github/images/readme/separator.svg" width="800" alt="">
+</p>
 
-<img src=".github/images/readme/features.png" width="100%" alt="Bikes: 3, road, gravel and mountain. Gears: 12, virtual shifting. Trainers: FTMS Bluetooth smart trainers. Steering: phone, via OpenBikeControl. Rides: FIT files for Strava and Garmin Connect. Tracks: generated loop roads.">
+## Features
 
 - **Real bicycles:** road, gravel and mountain bikes, crafted from frames, wheels, tires, handlebars, saddles and
   pedals, recolorable with dyes, enchantable with Speed Boost, repaired and dismantled with a wrench.
@@ -270,6 +276,10 @@ valleys and tunnels through mountains, with low lit borders and five blocks of h
 bar; `/voxvelo track status` and `/voxvelo track cancel` inspect or stop it (cancelling keeps what is already
 built). Only one track can be built per server at a time. The same seed, position and arguments give the same layout.
 
+<p align="center">
+  <img src=".github/images/readme/separator.svg" width="800" alt="">
+</p>
+
 ## Fitness features
 
 These features require VoxVelo Fitness and both of its dependencies. They are not included in Bikes alone.
@@ -410,6 +420,10 @@ Press `B` for bicycle settings, or `F8` for Fitness Library settings. Client set
 | Fabric API | >= 0.161.0 (built against 0.161.2+26.4) |
 | GeckoLib | >= 5.5.7, < 6 (required on clients and servers) |
 | Java | 25 |
+
+<p align="center">
+  <img src=".github/images/readme/separator.svg" width="800" alt="">
+</p>
 
 ## License
 
