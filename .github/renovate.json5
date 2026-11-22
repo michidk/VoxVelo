@@ -34,6 +34,13 @@
       ]
     },
     {
+      "description": "Fabric API publishes one build per Minecraft version (+26.3, +26.4); only accept builds matching minecraft_version in gradle.properties",
+      "matchPackageNames": [
+        "net.fabricmc.fabric-api:fabric-api"
+      ],
+      "allowedVersions": "/\\+26\\.3$/"
+    },
+    {
       "description": "Fabric toolchain and runtime move together with Minecraft; test them as one change",
       "groupName": "fabric",
       "matchPackageNames": [
