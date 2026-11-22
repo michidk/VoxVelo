@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "tool": "readme-skill/0.1.0",
+  "inputHash": "1b0a551980b2b6ec3994f1dfcb5b536d85f9506ab86151bab9e28a58e79880c3",
+  "outputHash": "1115312c73f697b2da816a41552dee9e04d1711d2d58665cd1dc43b3aac49623",
+  "specification": {
+    "operation": "media",
+    "format": ".webp",
+    "width": 800,
+    "quality": 85,
+    "play": true,
+    "crop": null,
+    "variant": "maxresdefault",
+    "sharp": "0.35.5"
+  },
+  "source": "https://www.youtube.com/watch?v=N1gC_XH1ZYk"
+}

@@ -1,19 +1,38 @@
-# VoxVelo
-
-Turn Minecraft into an indoor cycling workout: pedal a smart trainer, feel the hills, steer with your phone,
-and record your rides as FIT files. VoxVelo combines **VoxVelo Bikes**, **VoxVelo Fitness Library**, and
-**VoxVelo Fitness**. You can also install Bikes alone for keyboard riding without fitness features.
-
-[What to install](#what-should-i-install) · [Quick start](#quick-start) · [Crafting](#crafting) ·
-[Fitness features](#fitness-features) · [Compatibility](#compatibility) · [Controller mappings](#controller-action-mappings)
+<p align="center">
+  <img src=".github/images/readme/hero.webp" width="100%" alt="VoxVelo: ride your world. Mountain, gravel and road bikes in a Minecraft meadow">
+</p>
 
 <p align="center">
-  <a href="https://modrinth.com/mod/voxvelo-bikes"><img src=".github/images/icon_bikes.png" alt="VoxVelo Bikes icon" width="144"></a>
-  &nbsp;&nbsp;
-  <a href="https://modrinth.com/mod/voxvelo-fitness-lib"><img src=".github/images/icon_fitness_lib.png" alt="VoxVelo Fitness Library icon" width="144"></a>
-  &nbsp;&nbsp;
-  <a href="https://modrinth.com/mod/voxvelo-fitness"><img src=".github/images/icon_fitness.png" alt="VoxVelo Fitness icon" width="144"></a>
+  <strong>Turn Minecraft into an indoor cycling workout.</strong><br>
+  Pedal a smart trainer, feel the hills, steer with your phone, and record your rides as FIT files.
 </p>
+
+<p align="center">
+  <a href="https://github.com/michidk/VoxVelo/releases/latest"><img src=".github/images/readme/download.png" width="360" alt="Download the latest release from GitHub"></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/michidk/VoxVelo/actions/workflows/build.yml"><img alt="Build" src="https://img.shields.io/github/actions/workflow/status/michidk/VoxVelo/build.yml?branch=main&label=build"></a>
+  <a href="https://github.com/michidk/VoxVelo/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/michidk/VoxVelo?color=f2b705"></a>
+  <a href="#what-should-i-install"><img alt="Minecraft 26.3 with Fabric Loader 0.19.5+" src="https://img.shields.io/badge/Minecraft_26.3-Fabric_0.19.5%2B-5da130"></a>
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue"></a>
+</p>
+
+<p align="center">
+  <a href="#what-should-i-install">What to install</a> ·
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#crafting">Crafting</a> ·
+  <a href="#fitness-features">Fitness features</a> ·
+  <a href="#compatibility">Compatibility</a> ·
+  <a href="#controller-action-mappings">Controller mappings</a>
+</p>
+
+<p align="center">
+  <img src=".github/images/readme/separator.svg" width="800" alt="">
+</p>
+
+VoxVelo combines **VoxVelo Bikes**, **VoxVelo Fitness Library**, and **VoxVelo Fitness**. You can also
+install Bikes alone for keyboard riding without fitness features.
 
 ## What should I install?
 
@@ -50,9 +69,13 @@ Download on Modrinth: [VoxVelo Bikes](https://modrinth.com/mod/voxvelo-bikes) |
 [VoxVelo Fitness Library](https://modrinth.com/mod/voxvelo-fitness-lib) |
 [VoxVelo Fitness](https://modrinth.com/mod/voxvelo-fitness).
 
-Watch [VoxVelo in action on YouTube](https://youtu.be/N1gC_XH1ZYk).
-
 ## Screenshots
+
+<p align="center">
+  <a href="https://youtu.be/N1gC_XH1ZYk"><img src=".github/images/video-thumbnail.webp" alt="Play the VoxVelo trailer on YouTube" width="800"></a>
+  <br>
+  <sub><a href="https://youtu.be/N1gC_XH1ZYk">Watch VoxVelo in action on YouTube</a></sub>
+</p>
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/michidk/VoxVelo/main/.github/screenshots/01-bike-lineup.png" alt="Mountain, gravel and road bikes, each in its own color" width="100%">
@@ -64,6 +87,10 @@ Watch [VoxVelo in action on YouTube](https://youtu.be/N1gC_XH1ZYk).
   <img src="https://raw.githubusercontent.com/michidk/VoxVelo/main/.github/screenshots/06-race-track.png" alt="A generated track cutting over a hill" width="49%">
   <img src="https://raw.githubusercontent.com/michidk/VoxVelo/main/.github/screenshots/03-on-the-road.png" alt="Riding along the track borders and glowstone lights" width="49%">
   <img src="https://raw.githubusercontent.com/michidk/VoxVelo/main/.github/screenshots/07-settings.png" alt="The VoxVelo settings screen" width="49%">
+</p>
+
+<p align="center">
+  <img src=".github/images/readme/separator.svg" width="800" alt="">
 </p>
 
 ## Features
@@ -87,6 +114,14 @@ Watch [VoxVelo in action on YouTube](https://youtu.be/N1gC_XH1ZYk).
   - Ride recording with summaries, FIT export for Strava, Garmin Connect and others, and ride maps.
 
 ## The three mods
+
+<p align="center">
+  <a href="https://modrinth.com/mod/voxvelo-bikes"><img src=".github/images/icon_bikes.png" alt="VoxVelo Bikes icon" width="144"></a>
+  &nbsp;&nbsp;
+  <a href="https://modrinth.com/mod/voxvelo-fitness-lib"><img src=".github/images/icon_fitness_lib.png" alt="VoxVelo Fitness Library icon" width="144"></a>
+  &nbsp;&nbsp;
+  <a href="https://modrinth.com/mod/voxvelo-fitness"><img src=".github/images/icon_fitness.png" alt="VoxVelo Fitness icon" width="144"></a>
+</p>
 
 Each mod has its own jar and a separately configured Modrinth entry:
 
@@ -241,6 +276,10 @@ valleys and tunnels through mountains, with low lit borders and five blocks of h
 bar; `/voxvelo track status` and `/voxvelo track cancel` inspect or stop it (cancelling keeps what is already
 built). Only one track can be built per server at a time. The same seed, position and arguments give the same layout.
 
+<p align="center">
+  <img src=".github/images/readme/separator.svg" width="800" alt="">
+</p>
+
 ## Fitness features
 
 These features require VoxVelo Fitness and both of its dependencies. They are not included in Bikes alone.
@@ -381,6 +420,10 @@ Press `B` for bicycle settings, or `F8` for Fitness Library settings. Client set
 | Fabric API | >= 0.161.0 (built against 0.161.2+26.4) |
 | GeckoLib | >= 5.5.7, < 6 (required on clients and servers) |
 | Java | 25 |
+
+<p align="center">
+  <img src=".github/images/readme/separator.svg" width="800" alt="">
+</p>
 
 ## License
 
