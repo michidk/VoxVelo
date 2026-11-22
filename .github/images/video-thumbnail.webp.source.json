@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "tool": "readme-skill/0.1.0",
-  "inputHash": "d024f352cd793a8b01efe4a43d8f453445d7cb1ca161e59a9bb409998e88258a",
-  "outputHash": "15fba8cf8c30a28cd1a5244056f9ee758fcee9b1e782c0539b54845fe9e636f6",
+  "inputHash": "1b0a551980b2b6ec3994f1dfcb5b536d85f9506ab86151bab9e28a58e79880c3",
+  "outputHash": "1115312c73f697b2da816a41552dee9e04d1711d2d58665cd1dc43b3aac49623",
   "specification": {
     "operation": "media",
     "format": ".webp",

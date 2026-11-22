@@ -1,8 +1,18 @@
-# VoxVelo
+<p align="center">
+  <a href="https://modrinth.com/mod/voxvelo-bikes"><img src=".github/images/icon_bikes.png" alt="VoxVelo Bikes icon" width="144"></a>
+  &nbsp;&nbsp;
+  <a href="https://modrinth.com/mod/voxvelo-fitness-lib"><img src=".github/images/icon_fitness_lib.png" alt="VoxVelo Fitness Library icon" width="144"></a>
+  &nbsp;&nbsp;
+  <a href="https://modrinth.com/mod/voxvelo-fitness"><img src=".github/images/icon_fitness.png" alt="VoxVelo Fitness icon" width="144"></a>
+</p>
 
-Turn Minecraft into an indoor cycling workout: pedal a smart trainer, feel the hills, steer with your phone,
-and record your rides as FIT files. VoxVelo combines **VoxVelo Bikes**, **VoxVelo Fitness Library**, and
-**VoxVelo Fitness**. You can also install Bikes alone for keyboard riding without fitness features.
+
+<h1 align="center">VoxVelo</h1>
+
+<p align="center">
+  <strong>Turn Minecraft into an indoor cycling workout.</strong><br>
+  Pedal a smart trainer, feel the hills, steer with your phone, and record your rides as FIT files.
+</p>
 
 <p align="center">
   <a href="https://github.com/michidk/VoxVelo/actions/workflows/build.yml"><img alt="Build" src="https://img.shields.io/github/actions/workflow/status/michidk/VoxVelo/build.yml?branch=main&label=build"></a>
@@ -11,13 +21,6 @@ and record your rides as FIT files. VoxVelo combines **VoxVelo Bikes**, **VoxVel
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue"></a>
 </p>
 
-<p align="center">
-  <a href="https://modrinth.com/mod/voxvelo-bikes"><img src=".github/images/icon_bikes.png" alt="VoxVelo Bikes icon" width="144"></a>
-  &nbsp;&nbsp;
-  <a href="https://modrinth.com/mod/voxvelo-fitness-lib"><img src=".github/images/icon_fitness_lib.png" alt="VoxVelo Fitness Library icon" width="144"></a>
-  &nbsp;&nbsp;
-  <a href="https://modrinth.com/mod/voxvelo-fitness"><img src=".github/images/icon_fitness.png" alt="VoxVelo Fitness icon" width="144"></a>
-</p>
 
 <p align="center">
   <a href="#what-should-i-install">What to install</a> ·
@@ -28,9 +31,15 @@ and record your rides as FIT files. VoxVelo combines **VoxVelo Bikes**, **VoxVel
   <a href="#controller-action-mappings">Controller mappings</a>
 </p>
 
+
+<br>
+
 <p align="center">
   <img src=".github/images/separator.svg" width="800" alt="">
 </p>
+
+VoxVelo combines **VoxVelo Bikes**, **VoxVelo Fitness Library**, and **VoxVelo Fitness**. You can also
+install Bikes alone for keyboard riding without fitness features.
 
 ## What should I install?
 
