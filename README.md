@@ -69,6 +69,13 @@ Download on Modrinth: [VoxVelo Bikes](https://modrinth.com/mod/voxvelo-bikes) |
 [VoxVelo Fitness Library](https://modrinth.com/mod/voxvelo-fitness-lib) |
 [VoxVelo Fitness](https://modrinth.com/mod/voxvelo-fitness).
 
+<<<<<<< HEAD
+=======
+Watch the [trailer](https://youtu.be/N1gC_XH1ZYk) and [gameplay showcase](https://youtu.be/j696ElR1QR4) on YouTube.
+
+
+
+>>>>>>> a1cf7a4 (docs: link trailer and gameplay showcase videos)
 ## Screenshots
 
 <p align="center">
