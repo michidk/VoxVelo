@@ -1,17 +1,14 @@
 <p align="center">
-  <a href="https://modrinth.com/mod/voxvelo-bikes"><img src=".github/images/icon_bikes.png" alt="VoxVelo Bikes icon" width="144"></a>
-  &nbsp;&nbsp;
-  <a href="https://modrinth.com/mod/voxvelo-fitness-lib"><img src=".github/images/icon_fitness_lib.png" alt="VoxVelo Fitness Library icon" width="144"></a>
-  &nbsp;&nbsp;
-  <a href="https://modrinth.com/mod/voxvelo-fitness"><img src=".github/images/icon_fitness.png" alt="VoxVelo Fitness icon" width="144"></a>
+  <img src=".github/images/readme/hero.webp" width="100%" alt="VoxVelo: ride your world. Mountain, gravel and road bikes in a Minecraft meadow">
 </p>
-
-
-<h1 align="center">VoxVelo</h1>
 
 <p align="center">
   <strong>Turn Minecraft into an indoor cycling workout.</strong><br>
   Pedal a smart trainer, feel the hills, steer with your phone, and record your rides as FIT files.
+</p>
+
+<p align="center">
+  <a href="https://github.com/michidk/VoxVelo/releases/latest"><img src=".github/images/readme/download.png" width="360" alt="Download the latest release from GitHub"></a>
 </p>
 
 <p align="center">
@@ -21,7 +18,6 @@
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue"></a>
 </p>
 
-
 <p align="center">
   <a href="#what-should-i-install">What to install</a> ·
   <a href="#quick-start">Quick start</a> ·
@@ -29,13 +25,6 @@
   <a href="#fitness-features">Fitness features</a> ·
   <a href="#compatibility">Compatibility</a> ·
   <a href="#controller-action-mappings">Controller mappings</a>
-</p>
-
-
-<br>
-
-<p align="center">
-  <img src=".github/images/separator.svg" width="800" alt="">
 </p>
 
 VoxVelo combines **VoxVelo Bikes**, **VoxVelo Fitness Library**, and **VoxVelo Fitness**. You can also
@@ -76,10 +65,6 @@ Download on Modrinth: [VoxVelo Bikes](https://modrinth.com/mod/voxvelo-bikes) |
 [VoxVelo Fitness Library](https://modrinth.com/mod/voxvelo-fitness-lib) |
 [VoxVelo Fitness](https://modrinth.com/mod/voxvelo-fitness).
 
-<p align="center">
-  <img src=".github/images/separator.svg" width="800" alt="">
-</p>
-
 ## Screenshots
 
 <p align="center">
@@ -100,11 +85,9 @@ Download on Modrinth: [VoxVelo Bikes](https://modrinth.com/mod/voxvelo-bikes) |
   <img src="https://raw.githubusercontent.com/michidk/VoxVelo/main/.github/screenshots/07-settings.png" alt="The VoxVelo settings screen" width="49%">
 </p>
 
-<p align="center">
-  <img src=".github/images/separator.svg" width="800" alt="">
-</p>
-
 ## Features
+
+<img src=".github/images/readme/features.png" width="100%" alt="Bikes: 3, road, gravel and mountain. Gears: 12, virtual shifting. Trainers: FTMS Bluetooth smart trainers. Steering: phone, via OpenBikeControl. Rides: FIT files for Strava and Garmin Connect. Tracks: generated loop roads.">
 
 - **Real bicycles:** road, gravel and mountain bikes, crafted from frames, wheels, tires, handlebars, saddles and
   pedals, recolorable with dyes, enchantable with Speed Boost, repaired and dismantled with a wrench.
@@ -124,11 +107,15 @@ Download on Modrinth: [VoxVelo Bikes](https://modrinth.com/mod/voxvelo-bikes) |
   - Riding HUD, heart rate graph and a server-wide rider stats overlay.
   - Ride recording with summaries, FIT export for Strava, Garmin Connect and others, and ride maps.
 
-<p align="center">
-  <img src=".github/images/separator.svg" width="800" alt="">
-</p>
-
 ## The three mods
+
+<p align="center">
+  <a href="https://modrinth.com/mod/voxvelo-bikes"><img src=".github/images/icon_bikes.png" alt="VoxVelo Bikes icon" width="144"></a>
+  &nbsp;&nbsp;
+  <a href="https://modrinth.com/mod/voxvelo-fitness-lib"><img src=".github/images/icon_fitness_lib.png" alt="VoxVelo Fitness Library icon" width="144"></a>
+  &nbsp;&nbsp;
+  <a href="https://modrinth.com/mod/voxvelo-fitness"><img src=".github/images/icon_fitness.png" alt="VoxVelo Fitness icon" width="144"></a>
+</p>
 
 Each mod has its own jar and a separately configured Modrinth entry:
 
@@ -155,10 +142,6 @@ resolve them.
 Developers: the vehicle integration API is `dev.michidk.voxvelo.fitnesslib.api`; see the optional
 [boat example](examples/fitness-boat/src/main/java/dev/michidk/example/BoatFitness.java).
 
-<p align="center">
-  <img src=".github/images/separator.svg" width="800" alt="">
-</p>
-
 ## Quick start
 
 1. Get a bike: craft one from parts (every recipe is in the recipe book), or in creative take one from the
@@ -182,10 +165,6 @@ Developers: the vehicle integration API is `dev.michidk.voxvelo.fitnesslib.api`;
 Keys are rebindable under *Controls > VoxVelo Bicycle* and *Fitness*. Sneak-use a bike with an empty hand to pick it up.
 Holding the pedal key produces 200 W of virtual power (adjustable in `B` > *Keyboard...*).
 
-<p align="center">
-  <img src=".github/images/separator.svg" width="800" alt="">
-</p>
-
 ## Bikes
 
 | | Road | Gravel | Mountain |
@@ -208,10 +187,6 @@ At 200 W on flat stone the three cruise at roughly 34, 32 and 28 km/h; on sand 1
   parts. Left-click a parked bike with the **Bike Wrench** to repair it, right-click to dismantle it.
   In Creative, one left-click instantly removes a bike without drops or an attack swing, including when holding
   a wrench. Normal right-click still mounts the bike.
-
-<p align="center">
-  <img src=".github/images/separator.svg" width="800" alt="">
-</p>
 
 ## Crafting
 
@@ -254,10 +229,6 @@ leather armor. Any wheel plus any tire swaps the tread, and a worn tire comes ba
 |:-:|:-:|:-:|
 | ![Bike helmet recipe](https://raw.githubusercontent.com/michidk/VoxVelo/main/.github/recipes/bike_helmet.png) | ![Dyeing a frame](https://raw.githubusercontent.com/michidk/VoxVelo/main/.github/recipes/dyeing.png) | ![Re-tiring a wheel](https://raw.githubusercontent.com/michidk/VoxVelo/main/.github/recipes/retread.png) |
 
-<p align="center">
-  <img src=".github/images/separator.svg" width="800" alt="">
-</p>
-
 ## Riding
 
 - **Slopes:** every bike rolls up a one-block step. Slabs and stairs are free; full-block ledges cost speed, the
@@ -269,10 +240,6 @@ leather armor. Any wheel plus any tire swaps the tread, and a worn tire comes ba
 - **Multiplayer:** the rider's client simulates its own bike, like vanilla horses and boats, and the server clamps
   what it reports and handles damage. A modified client could ride faster than the physics allows (within
   vanilla's movement checks), the same trade-off vanilla makes.
-
-<p align="center">
-  <img src=".github/images/separator.svg" width="800" alt="">
-</p>
 
 ## Cycling track generator
 
@@ -302,10 +269,6 @@ The road follows the ground with half-block slab steps, crosses water and lava o
 valleys and tunnels through mountains, with low lit borders and five blocks of headroom. Progress shows in a boss
 bar; `/voxvelo track status` and `/voxvelo track cancel` inspect or stop it (cancelling keeps what is already
 built). Only one track can be built per server at a time. The same seed, position and arguments give the same layout.
-
-<p align="center">
-  <img src=".github/images/separator.svg" width="800" alt="">
-</p>
 
 ## Fitness features
 
@@ -432,19 +395,11 @@ PNG photos and matching JSON files containing capture time, dimension, position,
 the ride's folder (photos taken outside a recording go in `.minecraft/voxvelo_fitness_lib/rides/photos/`). Use **Open photo folder** to find them. These are local files for
 attaching to an activity later; uploading photos to Strava is not implemented.
 
-<p align="center">
-  <img src=".github/images/separator.svg" width="800" alt="">
-</p>
-
 ## Configuration
 
 Press `B` for bicycle settings, or `F8` for Fitness Library settings. Client settings are stored in `config/voxvelo-bikes-client.json` (fitness:
 `config/voxvelo-fitness-lib.json`). Server settings are in `config/voxvelo-bikes-server.json`, for example
 `enableVehicleDamage` and `vehicleDamageInCreativeMode`.
-
-<p align="center">
-  <img src=".github/images/separator.svg" width="800" alt="">
-</p>
 
 ## Compatibility
 
@@ -455,10 +410,6 @@ Press `B` for bicycle settings, or `F8` for Fitness Library settings. Client set
 | Fabric API | >= 0.161.0 (built against 0.161.2+26.4) |
 | GeckoLib | >= 5.5.7, < 6 (required on clients and servers) |
 | Java | 25 |
-
-<p align="center">
-  <img src=".github/images/separator.svg" width="800" alt="">
-</p>
 
 ## License
 
@@ -478,10 +429,6 @@ The VoxVelo Bikes jar bundles no third-party code.
 | [JmDNS](https://github.com/jmdns/jmdns) (`org.jmdns:jmdns`) | 3.6.5 | [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0) | OpenBikeControl network discovery |
 
 Minecraft is a trademark of Mojang AB. VoxVelo is not affiliated with Mojang or Microsoft.
-
-<p align="center">
-  <img src=".github/images/separator.svg" width="800" alt="">
-</p>
 
 ## Controller action mappings
 
