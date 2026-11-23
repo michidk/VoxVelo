@@ -14,6 +14,7 @@
 <p align="center">
   <a href="https://github.com/michidk/VoxVelo/actions/workflows/build.yml"><img alt="Build" src="https://img.shields.io/github/actions/workflow/status/michidk/VoxVelo/build.yml?branch=main&label=build"></a>
   <a href="https://github.com/michidk/VoxVelo/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/michidk/VoxVelo?color=f2b705"></a>
+  <a href="https://www.curseforge.com/minecraft/mc-mods/voxvelo-fitness"><img alt="VoxVelo Fitness on CurseForge" src="https://img.shields.io/badge/CurseForge-VoxVelo_Fitness-F16436?logo=curseforge&logoColor=white"></a>
   <a href="#what-should-i-install"><img alt="Minecraft 26.3 with Fabric Loader 0.19.5+" src="https://img.shields.io/badge/Minecraft_26.3-Fabric_0.19.5%2B-5da130"></a>
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue"></a>
 </p>
@@ -39,13 +40,13 @@ install Bikes alone for keyboard riding without fitness features.
 > **Fitness Library setup:** Starting with version 0.1.3, Fitness can launch without Fitness Library. On the title screen, choose **Download and install library** to fetch the exact matching version from the official GitHub release, then quit and relaunch. Downloads only start after your click and are checked against GitHub's SHA-256 digest. Keyboard cycling remains available if you skip setup. Versions before 0.1.3 require manually installing the library from the same GitHub release as Bikes and Fitness.
 
 Use **Minecraft 26.3**, **Java 25**, and [Fabric Loader](https://fabricmc.net/use/) **0.19.5 or newer**.
-Both setups below also need [Fabric API](https://modrinth.com/mod/fabric-api) for Minecraft 26.3 and
-[GeckoLib](https://modrinth.com/mod/geckolib) **5.5.7**.
+Both setups below also need [Fabric API](https://www.curseforge.com/minecraft/mc-mods/fabric-api) for Minecraft 26.3 and
+[GeckoLib](https://www.curseforge.com/minecraft/mc-mods/geckolib) **5.5.7**.
 
 | I want to… | Install these VoxVelo mods |
 | --- | --- |
-| **Work out with a smart trainer**, use fitness sensors, or record rides | [VoxVelo Fitness](https://modrinth.com/project/voxvelo-fitness) and matching [VoxVelo Bikes](https://modrinth.com/project/voxvelo-bikes); install Fitness Library through the in-game setup |
-| **Just ride bikes with a keyboard and mouse**, without fitness features | **[VoxVelo Bikes](https://modrinth.com/project/voxvelo-bikes) only** |
+| **Work out with a smart trainer**, use fitness sensors, or record rides | [VoxVelo Fitness](https://www.curseforge.com/minecraft/mc-mods/voxvelo-fitness) and matching [VoxVelo Bikes](https://www.curseforge.com/minecraft/mc-mods/voxvelo-bikes); install Fitness Library through the in-game setup |
+| **Just ride bikes with a keyboard and mouse**, without fitness features | **[VoxVelo Bikes](https://www.curseforge.com/minecraft/mc-mods/voxvelo-bikes) only** |
 
 Alternatively, to install all three mods manually, download the JARs from the same [GitHub release](https://github.com/michidk/VoxVelo/releases)
 and put them, Fabric API, and GeckoLib in your instance's `mods/` folder. For the fitness setup, that means:
@@ -55,7 +56,7 @@ and put them, Fabric API, and GeckoLib in your instance's `mods/` folder. For th
 - `voxvelo-fitness-<version>.jar`
 
 **Fitness features require matching Bikes and Fitness Library versions.** Fitness can launch without the library and offers its installer on the title screen.
-The library alone does not add bicycles. With a dependency-aware Modrinth launcher, install VoxVelo Fitness
+The library alone does not add bicycles. With a dependency-aware CurseForge launcher, install VoxVelo Fitness
 and confirm that it also installs Bikes, Fabric API, and GeckoLib. If the library is missing, complete the in-game setup and restart Minecraft.
 
 Once installed, mount a bike and press `F8` to connect your Bluetooth FTMS trainer and optional sensors.
@@ -65,9 +66,13 @@ See [Fitness features](#fitness-features) for device setup, phone steering, resi
 for multiplayer rider stats and ride maps. Fitness devices connect to the player's client, not the server.
 
 Downloads and changelogs are on [GitHub Releases](https://github.com/michidk/VoxVelo/releases).
-Download on Modrinth: [VoxVelo Bikes](https://modrinth.com/mod/voxvelo-bikes) |
-[VoxVelo Fitness Library](https://modrinth.com/mod/voxvelo-fitness-lib) |
-[VoxVelo Fitness](https://modrinth.com/mod/voxvelo-fitness).
+You can also download each mod on CurseForge:
+
+| Mod | CurseForge |
+| --- | --- |
+| VoxVelo Bikes | [Download](https://www.curseforge.com/minecraft/mc-mods/voxvelo-bikes) |
+| VoxVelo Fitness Library | [Download](https://www.curseforge.com/minecraft/mc-mods/voxvelo-fitness-library) |
+| VoxVelo Fitness | [Download](https://www.curseforge.com/minecraft/mc-mods/voxvelo-fitness) |
 
 ## Screenshots
 
@@ -116,20 +121,20 @@ Download on Modrinth: [VoxVelo Bikes](https://modrinth.com/mod/voxvelo-bikes) |
 ## The three mods
 
 <p align="center">
-  <a href="https://modrinth.com/mod/voxvelo-bikes"><img src=".github/images/icon_bikes.png" alt="VoxVelo Bikes icon" width="144"></a>
+  <a href="https://www.curseforge.com/minecraft/mc-mods/voxvelo-bikes"><img src=".github/images/icon_bikes.png" alt="VoxVelo Bikes icon" width="144"></a>
   &nbsp;&nbsp;
-  <a href="https://modrinth.com/mod/voxvelo-fitness-lib"><img src=".github/images/icon_fitness_lib.png" alt="VoxVelo Fitness Library icon" width="144"></a>
+  <a href="https://www.curseforge.com/minecraft/mc-mods/voxvelo-fitness-library"><img src=".github/images/icon_fitness_lib.png" alt="VoxVelo Fitness Library icon" width="144"></a>
   &nbsp;&nbsp;
-  <a href="https://modrinth.com/mod/voxvelo-fitness"><img src=".github/images/icon_fitness.png" alt="VoxVelo Fitness icon" width="144"></a>
+  <a href="https://www.curseforge.com/minecraft/mc-mods/voxvelo-fitness"><img src=".github/images/icon_fitness.png" alt="VoxVelo Fitness icon" width="144"></a>
 </p>
 
-Each mod has its own jar and a separately configured Modrinth entry:
+Each mod has its own jar and project pages on CurseForge:
 
 | Project | Jar | Mod ID | Purpose | Requires |
 | --- | --- | --- | --- | --- |
-| [VoxVelo Bikes](https://modrinth.com/mod/voxvelo-bikes) | `voxvelo-bikes-<version>.jar` | `voxvelo_bikes` | Bikes, physics, recipes, keyboard riding, tracks | Fabric API, GeckoLib |
-| [VoxVelo Fitness Library](https://modrinth.com/mod/voxvelo-fitness-lib) | `voxvelo-fitness-lib-<version>.jar` | `voxvelo_fitness_lib` | Reusable Bluetooth/device connections, trainer feedback, HUD, sessions, recording and FIT export | Fabric API |
-| [VoxVelo Fitness](https://modrinth.com/mod/voxvelo-fitness) | `voxvelo-fitness-<version>.jar` | `voxvelo_fitness` | Connects bikes to the fitness library; road following, rider stats and ride maps | Matching VoxVelo Bikes and VoxVelo Fitness Library, plus Fabric API and GeckoLib |
+| [VoxVelo Bikes](https://www.curseforge.com/minecraft/mc-mods/voxvelo-bikes) | `voxvelo-bikes-<version>.jar` | `voxvelo_bikes` | Bikes, physics, recipes, keyboard riding, tracks | Fabric API, GeckoLib |
+| [VoxVelo Fitness Library](https://www.curseforge.com/minecraft/mc-mods/voxvelo-fitness-library) | `voxvelo-fitness-lib-<version>.jar` | `voxvelo_fitness_lib` | Reusable Bluetooth/device connections, trainer feedback, HUD, sessions, recording and FIT export | Fabric API |
+| [VoxVelo Fitness](https://www.curseforge.com/minecraft/mc-mods/voxvelo-fitness) | `voxvelo-fitness-<version>.jar` | `voxvelo_fitness` | Connects bikes to the fitness library; road following, rider stats and ride maps | Matching VoxVelo Bikes and VoxVelo Fitness Library, plus Fabric API and GeckoLib |
 
 **VoxVelo Bikes** works independently. It contains no Bluetooth support, fitness-device integrations, workout
 recording or fitness libraries. Players who just want bicycles only need Bikes and its normal dependencies.
@@ -142,7 +147,7 @@ feedback and recording samples only when an adapter supports the local player's 
 install all three jars from the same release. Bikes and the library do not depend on each other. The library is
 an explicit, separately installed dependency of Fitness, not bundled inside its jar.
 
-The VoxVelo Fitness entry on Modrinth declares both required dependencies so compatible launchers can
+The VoxVelo Fitness entry on CurseForge declares its required dependencies so compatible launchers can
 resolve them.
 
 Developers: the vehicle integration API is `dev.michidk.voxvelo.fitnesslib.api`; see the optional
